@@ -1,10 +1,101 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Image, Animated, KeyboardAvoidingView, Platform, ActivityIndicator, Modal, Alert } from 'react-native';
-import { Stethoscope, User, ArrowRight, Mail, Lock, X, CheckCircle, Eye, EyeOff, Smartphone, Shield } from 'lucide-react-native';
+﻿import React, { useState, useRef, useEffect } from 'react';
+import {
+    View, Text, TextInput, TouchableOpacity, ScrollView, Image,
+    Animated, KeyboardAvoidingView, Platform, ActivityIndicator,
+    Modal, Alert, Dimensions, StatusBar,
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import {
+    Stethoscope, User, ArrowRight, Mail, Lock, X,
+    CheckCircle, Eye, EyeOff, Smartphone, Shield, Heart,
+} from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserRole } from '@/lib/mock-data';
 import ForgotPasswordForm from './shared/ForgotPasswordForm';
 import { colors, spacing, radius, typography, cardShadow, fonts } from '@/lib/theme';
+
+const { width, height } = Dimensions.get('window');
+
+// ─── Staggered animated input row ────────────────────────────────────────────
+function AnimatedField({
+    children, delay = 0
+}: { children: React.ReactNode; delay?: number }) {
+    const opacity = useRef(new Animated.Value(0)).current;
+    const translateY = useRef(new Animated.Value(24)).current;
+
+    useEffect(() => {
+        Animated.parallel([
+            Animated.timing(opacity, { toValue: 1, duration: 400, delay, useNativeDriver: true }),
+            Animated.timing(translateY, { toValue: 0, duration: 400, delay, useNativeDriver: true }),
+        ]).start();
+    }, []);
+
+    return (
+        <Animated.View style={{ opacity, transform: [{ translateY }] }}>
+            {children}
+        </Animated.View>
+    );
+}
+
+// ─── Focusable, glowing input ─────────────────────────────────────────────────
+function GlowInput({
+    icon: Icon, placeholder, value, onChangeText,
+    secureTextEntry, keyboardType, autoCapitalize,
+    rightNode, label, multiline,
+}: any) {
+    const [focused, setFocused] = useState(false);
+    const glowAnim = useRef(new Animated.Value(0)).current;
+    const borderColor = useRef(new Animated.Value(0)).current;
+
+    const onFocus = () => {
+        setFocused(true);
+        Animated.timing(glowAnim, { toValue: 1, duration: 200, useNativeDriver: false }).start();
+    };
+    const onBlur = () => {
+        setFocused(false);
+        Animated.timing(glowAnim, { toValue: 0, duration: 200, useNativeDriver: false }).start();
+    };
+
+    const animBorder = glowAnim.interpolate({ inputRange: [0, 1], outputRange: [colors.border, colors.primary] });
+
+    return (
+        <View style={{ marginBottom: 18 }}>
+            <Text style={{
+                fontFamily: fonts.medium, fontSize: 12,
+                color: focused ? colors.primary : colors.textSecondary,
+                marginBottom: 8, letterSpacing: 0.3,
+                textTransform: 'uppercase',
+            }}>
+                {label}
+            </Text>
+            <Animated.View style={{
+                flexDirection: 'row', alignItems: 'center',
+                borderWidth: 1.5, borderColor: animBorder,
+                borderRadius: 16, paddingHorizontal: 14,
+                backgroundColor: focused ? 'rgba(29,143,212,0.04)' : '#F8FAFC',
+                minHeight: 54,
+            }}>
+                <Icon size={18} color={focused ? colors.primary : colors.textMuted} strokeWidth={2} />
+                <TextInput
+                    value={value}
+                    onChangeText={onChangeText}
+                    placeholder={placeholder}
+                    placeholderTextColor={colors.textMuted}
+                    secureTextEntry={secureTextEntry}
+                    keyboardType={keyboardType || 'default'}
+                    autoCapitalize={autoCapitalize || 'sentences'}
+                    onFocus={onFocus}
+                    onBlur={onBlur}
+                    style={{
+                        flex: 1, paddingVertical: 14, paddingHorizontal: 10,
+                        fontSize: 15, color: colors.text, fontFamily: fonts.regular,
+                    }}
+                />
+                {rightNode}
+            </Animated.View>
+        </View>
+    );
+}
 
 export default function LoginPage() {
     const [selectedRole, setSelectedRole] = useState<UserRole>('patient');
@@ -23,16 +114,76 @@ export default function LoginPage() {
     const [pendingVerificationEmail, setPendingVerificationEmail] = useState<string | null>(null);
     const { login, register, verifyOTP } = useAuth();
 
-    const fadeAnim = useRef(new Animated.Value(0)).current;
-    const slideAnim = useRef(new Animated.Value(20)).current;
+    // ── Hero animations ───────────────────────────────────────────────────────
+    const logoScale = useRef(new Animated.Value(0.6)).current;
+    const logoOpacity = useRef(new Animated.Value(0)).current;
+    const heroSlide = useRef(new Animated.Value(-20)).current;
+    const formOpacity = useRef(new Animated.Value(0)).current;
+    const buttonScale = useRef(new Animated.Value(1)).current;
+    // Per-role button scales for press feedback
+    const roleScales = useRef<{ [key: string]: Animated.Value }>({
+        patient: new Animated.Value(1),
+        doctor: new Animated.Value(1),
+    }).current;
+    // Fade animation when switching role
+    const roleAnim = useRef(new Animated.Value(1)).current;
+
+    // Floating pulse on logo
+    const pulse = useRef(new Animated.Value(1)).current;
 
     useEffect(() => {
+        // Logo entrance
         Animated.parallel([
-            Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }),
-            Animated.timing(slideAnim, { toValue: 0, duration: 400, useNativeDriver: true }),
-        ]).start();
-    }, [fadeAnim, slideAnim]);
+            Animated.spring(logoScale, { toValue: 1, tension: 60, friction: 7, useNativeDriver: true }),
+            Animated.timing(logoOpacity, { toValue: 1, duration: 500, useNativeDriver: true }),
+            Animated.timing(heroSlide, { toValue: 0, duration: 500, useNativeDriver: true }),
+        ]).start(() => {
+            // Form fade in after hero
+            Animated.timing(formOpacity, { toValue: 1, duration: 400, useNativeDriver: true }).start();
+        });
 
+        // Infinite pulse on logo
+        const loop = Animated.loop(
+            Animated.sequence([
+                Animated.timing(pulse, { toValue: 1.06, duration: 1800, useNativeDriver: true }),
+                Animated.timing(pulse, { toValue: 1, duration: 1800, useNativeDriver: true }),
+            ])
+        );
+        loop.start();
+        return () => loop.stop();
+    }, []);
+
+    // Animate form when switching login⇄signup
+    const switchAnim = useRef(new Animated.Value(1)).current;
+    const handleSwitch = (val: boolean) => {
+        Animated.sequence([
+            Animated.timing(switchAnim, { toValue: 0, duration: 120, useNativeDriver: true }),
+            Animated.timing(switchAnim, { toValue: 1, duration: 220, useNativeDriver: true }),
+        ]).start();
+        setIsSignUp(val);
+        setAuthError(null);
+    };
+
+    const handleRoleChange = (role: UserRole) => {
+        if (role === selectedRole) return;
+        // Spring bounce on the tapped button
+        Animated.sequence([
+            Animated.spring(roleScales[role], { toValue: 0.92, useNativeDriver: true, speed: 80, bounciness: 0 }),
+            Animated.spring(roleScales[role], { toValue: 1, useNativeDriver: true, speed: 30, bounciness: 10 }),
+        ]).start();
+        // Fade form out then back in
+        Animated.sequence([
+            Animated.timing(roleAnim, { toValue: 0.55, duration: 100, useNativeDriver: true }),
+            Animated.timing(roleAnim, { toValue: 1, duration: 220, useNativeDriver: true }),
+        ]).start();
+        setSelectedRole(role);
+        setAuthError(null);
+    };
+
+    const onPressInBtn = () => Animated.spring(buttonScale, { toValue: 0.96, useNativeDriver: true, speed: 50 }).start();
+    const onPressOutBtn = () => Animated.spring(buttonScale, { toValue: 1, useNativeDriver: true, speed: 30, bounciness: 8 }).start();
+
+    // ── Auth handlers ─────────────────────────────────────────────────────────
     const handlePrimaryAction = async () => {
         setAuthError(null);
         if (isSignUp) {
@@ -49,7 +200,7 @@ export default function LoginPage() {
                 } else {
                     setAuthError(result.message);
                 }
-            } catch (e) {
+            } catch {
                 setAuthError('Something went wrong while creating your account.');
             } finally {
                 setIsLoading(false);
@@ -71,7 +222,7 @@ export default function LoginPage() {
                     setAuthError(result.message);
                 }
             }
-        } catch (e) {
+        } catch {
             setAuthError('Something went wrong while logging in.');
         } finally {
             setIsLoading(false);
@@ -79,39 +230,18 @@ export default function LoginPage() {
     };
 
     const handleVerifyOTP = async () => {
-        if (!pendingVerificationEmail) {
-            setShowOTP(false);
-            return;
-        }
+        if (!pendingVerificationEmail) { setShowOTP(false); return; }
         const code = otp.join('');
-        if (code.length !== 6) {
-            Alert.alert('Invalid code', 'Please enter the 6-digit OTP sent to your email.');
-            return;
-        }
+        if (code.length !== 6) { Alert.alert('Invalid code', 'Please enter the 6-digit OTP.'); return; }
         setIsLoading(true);
         try {
             const ok = await verifyOTP(pendingVerificationEmail, code);
-            if (!ok) {
-                Alert.alert('Verification failed', 'The OTP is invalid or has expired.');
-            } else {
-                setShowOTP(false);
-                setOtp(['', '', '', '', '', '']);
-            }
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleSocialLogin = (provider: string) => {
-        setIsLoading(true);
-        setTimeout(() => {
-            setIsLoading(false);
-            Alert.alert('Sign in', `${provider} sign-in is not yet configured.`);
-        }, 800);
+            if (!ok) Alert.alert('Verification failed', 'The OTP is invalid or has expired.');
+            else { setShowOTP(false); setOtp(['', '', '', '', '', '']); }
+        } finally { setIsLoading(false); }
     };
 
     const otpRefs = useRef<(TextInput | null)[]>([]);
-
     const handleOTPChange = (text: string, index: number) => {
         const newOtp = [...otp];
         newOtp[index] = text;
@@ -119,227 +249,349 @@ export default function LoginPage() {
         if (text && index < 5) otpRefs.current[index + 1]?.focus();
     };
 
-    const inputStyle = {
-        flex: 1,
-        paddingVertical: 12,
-        paddingHorizontal: 12,
-        color: colors.text,
-        fontSize: 15,
-        fontFamily: fonts.regular,
-    };
-
     return (
-        <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.background }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <KeyboardAvoidingView
+            style={{ flex: 1, backgroundColor: '#0A1628' }}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+            <StatusBar barStyle="light-content" />
             <ScrollView
-                contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}
+                contentContainerStyle={{ flexGrow: 1 }}
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
             >
-                {/* Header */}
-                <View style={{ backgroundColor: colors.card, paddingTop: Platform.OS === 'ios' ? 56 : 40, paddingBottom: spacing.xl, paddingHorizontal: spacing.lg, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-                    <Animated.View style={{ alignItems: 'center', opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
-                        <Image source={require('../assets/images/logo.png')} style={{ width: 110, height: 110, marginBottom: spacing.md }} resizeMode="contain" />
-                        <Text style={[typography.screenTitle, { fontSize: 22 }]}>Medicare</Text>
-                        <Text style={[typography.body, { marginTop: 4 }]}>Healthcare management</Text>
+                {/* ══ HERO SECTION ══════════════════════════════════════════════ */}
+                <LinearGradient
+                    colors={['#0A1628', '#0D2341', '#1D4168']}
+                    style={{ paddingTop: Platform.OS === 'ios' ? 64 : 48, paddingBottom: 48, alignItems: 'center', paddingHorizontal: 24 }}
+                >
+                    {/* Decorative circles */}
+                    <View style={{ position: 'absolute', top: 0, right: -40, width: 200, height: 200, borderRadius: 100, backgroundColor: 'rgba(29,143,212,0.08)' }} />
+                    <View style={{ position: 'absolute', top: 40, left: -60, width: 160, height: 160, borderRadius: 80, backgroundColor: 'rgba(29,143,212,0.05)' }} />
+
+                    {/* Logo */}
+                    <Animated.View style={{
+                        opacity: logoOpacity,
+                        transform: [{ scale: Animated.multiply(logoScale, pulse) }, { translateY: heroSlide }],
+                        marginBottom: -20,
+                    }}>
+                        <Image
+                            source={require('../assets/images/logo.png')}
+                            style={{ width: 220, height: 220 }}
+                            resizeMode="contain"
+                        />
                     </Animated.View>
-                </View>
 
-                <Animated.View style={{ opacity: fadeAnim, padding: spacing.lg, paddingTop: spacing.xl }}>
-                    {/* Login / Sign up toggle */}
-                    <View style={{ flexDirection: 'row', backgroundColor: colors.card, borderRadius: radius.md, padding: 4, marginBottom: spacing.lg, borderWidth: 1, borderColor: colors.border }}>
-                        {([false, true] as const).map((isSign) => (
-                            <TouchableOpacity
-                                key={String(isSign)}
-                                onPress={() => setIsSignUp(isSign)}
-                                activeOpacity={0.7}
-                                style={{
-                                    flex: 1,
-                                    paddingVertical: 12,
-                                    borderRadius: radius.sm,
-                                    backgroundColor: isSignUp === isSign ? colors.card : 'transparent',
-                                    alignItems: 'center',
-                                    ...(isSignUp === isSign && cardShadow),
-                                }}
-                            >
-                                <Text style={[typography.label, { color: isSignUp === isSign ? colors.primary : colors.textMuted }]}>
-                                    {isSign ? 'Sign up' : 'Log in'}
-                                </Text>
-                            </TouchableOpacity>
-                        ))}
-                    </View>
+                    <Animated.View style={{ opacity: logoOpacity, transform: [{ translateY: heroSlide }], alignItems: 'center' }}>
+                        <Text style={{ fontFamily: fonts.bold, fontSize: 30, color: '#FFFFFF', letterSpacing: -0.5 }}>
+                            Medicare
+                        </Text>
+                        <Text style={{ fontFamily: fonts.regular, fontSize: 14, color: 'rgba(255,255,255,0.55)', marginTop: 6, letterSpacing: 0.5 }}>
+                            Your health, our priority
+                        </Text>
 
-                    {/* Role */}
-                    <View style={{ flexDirection: 'row', backgroundColor: colors.background, borderRadius: radius.md, padding: 4, marginBottom: spacing.lg, borderWidth: 1, borderColor: colors.border }}>
-                        {(['patient', 'doctor'] as UserRole[]).map((role) => (
-                            <TouchableOpacity
-                                key={role}
-                                onPress={() => setSelectedRole(role)}
-                                activeOpacity={0.7}
-                                style={{
-                                    flex: 1,
-                                    flexDirection: 'row',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: 8,
-                                    paddingVertical: 12,
-                                    borderRadius: radius.sm,
-                                    backgroundColor: selectedRole === role ? colors.card : 'transparent',
-                                    borderWidth: selectedRole === role ? 1 : 0,
-                                    borderColor: colors.border,
-                                }}
-                            >
-                                {role === 'patient' ? <User size={16} color={selectedRole === role ? colors.primary : colors.textSecondary} /> : <Stethoscope size={16} color={selectedRole === role ? colors.primary : colors.textSecondary} />}
-                                <Text style={[typography.label, { color: selectedRole === role ? colors.primary : colors.textSecondary }]}>
-                                    {role === 'patient' ? 'Patient' : 'Doctor'}
-                                </Text>
-                            </TouchableOpacity>
-                        ))}
-                    </View>
-
-                    {/* Form */}
-                    <View style={{ backgroundColor: colors.card, borderRadius: radius.md, padding: spacing.lg, marginBottom: spacing.lg, borderWidth: 1, borderColor: colors.border, ...cardShadow }}>
-                        {isSignUp && (
-                            <View style={{ marginBottom: spacing.md }}>
-                                <Text style={[typography.label, { color: colors.textSecondary, marginBottom: 6 }]}>Full name</Text>
-                                <View style={{ flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, paddingHorizontal: spacing.md, backgroundColor: colors.background }}>
-                                    <User size={18} color={colors.textMuted} />
-                                    <TextInput value={name} onChangeText={setName} placeholder="Enter full name" placeholderTextColor={colors.textMuted} style={inputStyle} />
+                        {/* Stats strip */}
+                        <View style={{
+                            flexDirection: 'row', gap: 24, marginTop: 28,
+                            paddingVertical: 16, paddingHorizontal: 28,
+                            backgroundColor: 'rgba(255,255,255,0.06)',
+                            borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
+                        }}>
+                            {[
+                                { val: '2,500+', label: 'Doctors' },
+                                { val: '50k+', label: 'Patients' },
+                                { val: '4.9★', label: 'Rated' },
+                            ].map((s, i) => (
+                                <View key={i} style={{ alignItems: 'center' }}>
+                                    <Text style={{ fontFamily: fonts.bold, fontSize: 15, color: '#FFFFFF' }}>{s.val}</Text>
+                                    <Text style={{ fontFamily: fonts.regular, fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>{s.label}</Text>
                                 </View>
-                            </View>
-                        )}
-
-                        <View style={{ marginBottom: spacing.md }}>
-                            <Text style={[typography.label, { color: colors.textSecondary, marginBottom: 6 }]}>Email</Text>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, paddingHorizontal: spacing.md, backgroundColor: colors.background }}>
-                                <Mail size={18} color={colors.textMuted} />
-                                <TextInput value={email} onChangeText={setEmail} placeholder="name@example.com" placeholderTextColor={colors.textMuted} autoCapitalize="none" keyboardType="email-address" style={inputStyle} />
-                            </View>
+                            ))}
                         </View>
+                    </Animated.View>
+                </LinearGradient>
 
-                        {isSignUp && (
-                            <View style={{ marginBottom: spacing.md }}>
-                                <Text style={[typography.label, { color: colors.textSecondary, marginBottom: 6 }]}>Phone</Text>
-                                <View style={{ flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, paddingHorizontal: spacing.md, backgroundColor: colors.background }}>
-                                    <Smartphone size={18} color={colors.textMuted} />
-                                    <Text style={[typography.body, { color: colors.textSecondary, marginRight: 4 }]}>+91</Text>
-                                    <TextInput value={phone} onChangeText={setPhone} placeholder="Phone number" placeholderTextColor={colors.textMuted} keyboardType="phone-pad" maxLength={10} style={inputStyle} />
-                                </View>
+                {/* ══ FORM CARD ════════════════════════════════════════════════ */}
+                <Animated.View style={{ opacity: formOpacity }}>
+                    <View style={{
+                        backgroundColor: '#FFFFFF', borderTopLeftRadius: 32, borderTopRightRadius: 32,
+                        marginTop: -20, paddingHorizontal: 24, paddingTop: 32, paddingBottom: 48,
+                        minHeight: height * 0.58,
+                        shadowColor: '#000', shadowOffset: { width: 0, height: -4 },
+                        shadowOpacity: 0.08, shadowRadius: 20, elevation: 8,
+                    }}>
+
+                        {/* Login / Sign Up toggle */}
+                        <AnimatedField delay={0}>
+                            <View style={{
+                                flexDirection: 'row', backgroundColor: '#F1F5F9',
+                                borderRadius: 14, padding: 4, marginBottom: 24,
+                            }}>
+                                {([false, true] as const).map((isSign) => (
+                                    <TouchableOpacity
+                                        key={String(isSign)}
+                                        onPress={() => handleSwitch(isSign)}
+                                        activeOpacity={0.8}
+                                        style={{
+                                            flex: 1, paddingVertical: 12, borderRadius: 11,
+                                            backgroundColor: isSignUp === isSign ? '#FFFFFF' : 'transparent',
+                                            alignItems: 'center',
+                                            ...(isSignUp === isSign ? {
+                                                shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+                                                shadowOpacity: 0.08, shadowRadius: 6, elevation: 2,
+                                            } : {}),
+                                        }}
+                                    >
+                                        <Text style={{
+                                            fontFamily: isSignUp === isSign ? fonts.semiBold : fonts.regular,
+                                            fontSize: 14,
+                                            color: isSignUp === isSign ? colors.primary : colors.textMuted,
+                                        }}>
+                                            {isSign ? 'Sign Up' : 'Log In'}
+                                        </Text>
+                                    </TouchableOpacity>
+                                ))}
                             </View>
-                        )}
+                        </AnimatedField>
 
-                        <View style={{ marginBottom: spacing.md }}>
-                            <Text style={[typography.label, { color: colors.textSecondary, marginBottom: 6 }]}>Password</Text>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, paddingHorizontal: spacing.md, backgroundColor: colors.background }}>
-                                <Lock size={18} color={colors.textMuted} />
-                                <TextInput value={password} onChangeText={setPassword} placeholder="••••••••" placeholderTextColor={colors.textMuted} secureTextEntry={!showPassword} style={inputStyle} />
-                                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} activeOpacity={0.7}>
-                                    {showPassword ? <EyeOff size={18} color={colors.textMuted} /> : <Eye size={18} color={colors.textMuted} />}
-                                </TouchableOpacity>
+                        {/* Role Selector */}
+                        <AnimatedField delay={60}>
+                            <View style={{ flexDirection: 'row', gap: 12, marginBottom: 24 }}>
+                                {(['patient', 'doctor'] as UserRole[]).map((role) => {
+                                    const active = selectedRole === role;
+                                    return (
+                                        <Animated.View key={role} style={{ flex: 1, transform: [{ scale: roleScales[role] }] }}>
+                                            <TouchableOpacity
+                                                onPress={() => handleRoleChange(role)}
+                                                activeOpacity={0.85}
+                                                style={{
+                                                    flexDirection: 'row', alignItems: 'center',
+                                                    justifyContent: 'center', gap: 8,
+                                                    paddingVertical: 14, borderRadius: 16,
+                                                    backgroundColor: active ? colors.primary : '#F8FAFC',
+                                                    borderWidth: 1.5,
+                                                    borderColor: active ? colors.primary : colors.border,
+                                                    shadowColor: active ? colors.primary : 'transparent',
+                                                    shadowOffset: { width: 0, height: 4 },
+                                                    shadowOpacity: active ? 0.25 : 0,
+                                                    shadowRadius: 8, elevation: active ? 4 : 0,
+                                                }}
+                                            >
+                                                {role === 'patient'
+                                                    ? <Heart size={16} color={active ? '#fff' : colors.textSecondary} fill={active ? '#fff' : 'transparent'} />
+                                                    : <Stethoscope size={16} color={active ? '#fff' : colors.textSecondary} />
+                                                }
+                                                <Text style={{
+                                                    fontFamily: fonts.semiBold, fontSize: 14,
+                                                    color: active ? '#fff' : colors.textSecondary,
+                                                }}>
+                                                    {role === 'patient' ? 'Patient' : 'Doctor'}
+                                                </Text>
+                                            </TouchableOpacity>
+                                        </Animated.View>
+                                    );
+                                })}
                             </View>
-                        </View>
+                        </AnimatedField>
 
-                        {!isSignUp && (
-                            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.lg }}>
-                                <TouchableOpacity onPress={() => setRememberMe(!rememberMe)} activeOpacity={0.7} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                                    <View style={{ width: 18, height: 18, borderRadius: 4, borderWidth: 1.5, borderColor: rememberMe ? colors.primary : colors.border, backgroundColor: rememberMe ? colors.primary : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-                                        {rememberMe && <CheckCircle size={12} color="#fff" />}
-                                    </View>
-                                    <Text style={[typography.caption, { color: colors.textSecondary }]}>Remember me</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity onPress={() => setShowForgotPassword(true)} activeOpacity={0.7}>
-                                    <Text style={[typography.caption, { color: colors.primary, fontWeight: '600' }]}>Forgot password?</Text>
-                                </TouchableOpacity>
-                            </View>
-                        )}
-
-                        {authError && (
-                            <View style={{ marginBottom: spacing.md, padding: spacing.sm, backgroundColor: '#FEF2F2', borderRadius: radius.sm }}>
-                                <Text style={[typography.caption, { color: colors.danger }]}>{authError}</Text>
-                            </View>
-                        )}
-
-                        <TouchableOpacity
-                            onPress={handlePrimaryAction}
-                            activeOpacity={0.8}
-                            disabled={isLoading}
-                            style={{
-                                width: '100%',
-                                backgroundColor: colors.primary,
-                                paddingVertical: 14,
-                                borderRadius: radius.md,
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: 8,
-                            }}
-                        >
-                            {isLoading ? (
-                                <ActivityIndicator size="small" color="#fff" />
-                            ) : (
-                                <>
-                                    <Text style={{ color: '#fff', fontFamily: fonts.semiBold, fontSize: 15 }}>{isSignUp ? 'Create account' : 'Log in'}</Text>
-                                    <ArrowRight size={18} color="#fff" strokeWidth={2} />
-                                </>
+                        {/* ── Form Fields ─────────────── */}
+                        <Animated.View style={{ opacity: Animated.multiply(switchAnim, roleAnim) }}>
+                            {isSignUp && (
+                                <AnimatedField delay={80}>
+                                    <GlowInput
+                                        icon={User} label="Full Name"
+                                        placeholder="Enter your full name"
+                                        value={name} onChangeText={setName}
+                                    />
+                                </AnimatedField>
                             )}
-                        </TouchableOpacity>
-                    </View>
 
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: spacing.lg }}>
-                        <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
-                        <Text style={{ marginHorizontal: spacing.md, fontSize: 12, color: colors.textMuted }}>or continue with</Text>
-                        <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
-                    </View>
+                            <AnimatedField delay={isSignUp ? 120 : 80}>
+                                <GlowInput
+                                    icon={Mail} label="Email Address"
+                                    placeholder="name@example.com"
+                                    value={email} onChangeText={setEmail}
+                                    keyboardType="email-address" autoCapitalize="none"
+                                />
+                            </AnimatedField>
 
-                    <View style={{ flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.xl }}>
-                        {[
-                            { label: 'Google', icon: Mail },
-                            { label: 'Apple', icon: Smartphone },
-                            { label: 'Phone', icon: Smartphone },
-                        ].map(({ label, icon: Icon }) => (
-                            <TouchableOpacity
-                                key={label}
-                                onPress={() => label === 'Phone' ? setShowOTP(true) : handleSocialLogin(label)}
-                                activeOpacity={0.7}
-                                style={{
-                                    flex: 1,
-                                    flexDirection: 'row',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: 6,
-                                    paddingVertical: 12,
-                                    borderRadius: radius.md,
-                                    borderWidth: 1,
-                                    borderColor: colors.border,
-                                    backgroundColor: colors.card,
-                                }}
-                            >
-                                <Icon size={18} color={colors.textSecondary} strokeWidth={2} />
-                                <Text style={[typography.caption, { color: colors.text, fontWeight: '500' }]}>{label}</Text>
-                            </TouchableOpacity>
-                        ))}
-                    </View>
+                            {isSignUp && (
+                                <AnimatedField delay={160}>
+                                    <GlowInput
+                                        icon={Smartphone} label="Phone Number"
+                                        placeholder="10-digit number"
+                                        value={phone} onChangeText={setPhone}
+                                        keyboardType="phone-pad" autoCapitalize="none"
+                                    />
+                                </AnimatedField>
+                            )}
 
-                    <View style={{ alignItems: 'center', paddingBottom: spacing.xxl }}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-                            <Shield size={14} color={colors.textMuted} />
-                            <Text style={[typography.caption, { color: colors.textMuted }]}>Secure sign-in</Text>
+                            <AnimatedField delay={isSignUp ? 200 : 120}>
+                                <GlowInput
+                                    icon={Lock} label="Password"
+                                    placeholder="••••••••"
+                                    value={password} onChangeText={setPassword}
+                                    secureTextEntry={!showPassword}
+                                    autoCapitalize="none"
+                                    rightNode={
+                                        <TouchableOpacity onPress={() => setShowPassword(!showPassword)} activeOpacity={0.7}>
+                                            {showPassword
+                                                ? <EyeOff size={18} color={colors.textMuted} />
+                                                : <Eye size={18} color={colors.textMuted} />
+                                            }
+                                        </TouchableOpacity>
+                                    }
+                                />
+                            </AnimatedField>
+
+                            {/* Remember me / Forgot */}
+                            {!isSignUp && (
+                                <AnimatedField delay={160}>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+                                        <TouchableOpacity onPress={() => setRememberMe(!rememberMe)} activeOpacity={0.7} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                            <View style={{
+                                                width: 20, height: 20, borderRadius: 6,
+                                                borderWidth: 1.5,
+                                                borderColor: rememberMe ? colors.primary : colors.border,
+                                                backgroundColor: rememberMe ? colors.primary : 'transparent',
+                                                alignItems: 'center', justifyContent: 'center',
+                                            }}>
+                                                {rememberMe && <CheckCircle size={12} color="#fff" />}
+                                            </View>
+                                            <Text style={{ fontFamily: fonts.regular, fontSize: 13, color: colors.textSecondary }}>
+                                                Remember me
+                                            </Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity onPress={() => setShowForgotPassword(true)} activeOpacity={0.7}>
+                                            <Text style={{ fontFamily: fonts.semiBold, fontSize: 13, color: colors.primary }}>
+                                                Forgot password?
+                                            </Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                </AnimatedField>
+                            )}
+
+                            {/* Error */}
+                            {authError && (
+                                <View style={{
+                                    marginBottom: 16, padding: 14,
+                                    backgroundColor: '#FEF2F2', borderRadius: 12,
+                                    borderWidth: 1, borderColor: '#FECACA',
+                                    flexDirection: 'row', alignItems: 'center', gap: 8,
+                                }}>
+                                    <X size={14} color={colors.danger} />
+                                    <Text style={{ fontFamily: fonts.regular, fontSize: 13, color: colors.danger, flex: 1 }}>
+                                        {authError}
+                                    </Text>
+                                </View>
+                            )}
+
+                            {/* Primary Button */}
+                            <AnimatedField delay={isSignUp ? 240 : 200}>
+                                <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
+                                    <TouchableOpacity
+                                        onPress={handlePrimaryAction}
+                                        onPressIn={onPressInBtn}
+                                        onPressOut={onPressOutBtn}
+                                        activeOpacity={1}
+                                        disabled={isLoading}
+                                        style={{ borderRadius: 18, overflow: 'hidden', marginBottom: 16 }}
+                                    >
+                                        <LinearGradient
+                                            colors={[colors.primary, '#1565a8']}
+                                            start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                                            style={{
+                                                paddingVertical: 17, flexDirection: 'row',
+                                                alignItems: 'center', justifyContent: 'center', gap: 10,
+                                            }}
+                                        >
+                                            {isLoading
+                                                ? <ActivityIndicator size="small" color="#fff" />
+                                                : <>
+                                                    <Text style={{ fontFamily: fonts.semiBold, fontSize: 16, color: '#fff', letterSpacing: 0.3 }}>
+                                                        {isSignUp ? 'Create Account' : 'Log In'}
+                                                    </Text>
+                                                    <ArrowRight size={18} color="#fff" strokeWidth={2.5} />
+                                                </>
+                                            }
+                                        </LinearGradient>
+                                    </TouchableOpacity>
+                                </Animated.View>
+                            </AnimatedField>
+
+                            {/* Divider */}
+                            <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 8 }}>
+                                <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
+                                <Text style={{ marginHorizontal: 14, fontFamily: fonts.regular, fontSize: 12, color: colors.textMuted }}>
+                                    or continue with
+                                </Text>
+                                <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
+                            </View>
+
+                            {/* Social Buttons */}
+                            <AnimatedField delay={isSignUp ? 280 : 240}>
+                                <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
+                                    {[
+                                        { label: 'Google', icon: Mail },
+                                        { label: 'Apple', icon: Smartphone },
+                                        { label: 'OTP', icon: Shield },
+                                    ].map(({ label, icon: Icon }) => (
+                                        <TouchableOpacity
+                                            key={label}
+                                            onPress={() => label === 'OTP' ? setShowOTP(true) : Alert.alert('Sign in', `${label} sign-in is not yet configured.`)}
+                                            activeOpacity={0.75}
+                                            style={{
+                                                flex: 1, flexDirection: 'row', alignItems: 'center',
+                                                justifyContent: 'center', gap: 6,
+                                                paddingVertical: 14, borderRadius: 14,
+                                                borderWidth: 1.5, borderColor: colors.border,
+                                                backgroundColor: '#F8FAFC',
+                                            }}
+                                        >
+                                            <Icon size={17} color={colors.textSecondary} strokeWidth={2} />
+                                            <Text style={{ fontFamily: fonts.medium, fontSize: 12, color: colors.text }}>{label}</Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </View>
+                            </AnimatedField>
+                        </Animated.View>
+
+                        {/* Footer */}
+                        <View style={{ alignItems: 'center', marginTop: 28 }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                                <Shield size={13} color={colors.textMuted} />
+                                <Text style={{ fontFamily: fonts.regular, fontSize: 12, color: colors.textMuted }}>
+                                    256-bit encrypted & HIPAA compliant
+                                </Text>
+                            </View>
                         </View>
                     </View>
                 </Animated.View>
             </ScrollView>
 
-            {/* OTP Modal */}
+            {/* ══ OTP Modal ════════════════════════════════════════════════════ */}
             <Modal visible={showOTP} transparent animationType="slide">
-                <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}>
-                    <View style={{ backgroundColor: colors.card, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: spacing.lg, paddingBottom: 40 }}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.lg }}>
-                            <Text style={[typography.title, { color: colors.text }]}>Verify email</Text>
-                            <TouchableOpacity onPress={() => setShowOTP(false)}><X size={22} color={colors.textMuted} /></TouchableOpacity>
+                <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
+                    <View style={{
+                        backgroundColor: '#FFFFFF',
+                        borderTopLeftRadius: 32, borderTopRightRadius: 32,
+                        padding: 28, paddingBottom: Platform.OS === 'ios' ? 44 : 32,
+                    }}>
+                        <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: colors.border, alignSelf: 'center', marginBottom: 24 }} />
+                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                            <Text style={{ fontFamily: fonts.bold, fontSize: 20, color: colors.text }}>Verify Email</Text>
+                            <TouchableOpacity onPress={() => setShowOTP(false)} style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center' }}>
+                                <X size={18} color={colors.textMuted} />
+                            </TouchableOpacity>
                         </View>
-                        <Text style={[typography.caption, { color: colors.textSecondary, marginBottom: 4 }]}>Enter the 6-digit code sent to</Text>
-                        <Text style={[typography.section, { color: colors.primary, marginBottom: spacing.lg }]}>{pendingVerificationEmail || email || 'your email'}</Text>
+                        <Text style={{ fontFamily: fonts.regular, fontSize: 14, color: colors.textSecondary, marginBottom: 4 }}>
+                            Enter the 6-digit code sent to
+                        </Text>
+                        <Text style={{ fontFamily: fonts.semiBold, fontSize: 14, color: colors.primary, marginBottom: 24 }}>
+                            {pendingVerificationEmail || email || 'your email'}
+                        </Text>
 
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.xl }}>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 28 }}>
                             {otp.map((digit, index) => (
                                 <TextInput
                                     key={index}
@@ -349,16 +601,12 @@ export default function LoginPage() {
                                     keyboardType="number-pad"
                                     maxLength={1}
                                     style={{
-                                        width: 44,
-                                        height: 52,
-                                        borderRadius: radius.md,
-                                        borderWidth: 1,
+                                        width: 46, height: 56, borderRadius: 14,
+                                        borderWidth: 1.5,
                                         borderColor: digit ? colors.primary : colors.border,
-                                        backgroundColor: colors.background,
-                                        textAlign: 'center',
-                                        fontSize: 20,
-                                        fontWeight: '600',
-                                        color: colors.text,
+                                        backgroundColor: digit ? 'rgba(29,143,212,0.06)' : '#F8FAFC',
+                                        textAlign: 'center', fontSize: 22,
+                                        fontFamily: fonts.bold, color: colors.text,
                                     }}
                                 />
                             ))}
@@ -366,15 +614,27 @@ export default function LoginPage() {
 
                         <TouchableOpacity
                             onPress={handleVerifyOTP}
-                            activeOpacity={0.8}
+                            activeOpacity={0.85}
                             disabled={isLoading}
-                            style={{ backgroundColor: colors.primary, paddingVertical: 14, borderRadius: radius.md, alignItems: 'center', marginBottom: spacing.md }}
+                            style={{ borderRadius: 16, overflow: 'hidden', marginBottom: 16 }}
                         >
-                            {isLoading ? <ActivityIndicator color="#fff" /> : <Text style={{ color: '#fff', fontFamily: fonts.semiBold, fontSize: 15 }}>Verify and continue</Text>}
+                            <LinearGradient
+                                colors={[colors.primary, '#1565a8']}
+                                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                                style={{ paddingVertical: 16, alignItems: 'center' }}
+                            >
+                                {isLoading
+                                    ? <ActivityIndicator color="#fff" />
+                                    : <Text style={{ fontFamily: fonts.semiBold, fontSize: 15, color: '#fff' }}>Verify & Continue</Text>
+                                }
+                            </LinearGradient>
                         </TouchableOpacity>
 
                         <TouchableOpacity activeOpacity={0.7} style={{ alignItems: 'center' }}>
-                            <Text style={[typography.caption, { color: colors.textSecondary }]}>Didn't receive code? <Text style={{ color: colors.primary, fontWeight: '600' }}>Resend</Text></Text>
+                            <Text style={{ fontFamily: fonts.regular, fontSize: 13, color: colors.textSecondary }}>
+                                Didn't receive code?{' '}
+                                <Text style={{ fontFamily: fonts.semiBold, color: colors.primary }}>Resend</Text>
+                            </Text>
                         </TouchableOpacity>
                     </View>
                 </View>
