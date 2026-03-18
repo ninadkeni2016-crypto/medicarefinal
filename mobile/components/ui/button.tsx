@@ -1,71 +1,85 @@
-﻿import React from 'react';
-import { TouchableOpacity, Text, TouchableOpacityProps, ViewStyle, TextStyle } from 'react-native';
+import React from 'react';
+import { TouchableOpacity, Text, TouchableOpacityProps, View, ActivityIndicator } from 'react-native';
 
 export interface ButtonProps extends TouchableOpacityProps {
-    variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
+    variant?: 'primary' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
     size?: 'default' | 'sm' | 'lg' | 'icon';
+    loading?: boolean;
     textClass?: string;
     children: React.ReactNode;
 }
 
 export const Button = React.forwardRef<React.ElementRef<typeof TouchableOpacity>, ButtonProps>(
-    ({ className, variant = 'default', size = 'default', textClass, children, ...props }, ref) => {
+    ({ className, variant = 'primary', size = 'default', loading, textClass, children, disabled, ...props }, ref) => {
 
         // Base classes
-        let buttonClass = 'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 ';
-        let labelClass = 'text-sm font-medium ';
+        let buttonClass = 'inline-flex items-center justify-center rounded-xl transition-all active:scale-[0.98] ';
+        let labelClass = 'font-semibold ';
 
         // Variants
         switch (variant) {
-            case 'default':
-                buttonClass += 'bg-slate-900 ';
-                labelClass += 'text-slate-50 ';
+            case 'primary':
+                buttonClass += 'bg-primary ';
+                labelClass += 'text-white ';
                 break;
             case 'destructive':
-                buttonClass += 'bg-red-500 ';
-                labelClass += 'text-slate-50 ';
+                buttonClass += 'bg-danger ';
+                labelClass += 'text-white ';
                 break;
             case 'outline':
-                buttonClass += 'border border-slate-200 bg-white ';
-                labelClass += 'text-slate-900 ';
+                buttonClass += 'border border-border bg-white ';
+                labelClass += 'text-text-primary ';
                 break;
             case 'secondary':
                 buttonClass += 'bg-slate-100 ';
-                labelClass += 'text-slate-900 ';
+                labelClass += 'text-text-primary ';
                 break;
             case 'ghost':
                 buttonClass += 'bg-transparent ';
-                labelClass += 'text-slate-900 ';
+                labelClass += 'text-text-primary ';
                 break;
             case 'link':
-                buttonClass += 'underline-offset-4 ';
-                labelClass += 'text-slate-900 underline ';
+                buttonClass += 'bg-transparent ';
+                labelClass += 'text-primary underline ';
                 break;
         }
 
         // Sizes
         switch (size) {
             case 'default':
-                buttonClass += 'h-10 px-4 py-2 ';
+                buttonClass += 'h-11 px-5 ';
+                labelClass += 'text-[15px] ';
                 break;
             case 'sm':
-                buttonClass += 'h-9 rounded-md px-3 ';
+                buttonClass += 'h-9 px-3 ';
+                labelClass += 'text-xs ';
                 break;
             case 'lg':
-                buttonClass += 'h-11 rounded-md px-8 ';
+                buttonClass += 'h-14 px-8 ';
+                labelClass += 'text-base ';
                 break;
             case 'icon':
-                buttonClass += 'h-10 w-10 p-0 ';
+                buttonClass += 'h-11 w-11 ';
                 break;
+        }
+
+        if (disabled || loading) {
+            buttonClass += 'opacity-50 ';
         }
 
         return (
             <TouchableOpacity
                 ref={ref}
+                disabled={disabled || loading}
+                activeOpacity={0.8}
                 className={`${buttonClass} ${className || ''}`}
                 {...props}
             >
-                <Text className={`${labelClass} ${textClass || ''}`}>{children}</Text>
+                {loading ? (
+                    <ActivityIndicator size="small" color={variant === 'outline' || variant === 'ghost' ? '#2563EB' : '#FFFFFF'} />
+                ) : (
+                    <Text className={`${labelClass} ${textClass || ''}`}>{children}</Text>
+                )}
             </TouchableOpacity>
         );
     }

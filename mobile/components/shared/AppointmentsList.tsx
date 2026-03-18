@@ -1,15 +1,23 @@
-﻿import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Image, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { Calendar, Clock, Video, MapPin, ChevronRight } from 'lucide-react-native';
 import { mockAppointments, Appointment } from '@/lib/mock-data';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
+import { colors, spacing, radius, typography } from '@/lib/theme';
+import { MedCard } from '@/components/ui/MedCard';
+import { AnimatedListItem } from '@/components/ui/Animations';
+import { InitialsAvatar } from '@/components/ui/InitialsAvatar';
+import { StatusBadge } from '@/components/ui/StatusBadge';
+import { SkeletonBox } from '@/components/ui/SkeletonBox';
 
 interface Props { onSelectAppointment?: (apt: Appointment) => void; }
 
+const FILTERS = ['all', 'upcoming', 'confirmed', 'completed', 'cancelled'] as const;
+
 export default function AppointmentsList({ onSelectAppointment }: Props) {
     const { role } = useAuth();
-    const [filter, setFilter] = useState('all');
+    const [filter, setFilter] = useState<string>('all');
     const [appointments, setAppointments] = useState<Appointment[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -19,7 +27,6 @@ export default function AppointmentsList({ onSelectAppointment }: Props) {
             setAppointments(res.data);
         } catch (error) {
             console.error('Failed to fetch appointments:', error);
-            // Fallback to mock data if API fails during testing
             setAppointments(mockAppointments);
         } finally {
             setLoading(false);
@@ -32,61 +39,129 @@ export default function AppointmentsList({ onSelectAppointment }: Props) {
 
     const filtered = filter === 'all' ? appointments : appointments.filter(a => a.status === filter);
 
-    const statusColors: Record<string, { bg: string; text: string }> = {
-        upcoming: { bg: '#dbeafe', text: '#2563eb' },
-        completed: { bg: '#dcfce7', text: '#16a34a' },
-        cancelled: { bg: '#fef2f2', text: '#dc2626' },
-    };
-
     if (loading) {
         return (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                <ActivityIndicator size="large" color="#0284c7" />
+            <View style={{ flex: 1, backgroundColor: colors.background, padding: spacing.lg }}>
+                <SkeletonBox height={24} width={160} style={{ marginBottom: spacing.sm }} />
+                <SkeletonBox height={36} width="100%" style={{ marginBottom: spacing.xl }} />
+                {[1, 2, 3].map(i => (
+                    <SkeletonBox key={i} height={80} style={{ marginBottom: spacing.sm }} />
+                ))}
             </View>
         );
     }
 
     return (
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
-            <View style={{ marginBottom: 16 }}>
-                <Text style={{ fontSize: 20, fontWeight: '700', color: '#0284c7' }}>Appointments</Text>
-                <Text style={{ fontSize: 14, color: '#64748b' }}>{appointments.length} total</Text>
+        <ScrollView
+            style={{ flex: 1, backgroundColor: colors.background }}
+            contentContainerStyle={{ padding: spacing.lg, paddingBottom: 100 }}
+            showsVerticalScrollIndicator={false}
+        >
+            <View style={{ marginBottom: spacing.lg }}>
+                <Text style={[typography.title, { color: colors.text }]}>Appointments</Text>
+                <Text style={[typography.caption, { color: colors.textSecondary, marginTop: 4 }]}>{appointments.length} total</Text>
             </View>
 
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
-                <View style={{ flexDirection: 'row', gap: 8 }}>
-                    {['all', 'upcoming', 'completed', 'cancelled'].map(f => (
-                        <TouchableOpacity key={f} onPress={() => setFilter(f)} activeOpacity={0.7} style={{ paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: filter === f ? '#0ea5e9' : '#f1f5f9' }}>
-                            <Text style={{ fontSize: 12, fontWeight: '600', color: filter === f ? '#fff' : '#64748b', textTransform: 'capitalize' }}>{f}</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: spacing.lg }}>
+                <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+                    {FILTERS.map(f => (
+                        <TouchableOpacity
+                            key={f}
+                            onPress={() => setFilter(f)}
+                            activeOpacity={0.7}
+                            style={{
+                                paddingHorizontal: spacing.lg,
+                                paddingVertical: spacing.sm,
+                                borderRadius: radius.md,
+                                backgroundColor: filter === f ? colors.primary : colors.card,
+                                borderWidth: 1,
+                                borderColor: filter === f ? colors.primary : colors.border,
+                            }}
+                        >
+                            <Text
+                                style={[
+                                    typography.label,
+                                    {
+                                        color: filter === f ? '#fff' : colors.textSecondary,
+                                        textTransform: 'capitalize',
+                                    },
+                                ]}
+                            >
+                                {f}
+                            </Text>
                         </TouchableOpacity>
                     ))}
                 </View>
             </ScrollView>
 
-            {filtered.map((apt) => {
-                const colors = statusColors[apt.status] || statusColors.upcoming;
+            {filtered.map((apt, idx) => {
+                const updateStatus = async (status: string) => {
+                    try {
+                        await api.put(`/appointments/${apt._id || apt.id}`, { status });
+                        fetchAppointments();
+                    } catch (error) {
+                        console.error('Failed to update appointment status:', error);
+                    }
+                };
+
                 return (
-                    <TouchableOpacity key={apt.id} onPress={() => onSelectAppointment?.(apt)} activeOpacity={0.7} style={{ backgroundColor: '#fff', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#f1f5f9', flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-                        <Image source={{ uri: apt.avatar }} style={{ width: 48, height: 48, borderRadius: 12 }} />
-                        <View style={{ flex: 1 }}>
-                            <Text style={{ fontWeight: '600', fontSize: 14, color: '#0284c7' }}>{role === 'doctor' ? apt.patientName : apt.doctorName}</Text>
-                            <Text style={{ fontSize: 12, color: '#64748b' }}>{apt.specialization}</Text>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 }}>
-                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><Calendar size={12} color="#64748b" /><Text style={{ fontSize: 11, color: '#64748b' }}>{apt.date}</Text></View>
-                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><Clock size={12} color="#64748b" /><Text style={{ fontSize: 11, color: '#64748b' }}>{apt.time}</Text></View>
+                    <AnimatedListItem key={apt._id || apt.id} index={idx} staggerMs={55}>
+                    <MedCard
+                        onPress={() => onSelectAppointment?.(apt)}
+                        style={{ marginBottom: spacing.sm }}
+                    >
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+                            <InitialsAvatar
+                                name={role === 'doctor' ? (apt.patientName || '') : (apt.doctorName || '')}
+                                size={48}
+                                radius={12}
+                            />
+                            <View style={{ flex: 1 }}>
+                                <Text style={[typography.section, { color: colors.text }]}>
+                                    {role === 'doctor' ? apt.patientName : apt.doctorName}
+                                </Text>
+                                <Text style={[typography.caption, { color: colors.textSecondary }]}>{apt.specialization}</Text>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: 6 }}>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                                        <Calendar size={12} color={colors.textMuted} />
+                                        <Text style={[typography.caption, { color: colors.textSecondary }]}>{apt.date}</Text>
+                                    </View>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                                        <Clock size={12} color={colors.textMuted} />
+                                        <Text style={[typography.caption, { color: colors.textSecondary }]}>{apt.time}</Text>
+                                    </View>
+                                </View>
+                            </View>
+                            <View style={{ alignItems: 'flex-end', gap: 6 }}>
+                                <StatusBadge status={apt.status} />
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                                    {apt.type === 'Video Call' ? (
+                                        <Video size={12} color={colors.textMuted} />
+                                    ) : (
+                                        <MapPin size={12} color={colors.textMuted} />
+                                    )}
+                                    <Text style={[typography.caption, { color: colors.textSecondary }]}>{apt.type}</Text>
+                                </View>
+                                {role === 'doctor' && (apt.status === 'upcoming' || apt.status === 'confirmed') && (
+                                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
+                                        {apt.status === 'upcoming' && (
+                                            <TouchableOpacity onPress={() => updateStatus('confirmed')} activeOpacity={0.7} style={{ paddingVertical: 4, paddingHorizontal: 8, borderRadius: radius.sm, backgroundColor: '#EFF6FF', borderWidth: 1, borderColor: colors.border }}>
+                                                <Text style={[typography.caption, { color: colors.primary, fontWeight: '600' }]}>Approve</Text>
+                                            </TouchableOpacity>
+                                        )}
+                                        <TouchableOpacity onPress={() => updateStatus('completed')} activeOpacity={0.7} style={{ paddingVertical: 4, paddingHorizontal: 8, borderRadius: radius.sm, backgroundColor: '#F0FDF4', borderWidth: 1, borderColor: colors.border }}>
+                                            <Text style={[typography.caption, { color: colors.success, fontWeight: '600' }]}>Complete</Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity onPress={() => updateStatus('cancelled')} activeOpacity={0.7} style={{ paddingVertical: 4, paddingHorizontal: 8, borderRadius: radius.sm, backgroundColor: '#FEF2F2', borderWidth: 1, borderColor: colors.border }}>
+                                            <Text style={[typography.caption, { color: colors.danger, fontWeight: '600' }]}>Cancel</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                )}
+                                <ChevronRight size={16} color={colors.textMuted} />
                             </View>
                         </View>
-                        <View style={{ alignItems: 'flex-end', gap: 4 }}>
-                            <View style={{ paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10, backgroundColor: colors.bg }}>
-                                <Text style={{ fontSize: 10, fontWeight: '600', color: colors.text, textTransform: 'capitalize' }}>{apt.status}</Text>
-                            </View>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-                                {apt.type === 'Video Call' ? <Video size={12} color="#64748b" /> : <MapPin size={12} color="#64748b" />}
-                                <Text style={{ fontSize: 10, color: '#64748b' }}>{apt.type}</Text>
-                            </View>
-                            <ChevronRight size={14} color="#94a3b8" />
-                        </View>
-                    </TouchableOpacity>
+                    </MedCard>
+                    </AnimatedListItem>
                 );
             })}
         </ScrollView>

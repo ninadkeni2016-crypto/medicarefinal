@@ -1,22 +1,33 @@
-﻿import React from "react";
-import { TextInput, TextInputProps, View } from "react-native";
+import React from "react";
+import { TextInput, TextInputProps, View, Text } from "react-native";
 
 export interface InputProps extends TextInputProps {
     className?: string;
-    error?: boolean;
+    label?: string;
+    error?: string;
 }
 
 export const Input = React.forwardRef<TextInput, InputProps>(
-    ({ className, error, ...props }, ref) => {
+    ({ className, label, error, ...props }, ref) => {
         return (
-            <View className="w-full">
+            <View className="w-full mb-4">
+                {label && (
+                    <Text className="text-xs font-medium text-text-secondary mb-1.5 ml-1">
+                        {label}
+                    </Text>
+                )}
                 <TextInput
                     ref={ref}
-                    className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${error ? "border-red-500" : "border-slate-200"
-                        } text-slate-900 bg-white ${className || ""}`}
-                    placeholderTextColor="#94a3b8"
+                    className={`flex h-11 w-full rounded-lg border bg-white px-4 py-2 text-[15px] transition-all ${error ? "border-danger" : "border-border"
+                        } text-text-primary ${className || ""}`}
+                    placeholderTextColor="#94A3B8"
                     {...props}
                 />
+                {error && (
+                    <Text className="text-[11px] font-medium text-danger mt-1 ml-1">
+                        {error}
+                    </Text>
+                )}
             </View>
         );
     }

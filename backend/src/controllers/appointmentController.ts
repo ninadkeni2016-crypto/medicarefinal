@@ -4,26 +4,36 @@ import User from '../models/User';
 import Doctor from '../models/Doctor';
 import { sendAppointmentConfirmationEmail, sendCancellationEmail } from '../utils/sendEmail';
 import Notification from '../models/Notification';
+import { isDemoMode } from '../config/demoMode';
+import { demoAppointments } from '../data/demoData';
 
 interface AuthRequest extends Request {
   user?: any;
 }
 
-// @desc    Get appointments
+// @desc    Get appointments. Returns demo data when DEMO_MODE=true.
 //          - Patient: sees their own booked appointments
-//          - Doctor:  sees appointments booked for them (by doctorId, doctorEmail, or doctorName)
+//          - Doctor:  sees appointments booked for them
 // @route   GET /api/appointments
 // @access  Private
 export const getAppointments = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-        let appointments;
+        if (isDemoMode()) {
+            res.setHeader('X-Demo-Data', 'true');
+            if (req.user?.role === 'doctor') {
+                res.json(demoAppointments);
+                return;
+            }
+            res.json(demoAppointments.slice(0, 3));
+            return;
+        }
+
+        let appointments: any[];
 
         if (req.user?.role === 'doctor') {
-            // Try to get the doctor's display name from their Doctor profile
             const doctorProfile = await Doctor.findOne({ user: req.user._id });
             const doctorName = doctorProfile?.name || req.user?.name || '';
 
-            // Match by: explicit doctorId link, email link, or name string (backward compat)
             appointments = await Appointment.find({
                 $or: [
                     { doctorId: req.user._id },
@@ -32,8 +42,17 @@ export const getAppointments = async (req: AuthRequest, res: Response): Promise<
                 ],
             }).sort({ createdAt: -1 });
         } else {
-            // Patient — only their own bookings
             appointments = await Appointment.find({ user: req.user?._id }).sort({ createdAt: -1 });
+        }
+
+        if (appointments.length === 0) {
+            res.setHeader('X-Demo-Data', 'true');
+            if (req.user?.role === 'doctor') {
+                res.json(demoAppointments);
+                return;
+            }
+            res.json(demoAppointments.slice(0, 3));
+            return;
         }
 
         res.json(appointments);

@@ -1,5 +1,6 @@
-﻿import React, { useState } from 'react';
-import { View, SafeAreaView, StatusBar, Platform } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, SafeAreaView, StatusBar, Platform, Animated } from 'react-native';
+import { colors } from '@/lib/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { Conversation } from '@/lib/chat-data';
 import { Doctor, Appointment, mockDoctors } from '@/lib/mock-data';
@@ -42,6 +43,22 @@ export default function Index() {
     const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
     const [showSettings, setShowSettings] = useState(false);
     const [showVideoCall, setShowVideoCall] = useState(false);
+    const fadeAnim = useRef(new Animated.Value(1)).current;
+    const slideAnim = useRef(new Animated.Value(0)).current;
+
+    const animateTransition = (callback: () => void) => {
+        Animated.parallel([
+            Animated.timing(fadeAnim, { toValue: 0, duration: 120, useNativeDriver: true }),
+            Animated.timing(slideAnim, { toValue: 8, duration: 120, useNativeDriver: true }),
+        ]).start(() => {
+            callback();
+            slideAnim.setValue(-8);
+            Animated.parallel([
+                Animated.timing(fadeAnim, { toValue: 1, duration: 200, useNativeDriver: true }),
+                Animated.timing(slideAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
+            ]).start();
+        });
+    };
 
     if (!isLoggedIn) {
         return <LoginPage />;
@@ -49,7 +66,7 @@ export default function Index() {
 
     if (showSettings) {
         return (
-            <View style={{ flex: 1, backgroundColor: '#f8fafc', paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0 }}>
+            <View style={{ flex: 1, backgroundColor: colors.background, paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0 }}>
                 <SafeAreaView style={{ flex: 1 }}>
                     <SettingsScreen onBack={() => setShowSettings(false)} />
                 </SafeAreaView>
@@ -63,10 +80,12 @@ export default function Index() {
 
     const handleTabChange = (tab: string) => {
         if (tab === 'settings') { setShowSettings(true); return; }
-        if (tab !== 'messages') { setActiveConversation(null); setShowAI(false); }
-        if (tab !== 'find-doctor') setSelectedDoctor(null);
-        if (tab !== 'appointments') setSelectedAppointment(null);
-        setActiveTab(tab);
+        animateTransition(() => {
+            if (tab !== 'messages') { setActiveConversation(null); setShowAI(false); }
+            if (tab !== 'find-doctor') setSelectedDoctor(null);
+            if (tab !== 'appointments') setSelectedAppointment(null);
+            setActiveTab(tab);
+        });
     };
 
     const renderChatScreen = () => {
@@ -123,7 +142,7 @@ export default function Index() {
     const renderDoctorScreen = () => {
         switch (activeTab) {
             case 'home': return <DoctorHome onNavigate={handleTabChange} />;
-            case 'patients': return <PatientsList />;
+            case 'patients': return <PatientsList onNavigate={handleTabChange} />;
             case 'appointments': return renderAppointments();
             case 'prescriptions': return <PrescriptionsList />;
             case 'reports': return <ReportsList />;
@@ -138,10 +157,12 @@ export default function Index() {
     const hideBottomNav = showAI || activeConversation !== null || activeTab === 'pharmacy';
 
     return (
-        <View style={{ flex: 1, backgroundColor: '#e2e8f0', paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0, alignItems: 'center', justifyContent: 'center' }}>
-            <View style={{ flex: 1, width: '100%', maxWidth: 480, alignSelf: 'center', backgroundColor: '#f8fafc', overflow: 'hidden', ...(Platform.OS === 'web' ? { borderLeftWidth: 1, borderRightWidth: 1, borderColor: '#cbd5e1' } : {}) }}>
+        <View style={{ flex: 1, backgroundColor: colors.background, paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0 }}>
+            <View style={{ flex: 1, width: '100%' }}>
                 <SafeAreaView style={{ flex: 1 }}>
-                    {role === 'doctor' ? renderDoctorScreen() : renderPatientScreen()}
+                    <Animated.View style={{ flex: 1, opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
+                        {role === 'doctor' ? renderDoctorScreen() : renderPatientScreen()}
+                    </Animated.View>
                 </SafeAreaView>
                 {!hideBottomNav && <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />}
             </View>

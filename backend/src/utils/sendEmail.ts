@@ -20,13 +20,13 @@ export const sendVerificationEmail = async (to: string, otp: string, name: strin
   }
 
   const mailOptions = {
-    from: `"Care Connect Pro" <${process.env.EMAIL_USER}>`,
+    from: `"Medicare" <${process.env.EMAIL_USER}>`,
     to,
-    subject: 'Verify your Care Connect Pro account',
+    subject: 'Verify your Medicare account',
     html: `
       <div style="font-family: 'Helvetica Neue', sans-serif; max-width: 480px; margin: 0 auto; background: #fff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0;">
         <div style="background: #0f172a; padding: 32px; text-align: center;">
-          <h1 style="color: white; margin: 0; font-size: 24px;">Care Connect Pro</h1>
+          <h1 style="color: white; margin: 0; font-size: 24px;">Medicare</h1>
           <p style="color: #94a3b8; margin: 8px 0 0; font-size: 14px;">Your Health, Our Priority</p>
         </div>
         <div style="padding: 32px;">
@@ -43,7 +43,7 @@ export const sendVerificationEmail = async (to: string, otp: string, name: strin
           </p>
         </div>
         <div style="background: #f8fafc; padding: 16px; text-align: center;">
-          <p style="color: #94a3b8; font-size: 12px; margin: 0;">© 2026 Care Connect Pro. All rights reserved.</p>
+          <p style="color: #94a3b8; font-size: 12px; margin: 0;">© 2026 Medicare. All rights reserved.</p>
         </div>
       </div>
     `,
@@ -63,13 +63,13 @@ export const sendAppointmentConfirmationEmail = async (
   }
 
   const mailOptions = {
-    from: `"Care Connect Pro" <${process.env.EMAIL_USER}>`,
+    from: `"Medicare" <${process.env.EMAIL_USER}>`,
     to,
-    subject: '✅ Appointment Confirmed - Care Connect Pro',
+    subject: '✅ Appointment Confirmed - Medicare',
     html: `
       <div style="font-family: 'Helvetica Neue', sans-serif; max-width: 480px; margin: 0 auto; background: #fff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0;">
         <div style="background: #0f172a; padding: 28px; text-align: center;">
-          <h1 style="color: white; margin: 0; font-size: 22px;">Care Connect Pro</h1>
+          <h1 style="color: white; margin: 0; font-size: 22px;">Medicare</h1>
           <p style="color: #94a3b8; margin: 6px 0 0; font-size: 13px;">Appointment Confirmation</p>
         </div>
         <div style="padding: 28px;">
@@ -94,7 +94,7 @@ export const sendAppointmentConfirmationEmail = async (
           <p style="color: #94a3b8; font-size: 12px; margin-top: 20px;">Please arrive 10 minutes early for in-person appointments.</p>
         </div>
         <div style="background: #f8fafc; padding: 14px; text-align: center;">
-          <p style="color: #94a3b8; font-size: 12px; margin: 0;">© 2026 Care Connect Pro. All rights reserved.</p>
+          <p style="color: #94a3b8; font-size: 12px; margin: 0;">© 2026 Medicare. All rights reserved.</p>
         </div>
       </div>
     `,
@@ -122,13 +122,13 @@ export const sendPrescriptionEmail = async (
   }
 
   const mailOptions = {
-    from: `"Care Connect Pro" <${process.env.EMAIL_USER}>`,
+    from: `"Medicare" <${process.env.EMAIL_USER}>`,
     to,
-    subject: '💊 New Prescription - Care Connect Pro',
+    subject: '💊 New Prescription - Medicare',
     html: `
       <div style="font-family: 'Helvetica Neue', sans-serif; max-width: 520px; margin: 0 auto; background: #fff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0;">
         <div style="background: #0f172a; padding: 28px; text-align: center;">
-          <h1 style="color: white; margin: 0; font-size: 22px;">Care Connect Pro</h1>
+          <h1 style="color: white; margin: 0; font-size: 22px;">Medicare</h1>
           <p style="color: #94a3b8; margin: 6px 0 0; font-size: 13px;">Prescription Details</p>
         </div>
         <div style="padding: 28px;">
@@ -157,7 +157,7 @@ export const sendPrescriptionEmail = async (
           <p style="color: #94a3b8; font-size: 12px; margin-top: 20px;">Please follow the prescription carefully. Contact your doctor if you have any questions.</p>
         </div>
         <div style="background: #f8fafc; padding: 14px; text-align: center;">
-          <p style="color: #94a3b8; font-size: 12px; margin: 0;">© 2026 Care Connect Pro. All rights reserved.</p>
+          <p style="color: #94a3b8; font-size: 12px; margin: 0;">© 2026 Medicare. All rights reserved.</p>
         </div>
       </div>
     `,
@@ -176,13 +176,13 @@ export const sendCancellationEmail = async (
   }
 
   const mailOptions = {
-    from: `"Care Connect Pro" <${process.env.EMAIL_USER}>`,
+    from: `"Medicare" <${process.env.EMAIL_USER}>`,
     to,
-    subject: '❌ Appointment Cancelled - Care Connect Pro',
+    subject: '❌ Appointment Cancelled - Medicare',
     html: `
       <div style="font-family: 'Helvetica Neue', sans-serif; max-width: 480px; margin: 0 auto; background: #fff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0;">
         <div style="background: #0f172a; padding: 28px; text-align: center;">
-          <h1 style="color: white; margin: 0; font-size: 22px;">Care Connect Pro</h1>
+          <h1 style="color: white; margin: 0; font-size: 22px;">Medicare</h1>
           <p style="color: #94a3b8; margin: 6px 0 0; font-size: 13px;">Appointment Update</p>
         </div>
         <div style="padding: 28px;">
@@ -194,7 +194,7 @@ export const sendCancellationEmail = async (
           <p style="color: #94a3b8; font-size: 12px; margin-top: 20px;">If this was a mistake, please visit the app to reschedule.</p>
         </div>
         <div style="background: #f8fafc; padding: 14px; text-align: center;">
-          <p style="color: #94a3b8; font-size: 12px; margin: 0;">© 2026 Care Connect Pro. All rights reserved.</p>
+          <p style="color: #94a3b8; font-size: 12px; margin: 0;">© 2026 Medicare. All rights reserved.</p>
         </div>
       </div>
     `,
@@ -213,13 +213,13 @@ export const sendPaymentSuccessEmail = async (
   }
 
   const mailOptions = {
-    from: `"Care Connect Pro" <${process.env.EMAIL_USER}>`,
+    from: `"Medicare" <${process.env.EMAIL_USER}>`,
     to,
-    subject: '💳 Payment Receipt - Care Connect Pro',
+    subject: '💳 Payment Receipt - Medicare',
     html: `
       <div style="font-family: 'Helvetica Neue', sans-serif; max-width: 480px; margin: 0 auto; background: #fff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0;">
         <div style="background: #0f172a; padding: 28px; text-align: center;">
-          <h1 style="color: white; margin: 0; font-size: 22px;">Care Connect Pro</h1>
+          <h1 style="color: white; margin: 0; font-size: 22px;">Medicare</h1>
           <p style="color: #94a3b8; margin: 6px 0 0; font-size: 13px;">Payment Receipt</p>
         </div>
         <div style="padding: 28px;">
@@ -239,10 +239,10 @@ export const sendPaymentSuccessEmail = async (
               </tr>
             `).join('')}
           </table>
-          <p style="color: #94a3b8; font-size: 12px; margin-top: 20px;">Thank you for using Care Connect Pro.</p>
+          <p style="color: #94a3b8; font-size: 12px; margin-top: 20px;">Thank you for using Medicare.</p>
         </div>
         <div style="background: #f8fafc; padding: 14px; text-align: center;">
-          <p style="color: #94a3b8; font-size: 12px; margin: 0;">© 2026 Care Connect Pro. All rights reserved.</p>
+          <p style="color: #94a3b8; font-size: 12px; margin: 0;">© 2026 Medicare. All rights reserved.</p>
         </div>
       </div>
     `,

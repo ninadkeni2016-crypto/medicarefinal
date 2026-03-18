@@ -17,7 +17,9 @@ import chatRoutes from './routes/chatRoutes';
 import notificationRoutes from './routes/notificationRoutes';
 import paymentRoutes from './routes/paymentRoutes';
 import reviewRoutes from './routes/reviewRoutes';
+import dashboardRoutes from './routes/dashboardRoutes';
 import { notFound, errorHandler } from './middlewares/errorMiddleware';
+import { isDemoMode } from './config/demoMode';
 
 // Always load .env from the backend folder, regardless of where the process is started
 dotenv.config({ path: path.join(__dirname, '../.env') });
@@ -53,10 +55,11 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
-// Basic health check route
+// Basic health check route (includes demoMode for frontend)
 app.get('/api/health', (req: Request, res: Response) => {
-    res.status(200).json({ status: 'ok', message: 'API is running smoothly' });
+    res.status(200).json({ status: 'ok', message: 'API is running smoothly', demoMode: isDemoMode() });
 });
 
 // Fallback 404 and global error handler

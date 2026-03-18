@@ -1,9 +1,15 @@
-﻿import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, Image, ActivityIndicator } from 'react-native';
-import { Search, Bot, ChevronRight } from 'lucide-react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, TouchableOpacity, FlatList, ActivityIndicator, Platform, Dimensions } from 'react-native';
+import { Search, Bot, ChevronRight, MessageSquare, Activity } from 'lucide-react-native';
 import { patientConversations, doctorConversations, Conversation } from '@/lib/chat-data';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
+
+const { width } = Dimensions.get('window');
+
+import { MedCard } from '../ui/MedCard';
+import { SectionHeader } from '../ui/SectionHeader';
+import { colors, spacing, radius, typography, cardShadow, fonts } from '@/lib/theme';
 
 interface Props { onSelectConversation: (c: Conversation) => void; onOpenAI?: () => void; }
 
@@ -17,7 +23,6 @@ export default function ChatList({ onSelectConversation, onOpenAI }: Props) {
         api.get('/chat/conversations')
             .then(res => {
                 if (res.data && res.data.length > 0) {
-                    // Map backend conversations to the Conversation shape
                     const mapped: Conversation[] = res.data.map((c: any) => ({
                         id: c._id,
                         participantName: c.participantNames?.find((n: string) => n !== '') || 'Unknown',
@@ -29,7 +34,6 @@ export default function ChatList({ onSelectConversation, onOpenAI }: Props) {
                     }));
                     setConversations(mapped);
                 } else {
-                    // Fallback to demo data if no real conversations yet
                     setConversations(role === 'doctor' ? doctorConversations : patientConversations);
                 }
             })
@@ -44,59 +48,129 @@ export default function ChatList({ onSelectConversation, onOpenAI }: Props) {
         : conversations;
 
     if (loading) return (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <ActivityIndicator size="large" color="#0284c7" />
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
+            <ActivityIndicator size="large" color={colors.primary} />
         </View>
     );
 
     return (
-        <View style={{ flex: 1 }}>
-            <View style={{ padding: 16, paddingBottom: 0 }}>
-                <Text style={{ fontSize: 20, fontWeight: '700', color: '#0284c7', marginBottom: 4 }}>Messages</Text>
-                <Text style={{ fontSize: 14, color: '#64748b', marginBottom: 12 }}>{conversations.length} conversations</Text>
-
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#f1f5f9', borderRadius: 12, paddingHorizontal: 12, marginBottom: 12 }}>
-                    <Search size={16} color="#64748b" />
-                    <TextInput value={search} onChangeText={setSearch} placeholder="Search conversations..." placeholderTextColor="#94a3b8" style={{ flex: 1, paddingVertical: 10, fontSize: 14, color: '#0284c7' }} />
+        <View style={{ flex: 1, backgroundColor: colors.background }}>
+            <View style={{ padding: 20 }}>
+                <View style={{ marginBottom: 28 }}>
+                    <Text style={typography.screenTitle}>Messages</Text>
+                    <Text style={[typography.body, { marginTop: 4 }]}>Track your consultations and active chats</Text>
                 </View>
 
-                {onOpenAI && (
-                    <TouchableOpacity onPress={onOpenAI} activeOpacity={0.7} style={{ backgroundColor: '#f0fdfa', borderRadius: 16, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-                        <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: '#0ea5e9', alignItems: 'center', justifyContent: 'center' }}>
-                            <Bot size={22} color="#fff" />
-                        </View>
-                        <View style={{ flex: 1 }}>
-                            <Text style={{ fontWeight: '600', fontSize: 14, color: '#0ea5e9' }}>AI Health Assistant</Text>
-                            <Text style={{ fontSize: 12, color: '#64748b' }}>Check symptoms, get advice</Text>
-                        </View>
-                        <ChevronRight size={16} color="#0ea5e9" />
+                {/* Search Bar */}
+                <MedCard style={{ 
+                    flexDirection: 'row', 
+                    alignItems: 'center', 
+                    gap: 12, 
+                    paddingVertical: 2, 
+                    paddingHorizontal: 16, 
+                    marginBottom: 24, 
+                    borderRadius: 18,
+                    backgroundColor: colors.card,
+                    borderWidth: 1,
+                    borderColor: colors.border
+                }}>
+                    <Search size={20} color={colors.textMuted} />
+                    <TextInput 
+                        value={search} 
+                        onChangeText={setSearch} 
+                        placeholder="Search conversations..." 
+                        placeholderTextColor={colors.textMuted} 
+                        style={{ flex: 1, height: 52, fontSize: 15, color: colors.text, fontFamily: fonts.regular }} 
+                    />
+                </MedCard>
+
+                {onOpenAI && role === 'patient' && (
+                    <TouchableOpacity onPress={onOpenAI} activeOpacity={0.9} style={{ marginBottom: 32 }}>
+                        <MedCard style={{ 
+                            backgroundColor: colors.primary, 
+                            padding: 20, 
+                            flexDirection: 'row', 
+                            alignItems: 'center', 
+                            gap: 16,
+                            overflow: 'hidden',
+                            position: 'relative'
+                        }}>
+                            <View style={{ position: 'absolute', top: -20, right: -20, width: 100, height: 100, borderRadius: 50, backgroundColor: 'rgba(255,255,255,0.1)' }} />
+                            <View style={{ width: 60, height: 60, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' }}>
+                                <Bot size={32} color="#FFF" />
+                            </View>
+                            <View style={{ flex: 1 }}>
+                                <Text style={{ fontFamily: fonts.bold, fontSize: 17, color: '#FFF' }}>AI Health Assistant</Text>
+                                <Text style={{ fontFamily: fonts.medium, fontSize: 13, color: 'rgba(255,255,255,0.85)', marginTop: 2 }}>Secure symptom checker & advice</Text>
+                            </View>
+                            <View style={{ width: 40, height: 40, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' }}>
+                                <ChevronRight size={22} color="#FFF" />
+                            </View>
+                        </MedCard>
                     </TouchableOpacity>
                 )}
+                
+                <SectionHeader title="Recent Conversations" />
             </View>
 
             <FlatList
                 data={filtered}
                 keyExtractor={item => item.id}
-                contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100 }}
+                contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 100 }}
+                showsVerticalScrollIndicator={false}
                 renderItem={({ item }) => (
-                    <TouchableOpacity onPress={() => onSelectConversation(item)} activeOpacity={0.7} style={{ backgroundColor: '#fff', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: '#f1f5f9', flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-                        <View style={{ position: 'relative' }}>
-                            <Image source={{ uri: item.participantAvatar || 'https://i.pravatar.cc/150' }} style={{ width: 48, height: 48, borderRadius: 12 }} />
-                            {item.online && <View style={{ position: 'absolute', bottom: -1, right: -1, width: 14, height: 14, borderRadius: 7, backgroundColor: '#16a34a', borderWidth: 2, borderColor: '#fff' }} />}
-                        </View>
-                        <View style={{ flex: 1 }}>
-                            <Text style={{ fontWeight: '600', fontSize: 14, color: '#0284c7' }}>{item.participantName}</Text>
-                            {(item as any).specialization && <Text style={{ fontSize: 10, color: '#0ea5e9', fontWeight: '500' }}>{(item as any).specialization}</Text>}
-                            <Text style={{ fontSize: 12, color: '#64748b', marginTop: 2 }} numberOfLines={1}>{item.lastMessage}</Text>
-                        </View>
-                        <View style={{ alignItems: 'flex-end', gap: 4 }}>
-                            <Text style={{ fontSize: 10, color: '#64748b' }}>{item.lastMessageTime}</Text>
-                            {item.unreadCount > 0 && (
-                                <View style={{ backgroundColor: '#0ea5e9', borderRadius: 10, paddingHorizontal: 6, paddingVertical: 2 }}>
-                                    <Text style={{ fontSize: 10, fontWeight: '600', color: '#fff' }}>{item.unreadCount}</Text>
+                    <TouchableOpacity 
+                        onPress={() => onSelectConversation(item)} 
+                        activeOpacity={0.8} 
+                        style={{ marginBottom: 14 }}
+                    >
+                        <MedCard style={{ 
+                            flexDirection: 'row', 
+                            alignItems: 'center', 
+                            gap: 16, 
+                            padding: 14,
+                            borderRadius: 22
+                        }}>
+                            {/* Initials Avatar */}
+                            <View style={{ position: 'relative' }}>
+                                <View style={{
+                                    width: 56, height: 56, borderRadius: 18,
+                                    backgroundColor: '#EFF6FF', alignItems: 'center', justifyContent: 'center',
+                                }}>
+                                    <Text style={{ fontFamily: fonts.bold, fontSize: 18, color: colors.primary }}>
+                                        {item.participantName.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2)}
+                                    </Text>
                                 </View>
-                            )}
-                        </View>
+                                {item.online && (
+                                    <View style={{
+                                        position: 'absolute', bottom: 0, right: 0,
+                                        width: 14, height: 14, borderRadius: 7,
+                                        backgroundColor: colors.success, borderWidth: 2, borderColor: '#FFF',
+                                    }} />
+                                )}
+                            </View>
+                            <View style={{ flex: 1 }}>
+                                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                                    <Text style={typography.bodyMedium}>{item.participantName}</Text>
+                                    <Text style={typography.label}>{item.lastMessageTime}</Text>
+                                </View>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                                    <View style={{ flex: 1, marginRight: 8 }}>
+                                        {(item as any).specialization && (
+                                            <Text style={[typography.overline, { marginBottom: 2 }]}>{(item as any).specialization}</Text>
+                                        )}
+                                        <Text style={[typography.body, item.unreadCount > 0 && { color: colors.text, fontFamily: fonts.medium }]} numberOfLines={1}>
+                                            {item.lastMessage}
+                                        </Text>
+                                    </View>
+                                    {item.unreadCount > 0 && (
+                                        <View style={{ backgroundColor: colors.primary, borderRadius: 12, minWidth: 22, height: 22, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 }}>
+                                            <Text style={{ fontFamily: fonts.bold, fontSize: 11, color: '#FFF' }}>{item.unreadCount}</Text>
+                                        </View>
+                                    )}
+                                </View>
+                            </View>
+                        </MedCard>
                     </TouchableOpacity>
                 )}
             />

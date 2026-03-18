@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { View, Modal, ActivityIndicator, Platform } from 'react-native';
+import { View, Modal, ActivityIndicator, Platform, SafeAreaView } from 'react-native';
 import { WebView } from 'react-native-webview';
 
 interface RazorpayCheckoutProps {
@@ -7,7 +7,7 @@ interface RazorpayCheckoutProps {
     visible: boolean;
     onClose: () => void;
     onSuccess: () => void;
-    onCancel?: () => void;   // optional: called specifically on cancel/dismiss
+    onCancel?: () => void;
     description?: string;
     prefillName?: string;
     prefillEmail?: string;
@@ -22,7 +22,7 @@ export default function RazorpayCheckout({
     onClose,
     onSuccess,
     onCancel,
-    description = 'MediCare Payment',
+    description = 'MediCare Consultation',
     prefillName = '',
     prefillEmail = '',
     prefillContact = '',
@@ -62,120 +62,87 @@ export default function RazorpayCheckout({
 <!DOCTYPE html>
 <html>
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f8fafc;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            color: #334155;
+        body { 
+            margin: 0; padding: 0; 
+            background-color: transparent; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh;
         }
-        .container { text-align: center; padding: 40px 20px; }
-        .logo {
-            width: 64px; height: 64px;
-            background: linear-gradient(135deg, #0ea5e9, #0284c7);
-            border-radius: 16px;
-            margin: 0 auto 20px;
-            display: flex; align-items: center; justify-content: center;
-            color: #fff; font-size: 28px; font-weight: 900;
+        .loader {
+            border: 4px solid rgba(0,0,0,0.1);
+            border-left-color: #2563EB;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
         }
-        h2 { font-size: 20px; color: #0284c7; margin-bottom: 8px; }
-        .amount { font-size: 32px; font-weight: 800; color: #0284c7; margin: 16px 0; }
-        .amount span { font-size: 18px; font-weight: 400; color: #64748b; }
-        p { color: #64748b; font-size: 14px; margin-bottom: 24px; }
-        .btn {
-            background: linear-gradient(135deg, #0ea5e9, #0284c7);
-            color: #fff; border: none;
-            padding: 16px 48px; border-radius: 12px;
-            font-size: 16px; font-weight: 700; cursor: pointer;
-            width: 100%; max-width: 320px; letter-spacing: 0.5px;
+        @keyframes spin { 
+            0% { transform: rotate(0deg); } 
+            100% { transform: rotate(360deg); } 
         }
-        .btn:active { opacity: 0.9; transform: scale(0.98); }
-        .secure { color: #94a3b8; font-size: 11px; margin-top: 20px; }
-        .cancel-btn {
-            color: #94a3b8; font-size: 13px; margin-top: 16px;
-            cursor: pointer; background: none; border: none;
-            text-decoration: underline; display: block; width: 100%;
-        }
-        .cancel-btn:hover { color: #64748b; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="logo">M</div>
-        <h2>MediCare</h2>
-        <p>${description}</p>
-        <div class="amount">₹${amount.toLocaleString('en-IN')} <span>INR</span></div>
-        <button class="btn" onclick="startPayment()">Pay with Razorpay</button>
-        <p class="secure">🔒 Secured by Razorpay • 100% Safe &amp; Encrypted</p>
-        <button class="cancel-btn" onclick="cancelPayment()">✕ Cancel Payment</button>
-    </div>
-
+    <div class="loader" id="loader"></div>
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script>
-        // Unified postMessage that works in both WebView and iframe contexts
         function sendMessage(data) {
             var msg = JSON.stringify(Object.assign({ source: 'razorpay-iframe' }, data));
-            // React Native WebView bridge
             if (window.ReactNativeWebView) {
                 window.ReactNativeWebView.postMessage(msg);
             }
-            // Web iframe → parent window bridge
             if (window.parent && window.parent !== window) {
                 window.parent.postMessage(msg, '*');
             }
         }
 
-        function startPayment() {
+        window.onload = function() {
             var options = {
                 key: '${RAZORPAY_KEY_ID}',
                 amount: ${amountInPaise},
                 currency: 'INR',
-                name: 'MediCare',
+                name: 'MediCare Hub',
                 description: '${description}',
-                image: '',
+                theme: { color: '#2563EB' },
                 handler: function(response) {
                     sendMessage({ type: 'success', paymentId: response.razorpay_payment_id });
                 },
                 prefill: {
-                    name: '${prefillName}',
+                    name: '${prefillName || 'Patient'}',
                     email: '${prefillEmail || 'patient@medicare.com'}',
                     contact: '${prefillContact || '9999999999'}'
                 },
-                notes: { address: 'MediCare Healthcare' },
-                theme: { color: '#0284c7' },
                 modal: {
-                    // Fires when the Razorpay popup is closed (cancel button inside popup, or back)
                     ondismiss: function() {
                         sendMessage({ type: 'dismissed' });
-                    }
+                    },
+                    animation: true
                 }
             };
-
             var rzp = new Razorpay(options);
             rzp.on('payment.failed', function(response) {
                 sendMessage({ type: 'error', error: response.error.description });
             });
             rzp.open();
-        }
-
-        // Called by our own "Cancel Payment" button on the pre-checkout screen
-        function cancelPayment() {
-            sendMessage({ type: 'cancelled' });
-        }
+            
+            setTimeout(function() {
+                document.getElementById('loader').style.display = 'none';
+            }, 500);
+        };
     </script>
 </body>
 </html>
 `;
 
-    // ─── Native WebView message handler ─────────────────────────────────────
     const handleNativeMessage = (event: any) => {
         try {
             const data = JSON.parse(event.nativeEvent.data);
+            if (data?.source !== 'razorpay-iframe') return;
+
             if (data.type === 'success') {
                 onSuccess();
             } else if (data.type === 'cancelled' || data.type === 'dismissed') {
@@ -193,41 +160,39 @@ export default function RazorpayCheckout({
     return (
         <Modal
             visible={visible}
-            animationType="slide"
+            animationType="fade"
+            transparent={true}
             onRequestClose={() => {
-                // Android back-button pressed while modal open → treat as cancel
                 onCancel ? onCancel() : onClose();
             }}
         >
-            <View style={{ flex: 1, backgroundColor: '#f8fafc' }}>
-                {Platform.OS === 'web' ? (
-                    <iframe
-                        ref={iframeRef as any}
-                        srcDoc={htmlContent}
-                        style={{ flex: 1, border: 'none', width: '100%', height: '100%' } as any}
-                        title="Razorpay Checkout"
-                        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation"
-                    />
-                ) : (
-                    <WebView
-                        ref={webviewRef}
-                        source={{ html: htmlContent }}
-                        onMessage={handleNativeMessage}
-                        javaScriptEnabled={true}
-                        domStorageEnabled={true}
-                        startInLoadingState={true}
-                        renderLoading={() => (
-                            <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: '#f8fafc' }}>
-                                <ActivityIndicator size="large" color="#0284c7" />
-                            </View>
-                        )}
-                        style={{ flex: 1 }}
-                        originWhitelist={['*']}
-                        scalesPageToFit={false}
-                        allowsInlineMediaPlayback={true}
-                        userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 13_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1.1 Mobile/15E148 Safari/604.1"
-                    />
-                )}
+            <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                <SafeAreaView style={{ flex: 1 }}>
+                    {Platform.OS === 'web' ? (
+                        <iframe
+                            ref={iframeRef as any}
+                            srcDoc={htmlContent}
+                            style={{ flex: 1, border: 'none', width: '100%', height: '100%', backgroundColor: 'transparent' } as any}
+                            title="Razorpay Checkout"
+                            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation"
+                        />
+                    ) : (
+                        <WebView
+                            ref={webviewRef}
+                            source={{ html: htmlContent }}
+                            onMessage={handleNativeMessage}
+                            javaScriptEnabled={true}
+                            domStorageEnabled={true}
+                            startInLoadingState={false}
+                            style={{ flex: 1, backgroundColor: 'transparent' }}
+                            originWhitelist={['*']}
+                            bounces={false}
+                            scalesPageToFit={false}
+                            showsHorizontalScrollIndicator={false}
+                            showsVerticalScrollIndicator={false}
+                        />
+                    )}
+                </SafeAreaView>
             </View>
         </Modal>
     );

@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import {
     View, Text, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, KeyboardAvoidingView, Platform
 } from 'react-native';
@@ -173,7 +173,7 @@ export default function LoginPage() {
                         <View style={{ width: 64, height: 64, borderRadius: 18, backgroundColor: '#0f172a', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
                             <Heart size={30} color="#fff" />
                         </View>
-                        <Text style={{ fontSize: 22, fontWeight: '800', color: '#0f172a' }}>Care Connect Pro</Text>
+                        <Text style={{ fontSize: 22, fontWeight: '800', color: '#0f172a' }}>Medicare</Text>
                         <Text style={{ color: '#64748b', fontSize: 13, marginTop: 4 }}>Your Health, Our Priority</Text>
                     </View>
 

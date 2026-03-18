@@ -1,12 +1,24 @@
 import { Request, Response } from 'express';
 import Notification from '../models/Notification';
+import { isDemoMode } from '../config/demoMode';
+import { demoNotifications } from '../data/demoData';
 
-// @desc    Get user's notifications
+// @desc    Get user's notifications. Returns demo data when DEMO_MODE=true.
 // @route   GET /api/notifications
 // @access  Private
 export const getNotifications = async (req: Request, res: Response): Promise<void> => {
     try {
-        const notifications = await Notification.find({ user: req.user._id }).sort({ createdAt: -1 }).limit(50);
+        if (isDemoMode()) {
+            res.setHeader('X-Demo-Data', 'true');
+            res.json(demoNotifications);
+            return;
+        }
+        let notifications = await Notification.find({ user: req.user._id }).sort({ createdAt: -1 }).limit(50);
+        if (notifications.length === 0) {
+            res.setHeader('X-Demo-Data', 'true');
+            res.json(demoNotifications);
+            return;
+        }
         res.json(notifications);
     } catch (error: any) {
         res.status(500).json({ message: error.message });

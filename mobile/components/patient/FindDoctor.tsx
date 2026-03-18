@@ -1,95 +1,222 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Image, ActivityIndicator } from 'react-native';
-import { Search, Star, MapPin, Clock } from 'lucide-react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Platform, Dimensions, SafeAreaView } from 'react-native';
+import { Search, Star, MapPin, CheckCircle2, SlidersHorizontal } from 'lucide-react-native';
 import { mockDoctors, Doctor } from '@/lib/mock-data';
 import api from '@/lib/api';
+import { MedCard } from '../ui/MedCard';
+import { AnimatedListItem } from '../ui/Animations';
+import { InitialsAvatar } from '../ui/InitialsAvatar';
+import { colors, spacing, radius, typography, cardShadow, fonts } from '@/lib/theme';
 
-const specs = ['All', 'Cardiology', 'Dermatology', 'Neurology', 'Orthopedics', 'Pediatrics'];
+const { width } = Dimensions.get('window');
+const specs = ['All', 'Cardiologist', 'Dermatologist', 'Pediatrician', 'Orthopedic', 'Neurologist', 'Gynecologist', 'Endocrinologist', 'Psychiatrist', 'Ophthalmologist', 'Pulmonologist', 'Gastroenterologist', 'Oncologist', 'Urologist', 'General Medicine'];
 
-interface Props { onSelectDoctor: (d: Doctor) => void; }
+function mergeWithMockDoctors(apiDoctors: any[]): Doctor[] {
+    // Always show mock doctors; prepend any real API doctors that aren't duplicates
+    const mockIds = new Set(mockDoctors.map((d) => d.id));
+    const apiUnique = apiDoctors.filter((d: any) => !mockIds.has(d.id || d._id));
+    return [...apiUnique, ...mockDoctors];
+}
 
-export default function FindDoctor({ onSelectDoctor }: Props) {
+export default function FindDoctor({ onSelectDoctor }: { onSelectDoctor: (d: Doctor) => void }) {
     const [search, setSearch] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
     const [activeSpec, setActiveSpec] = useState('All');
-    const [doctors, setDoctors] = useState<Doctor[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [allDoctors, setAllDoctors] = useState<Doctor[]>(mockDoctors);
 
-    // Debounce search input
     useEffect(() => {
-        const handler = setTimeout(() => setDebouncedSearch(search), 500);
+        const handler = setTimeout(() => setDebouncedSearch(search), 400);
         return () => clearTimeout(handler);
     }, [search]);
 
-    const fetchDoctors = async () => {
-        setLoading(true);
-        try {
-            const params: Record<string, string> = {};
-            if (activeSpec !== 'All') params.specialization = activeSpec;
-            if (debouncedSearch) params.search = debouncedSearch;
-            
-            const res = await api.get('/doctors', { params });
-            
-            // Note: If backend returns empty, we show empty, not mocks (unless error)
-            setDoctors(res.data);
-        } catch {
-            console.warn('Failed to fetch from backend, using mock data fallback for UI testing');
-            setDoctors(mockDoctors);
-        } finally {
-            setLoading(false);
-        }
-    };
+    // Fetch from API and merge with mock doctors on mount
+    useEffect(() => {
+        api.get('/doctors')
+            .then((res) => {
+                const merged = mergeWithMockDoctors(res.data || []);
+                setAllDoctors(merged);
+            })
+            .catch(() => {
+                // Keep mockDoctors showing even if API fails
+                setAllDoctors(mockDoctors);
+            });
+    }, []);
 
-    useEffect(() => { fetchDoctors(); }, [activeSpec, debouncedSearch]);
+    // Client-side filtering (no network call needed for spec/search changes)
+    const filtered = allDoctors.filter((doc) => {
+        const matchSpec = activeSpec === 'All' || doc.specialization === activeSpec;
+        const q = debouncedSearch.toLowerCase();
+        const matchSearch = !q || doc.name.toLowerCase().includes(q) || (doc.specialization || '').toLowerCase().includes(q);
+        return matchSpec && matchSearch;
+    });
 
     return (
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
-            <Text style={{ fontSize: 20, fontWeight: '700', color: '#0284c7', marginBottom: 4 }}>Find a Doctor</Text>
-            <Text style={{ fontSize: 14, color: '#64748b', marginBottom: 16 }}>
-                {loading ? 'Searching...' : `${doctors.length} specialists available`}
-            </Text>
+        <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+            <ScrollView
+                style={{ flex: 1 }}
+                contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
+                showsVerticalScrollIndicator={false}
+            >
+                {/* Header */}
+                <View style={{ marginBottom: 24 }}>
+                    <Text style={{ fontFamily: fonts.semiBold, fontSize: 12, color: colors.primary, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 4 }}>
+                        Medical Network
+                    </Text>
+                    <Text style={typography.screenTitle}>Find Specialists</Text>
+                    <Text style={[typography.body, { color: colors.textSecondary, marginTop: 4 }]}>
+                        {filtered.length} doctors available
+                    </Text>
+                </View>
 
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#f1f5f9', borderRadius: 12, paddingHorizontal: 12, marginBottom: 16 }}>
-                <Search size={16} color="#64748b" />
-                <TextInput value={search} onChangeText={setSearch} placeholder="Search doctors..." placeholderTextColor="#94a3b8" style={{ flex: 1, paddingVertical: 10, fontSize: 14, color: '#0284c7' }} />
-            </View>
+                {/* Search & Filter Bar */}
+                <View style={{ flexDirection: 'row', gap: 12, marginBottom: 20 }}>
+                    <View style={{
+                        flex: 1, flexDirection: 'row', alignItems: 'center',
+                        backgroundColor: colors.card, borderRadius: 16,
+                        paddingHorizontal: 16, borderWidth: 1, borderColor: colors.border,
+                        height: 52, ...cardShadow,
+                    }}>
+                        <Search size={18} color={colors.textMuted} />
+                        <TextInput
+                            value={search}
+                            onChangeText={setSearch}
+                            placeholder="Doctor name or specialty..."
+                            placeholderTextColor={colors.textMuted}
+                            style={{ flex: 1, marginLeft: 10, fontSize: 15, color: colors.text, fontFamily: fonts.regular }}
+                        />
+                    </View>
+                    <TouchableOpacity style={{
+                        width: 52, height: 52, borderRadius: 16,
+                        backgroundColor: colors.card, alignItems: 'center', justifyContent: 'center',
+                        borderWidth: 1, borderColor: colors.border, ...cardShadow,
+                    }}>
+                        <SlidersHorizontal size={18} color={colors.primary} strokeWidth={2.5} />
+                    </TouchableOpacity>
+                </View>
 
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
-                <View style={{ flexDirection: 'row', gap: 8 }}>
-                    {specs.map(s => (
-                        <TouchableOpacity key={s} onPress={() => setActiveSpec(s)} activeOpacity={0.7} style={{ paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: activeSpec === s ? '#0ea5e9' : '#f1f5f9' }}>
-                            <Text style={{ fontSize: 12, fontWeight: '600', color: activeSpec === s ? '#fff' : '#64748b' }}>{s}</Text>
+                {/* Specialization Chips */}
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={{ marginBottom: 24 }}
+                    contentContainerStyle={{ gap: 8, paddingRight: 8 }}
+                >
+                    {specs.map((s) => (
+                        <TouchableOpacity
+                            key={s}
+                            onPress={() => setActiveSpec(s)}
+                            activeOpacity={0.8}
+                            style={{
+                                paddingHorizontal: 16, paddingVertical: 9, borderRadius: 20,
+                                backgroundColor: activeSpec === s ? colors.primary : colors.card,
+                                borderWidth: 1,
+                                borderColor: activeSpec === s ? colors.primary : colors.border,
+                            }}
+                        >
+                            <Text style={{
+                                fontFamily: fonts.semiBold, fontSize: 13,
+                                color: activeSpec === s ? '#FFF' : colors.textSecondary,
+                            }}>
+                                {s}
+                            </Text>
                         </TouchableOpacity>
                     ))}
-                </View>
-            </ScrollView>
+                </ScrollView>
 
-            {loading ? (
-                <View style={{ padding: 20, flex: 1, alignItems: 'center' }}>
-                    <ActivityIndicator size="large" color="#0ea5e9" />
-                </View>
-            ) : doctors.length === 0 ? (
-                <View style={{ padding: 20, alignItems: 'center' }}>
-                    <Text style={{ color: '#64748b' }}>No doctors found matching criteria.</Text>
-                </View>
-            ) : doctors.map((doc: any) => (
-                <TouchableOpacity key={doc.id || doc._id} onPress={() => onSelectDoctor(doc as Doctor)} activeOpacity={0.7} style={{ backgroundColor: '#fff', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: '#f1f5f9', flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-                    <Image source={{ uri: doc.avatar || 'https://images.unsplash.com/photo-1612349317150-e410f624c427?auto=format&fit=crop&q=80&w=150' }} style={{ width: 56, height: 56, borderRadius: 14 }} />
-                    <View style={{ flex: 1 }}>
-                        <Text style={{ fontWeight: '600', fontSize: 14, color: '#0284c7' }}>{doc.name}</Text>
-                        <Text style={{ fontSize: 12, color: '#0ea5e9', fontWeight: '500' }}>{doc.specialization}</Text>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 4 }}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><Star size={12} color="#ca8a04" /><Text style={{ fontSize: 12, fontWeight: '600', color: '#0284c7' }}>{doc.rating}</Text></View>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><MapPin size={12} color="#64748b" /><Text style={{ fontSize: 11, color: '#64748b' }}>{doc.distance}</Text></View>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><Clock size={12} color="#64748b" /><Text style={{ fontSize: 11, color: '#64748b' }}>{doc.availableSlots[0]}</Text></View>
-                        </View>
+                {/* Doctor Cards */}
+                {filtered.length === 0 ? (
+                    <View style={{ padding: 60, alignItems: 'center' }}>
+                        <Search size={40} color={colors.textMuted} />
+                        <Text style={[typography.bodyMedium, { color: colors.text, marginTop: 16 }]}>
+                            No Specialists Found
+                        </Text>
+                        <Text style={[typography.body, { color: colors.textSecondary, marginTop: 6, textAlign: 'center' }]}>
+                            Try adjusting your search or specialization filter.
+                        </Text>
                     </View>
-                    <View style={{ alignItems: 'flex-end' }}>
-                        <Text style={{ fontSize: 16, fontWeight: '700', color: '#0284c7' }}>₹{doc.consultationFee}</Text>
-                        <Text style={{ fontSize: 10, color: '#64748b' }}>fee</Text>
-                    </View>
-                </TouchableOpacity>
-            ))}
-        </ScrollView>
+                ) : (
+                    filtered.map((doc: any, idx: number) => (
+                        <AnimatedListItem key={doc.id || doc._id} index={idx} staggerMs={50}>
+                        <MedCard
+                            onPress={() => onSelectDoctor(doc as Doctor)}
+                            style={{ marginBottom: 14, padding: 16 }}
+                        >
+                            <View style={{ flexDirection: 'row', gap: 14 }}>
+                                {/* Avatar */}
+                                <View style={{ position: 'relative' }}>
+                                    <InitialsAvatar name={doc.name} size={76} radius={20} />
+                                    <View style={{
+                                        position: 'absolute', bottom: -4, right: -4,
+                                        backgroundColor: '#FFF', borderRadius: 10, padding: 2,
+                                    }}>
+                                        <CheckCircle2 size={15} color={colors.primary} fill="#FFF" />
+                                    </View>
+                                </View>
+
+                                {/* Info */}
+                                <View style={{ flex: 1 }}>
+                                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                        <View style={{ flex: 1, marginRight: 8 }}>
+                                            <Text style={{ fontFamily: fonts.semiBold, fontSize: 16, color: colors.text }} numberOfLines={1}>
+                                                {doc.name}
+                                            </Text>
+                                            <Text style={{ fontFamily: fonts.medium, fontSize: 13, color: colors.primary, marginTop: 2 }}>
+                                                {doc.specialization}
+                                            </Text>
+                                        </View>
+                                        <View style={{ alignItems: 'flex-end' }}>
+                                            <Text style={{ fontFamily: fonts.bold, fontSize: 15, color: colors.text }}>
+                                                ₹{doc.consultationFee}
+                                            </Text>
+                                            <Text style={{ fontFamily: fonts.regular, fontSize: 11, color: colors.textMuted }}>
+                                                / session
+                                            </Text>
+                                        </View>
+                                    </View>
+
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10 }}>
+                                        {/* Rating */}
+                                        <View style={{
+                                            backgroundColor: '#FFFBEB', paddingHorizontal: 8, paddingVertical: 3,
+                                            borderRadius: 8, flexDirection: 'row', alignItems: 'center', gap: 4,
+                                        }}>
+                                            <Star size={11} color="#B45309" fill="#B45309" />
+                                            <Text style={{ fontFamily: fonts.bold, fontSize: 12, color: '#B45309' }}>
+                                                {doc.rating || '4.8'}
+                                            </Text>
+                                        </View>
+
+                                        <View style={{ width: 1, height: 12, backgroundColor: colors.border }} />
+
+                                        <Text style={{ fontFamily: fonts.medium, fontSize: 12, color: colors.textSecondary }}>
+                                            {doc.experience || '10+'} Yrs Exp
+                                        </Text>
+
+                                        {doc.patients ? (
+                                            <>
+                                                <View style={{ width: 1, height: 12, backgroundColor: colors.border }} />
+                                                <Text style={{ fontFamily: fonts.medium, fontSize: 12, color: colors.textSecondary }}>
+                                                    {doc.patients > 999 ? `${(doc.patients / 1000).toFixed(1)}k` : doc.patients} patients
+                                                </Text>
+                                            </>
+                                        ) : null}
+                                    </View>
+
+                                    {(doc.address || doc.location) && (
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 8 }}>
+                                            <MapPin size={11} color={colors.textMuted} />
+                                            <Text style={{ fontFamily: fonts.regular, fontSize: 12, color: colors.textMuted }} numberOfLines={1}>
+                                                {doc.address || doc.location}
+                                            </Text>
+                                        </View>
+                                    )}
+                                </View>
+                            </View>
+                        </MedCard>
+                        </AnimatedListItem>
+                    ))
+                )}
+            </ScrollView>
+        </SafeAreaView>
     );
 }

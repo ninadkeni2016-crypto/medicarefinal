@@ -1,18 +1,32 @@
-﻿import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Image } from 'react-native';
-import { Mail, Phone, MapPin, Award, Users, Star, LogOut, ChevronRight, Settings } from 'lucide-react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import {
+    Mail, Phone, MapPin, Award, Settings, Camera,
+    Shield, Bell, HelpCircle, ChevronRight, LogOut, Stethoscope, Star, Users
+} from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import EditDoctorProfileForm from './EditDoctorProfileForm';
+import { MedCard } from '@/components/ui/MedCard';
+import { colors, cardShadow, radius, typography, fonts } from '@/lib/theme';
+
+function getInitials(name: string): string {
+    return name.split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2);
+}
 
 export default function DoctorProfile({ onNavigate }: { onNavigate?: (tab: string) => void }) {
-    const { logout } = useAuth();
+    const { logout, userName, patientProfile } = useAuth();
     const [isEditing, setIsEditing] = useState(false);
 
+    const doctorName = userName || 'Doctor';
+    const initials = getInitials(doctorName);
+    const email = patientProfile?.email || 'doctor@medicare.com';
+
     const menuItems = [
-        { icon: Award, label: 'Certifications', bg: '#f0fdfa', color: '#0ea5e9' },
-        { icon: Users, label: 'My Patients', bg: '#dcfce7', color: '#16a34a', tab: 'patients' },
-        { icon: Star, label: 'Reviews', bg: '#fef9c3', color: '#ca8a04' },
-        { icon: Settings, label: 'Settings', bg: '#f3e8ff', color: '#9333ea', tab: 'settings' },
+        { icon: Award, label: 'Professional Certifications', bg: '#EFF6FF', color: '#2563EB' },
+        { icon: Shield, label: 'Medical License & Privacy', bg: '#ECFDF5', color: '#059669' },
+        { icon: Bell, label: 'Push Notifications', bg: '#FFFBEB', color: '#D97706' },
+        { icon: Settings, label: 'Account Settings', bg: '#F5F3FF', color: '#7C3AED', tab: 'settings' },
+        { icon: HelpCircle, label: 'Help & Support Center', bg: '#F7F8FA', color: colors.textSecondary },
     ];
 
     if (isEditing) {
@@ -20,58 +34,170 @@ export default function DoctorProfile({ onNavigate }: { onNavigate?: (tab: strin
     }
 
     return (
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
-            <Text style={{ fontSize: 20, fontWeight: '700', color: '#0284c7', marginBottom: 16 }}>Profile</Text>
+        <ScrollView
+            style={{ flex: 1, backgroundColor: colors.background }}
+            contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
+            showsVerticalScrollIndicator={false}
+        >
+            {/* Header */}
+            <View style={{ marginBottom: 28 }}>
+                <Text style={typography.screenTitle}>My Profile</Text>
+                <Text style={[typography.body, { color: colors.textSecondary, marginTop: 4 }]}>
+                    Manage your professional details
+                </Text>
+            </View>
 
-            <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 20, borderWidth: 1, borderColor: '#f1f5f9', alignItems: 'center', marginBottom: 16 }}>
-                <View style={{ width: 80, height: 80, borderRadius: 16, marginBottom: 12, backgroundColor: '#e0f2fe', alignItems: 'center', justifyContent: 'center' }}>
-                    <Text style={{ fontSize: 28, fontWeight: '800', color: '#0284c7' }}>SM</Text>
+            {/* Profile Card */}
+            <MedCard style={{ padding: 24, alignItems: 'center', marginBottom: 20 }}>
+                {/* Avatar with initials */}
+                <View style={{ position: 'relative', marginBottom: 16 }}>
+                    <View style={{
+                        width: 96, height: 96, borderRadius: 32,
+                        backgroundColor: '#EFF6FF', alignItems: 'center', justifyContent: 'center',
+                        borderWidth: 3, borderColor: colors.border,
+                    }}>
+                        <Text style={{ fontFamily: fonts.bold, fontSize: 32, color: colors.primary }}>
+                            {initials}
+                        </Text>
+                    </View>
+                    <TouchableOpacity style={{
+                        position: 'absolute', bottom: -4, right: -4,
+                        width: 30, height: 30, borderRadius: 10,
+                        backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center',
+                        borderWidth: 2, borderColor: '#FFF',
+                    }}>
+                        <Camera size={14} color="#FFF" />
+                    </TouchableOpacity>
                 </View>
-                <Text style={{ fontWeight: '700', fontSize: 18, color: '#0284c7' }}>Dr. Sameer Mahadik</Text>
-                <Text style={{ fontSize: 14, color: '#0ea5e9', fontWeight: '500' }}>Cardiologist</Text>
-                <View style={{ flexDirection: 'row', gap: 8, marginTop: 16, width: '100%' }}>
+
+                <Text style={{ fontFamily: fonts.bold, fontSize: 22, color: colors.text }}>
+                    Dr. {doctorName}
+                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                    <Stethoscope size={14} color={colors.primary} />
+                    <Text style={{ fontFamily: fonts.medium, fontSize: 14, color: colors.primary }}>
+                        Senior Physician
+                    </Text>
+                </View>
+
+                {/* Stats Row */}
+                <View style={{ flexDirection: 'row', gap: 12, marginTop: 24, width: '100%' }}>
                     {[
-                        { label: 'Experience', value: '12 yrs' },
-                        { label: 'Patients', value: '1,240' },
-                        { label: 'Rating', value: '4.9 ⭐' },
-                    ].map(({ label, value }) => (
-                        <View key={label} style={{ flex: 1, backgroundColor: '#f8fafc', borderRadius: 12, padding: 10, alignItems: 'center' }}>
-                            <Text style={{ fontSize: 10, color: '#64748b' }}>{label}</Text>
-                            <Text style={{ fontSize: 14, fontWeight: '700', color: '#0284c7' }}>{value}</Text>
+                        { icon: Star, label: 'Rating', value: '4.9', bg: '#FFFBEB', color: '#D97706' },
+                        { icon: Users, label: 'Patients', value: '1.2k+', bg: '#ECFDF5', color: '#059669' },
+                        { icon: Award, label: 'Experience', value: '12 yr', bg: '#EFF6FF', color: '#2563EB' },
+                    ].map((item) => (
+                        <View key={item.label} style={{
+                            flex: 1, backgroundColor: item.bg, borderRadius: 16,
+                            padding: 12, alignItems: 'center', gap: 4,
+                        }}>
+                            <item.icon size={16} color={item.color} />
+                            <Text style={{ fontFamily: fonts.bold, fontSize: 15, color: item.color }}>
+                                {item.value}
+                            </Text>
+                            <Text style={{ fontFamily: fonts.regular, fontSize: 11, color: colors.textSecondary }}>
+                                {item.label}
+                            </Text>
                         </View>
                     ))}
                 </View>
-                <TouchableOpacity onPress={() => setIsEditing(true)} activeOpacity={0.7} style={{ width: '100%', marginTop: 16, paddingVertical: 10, borderRadius: 12, backgroundColor: '#f1f5f9', alignItems: 'center' }}>
-                    <Text style={{ fontSize: 14, fontWeight: '600', color: '#0284c7' }}>Edit Profile</Text>
+
+                <TouchableOpacity
+                    onPress={() => setIsEditing(true)}
+                    style={{
+                        marginTop: 20, width: '100%', height: 52, borderRadius: 16,
+                        backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center',
+                        ...cardShadow,
+                    }}
+                >
+                    <Text style={{ fontFamily: fonts.semiBold, fontSize: 15, color: '#FFF' }}>
+                        Edit Profile Details
+                    </Text>
                 </TouchableOpacity>
-            </View>
+            </MedCard>
 
-            <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#f1f5f9', marginBottom: 16 }}>
-                {[
-                    { icon: Mail, label: 'sameer.mahadik@medicare.com' },
-                    { icon: Phone, label: '+91 98765 43210' },
-                    { icon: MapPin, label: 'Apollo Hospital, Mumbai' },
-                ].map(({ icon: Icon, label }) => (
-                    <View key={label} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-                        <Icon size={16} color="#64748b" /><Text style={{ fontSize: 14, color: '#0284c7' }}>{label}</Text>
-                    </View>
-                ))}
-            </View>
-
-            <View style={{ backgroundColor: '#fff', borderRadius: 16, borderWidth: 1, borderColor: '#f1f5f9', overflow: 'hidden', marginBottom: 16 }}>
-                {menuItems.map(({ icon: Icon, label, bg, color, tab }, i) => (
-                    <TouchableOpacity key={label} onPress={() => tab && onNavigate?.(tab)} activeOpacity={0.7} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderTopWidth: i > 0 ? 1 : 0, borderTopColor: '#f1f5f9' }}>
-                        <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: bg, alignItems: 'center', justifyContent: 'center' }}>
-                            <Icon size={16} color={color} />
+            {/* Contact Information */}
+            <View style={{ marginBottom: 20 }}>
+                <Text style={{
+                    fontFamily: fonts.semiBold, fontSize: 11, color: colors.textMuted,
+                    textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10,
+                }}>
+                    Contact Information
+                </Text>
+                <MedCard style={{ padding: 20 }}>
+                    {[
+                        { icon: Mail, label: email, color: colors.primary },
+                        { icon: Phone, label: '+91 98765 43210', color: colors.success },
+                        { icon: MapPin, label: 'Apollo Hospital, Mumbai', color: colors.danger },
+                    ].map((item, i) => (
+                        <View key={item.label} style={{
+                            flexDirection: 'row', alignItems: 'center', gap: 14,
+                            marginBottom: i === 2 ? 0 : 16,
+                        }}>
+                            <View style={{
+                                width: 38, height: 38, borderRadius: 12,
+                                backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center',
+                                borderWidth: 1, borderColor: colors.border,
+                            }}>
+                                <item.icon size={16} color={item.color} />
+                            </View>
+                            <Text style={{ fontFamily: fonts.regular, fontSize: 14, color: colors.textSecondary, flex: 1 }}>
+                                {item.label}
+                            </Text>
                         </View>
-                        <Text style={{ flex: 1, fontSize: 14, fontWeight: '500', color: '#0284c7' }}>{label}</Text>
-                        <ChevronRight size={16} color="#64748b" />
-                    </TouchableOpacity>
-                ))}
+                    ))}
+                </MedCard>
             </View>
 
-            <TouchableOpacity onPress={logout} activeOpacity={0.7} style={{ width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 12, borderRadius: 16, backgroundColor: '#fef2f2' }}>
-                <LogOut size={16} color="#dc2626" /><Text style={{ color: '#dc2626', fontWeight: '600', fontSize: 14 }}>Sign Out</Text>
+            {/* Menu */}
+            <View style={{ marginBottom: 28 }}>
+                <Text style={{
+                    fontFamily: fonts.semiBold, fontSize: 11, color: colors.textMuted,
+                    textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10,
+                }}>
+                    Settings & Actions
+                </Text>
+                <MedCard style={{ padding: 0, overflow: 'hidden' }}>
+                    {menuItems.map((item, i) => (
+                        <TouchableOpacity
+                            key={item.label}
+                            onPress={() => item.tab && onNavigate?.(item.tab)}
+                            activeOpacity={0.7}
+                            style={{
+                                flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16,
+                                borderBottomWidth: i === menuItems.length - 1 ? 0 : 1,
+                                borderBottomColor: colors.border,
+                            }}
+                        >
+                            <View style={{
+                                width: 40, height: 40, borderRadius: 12,
+                                backgroundColor: item.bg, alignItems: 'center', justifyContent: 'center',
+                            }}>
+                                <item.icon size={18} color={item.color} />
+                            </View>
+                            <Text style={{ flex: 1, fontFamily: fonts.medium, fontSize: 15, color: colors.text }}>
+                                {item.label}
+                            </Text>
+                            <ChevronRight size={16} color={colors.border} />
+                        </TouchableOpacity>
+                    ))}
+                </MedCard>
+            </View>
+
+            {/* Logout */}
+            <TouchableOpacity
+                onPress={logout}
+                activeOpacity={0.8}
+                style={{
+                    height: 56, borderRadius: 18, backgroundColor: '#FEF2F2',
+                    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+                    gap: 10, borderWidth: 1, borderColor: '#FECACA',
+                }}
+            >
+                <LogOut size={20} color={colors.danger} />
+                <Text style={{ fontFamily: fonts.semiBold, fontSize: 16, color: colors.danger }}>
+                    Sign Out
+                </Text>
             </TouchableOpacity>
         </ScrollView>
     );
