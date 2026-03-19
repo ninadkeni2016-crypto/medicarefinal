@@ -1,6 +1,7 @@
-﻿import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, StatusBar } from 'react-native';
 import { ArrowLeft, Send, Bot } from 'lucide-react-native';
+import { colors, spacing, radius, typography, fonts, Shadows } from '@/lib/theme';
 
 interface Props { onBack: () => void; }
 
@@ -35,18 +36,52 @@ export default function AIAssistant({ onBack }: Props) {
     useEffect(() => { setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100); }, [messages]);
 
     return (
-        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 20}>
+        <KeyboardAvoidingView 
+            style={{ flex: 1, backgroundColor: colors.background }} 
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined} 
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+        >
             {/* Header */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#f1f5f9' }}>
-                <TouchableOpacity onPress={onBack} activeOpacity={0.7} style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: '#f1f5f9', alignItems: 'center', justifyContent: 'center' }}>
-                    <ArrowLeft size={16} color="#334155" />
+            <View style={{ 
+                flexDirection: 'row', 
+                alignItems: 'center', 
+                gap: 12, 
+                padding: 16, 
+                backgroundColor: colors.surface, 
+                borderBottomWidth: 1, 
+                borderBottomColor: colors.border,
+                ...Shadows.sm
+            }}>
+                <TouchableOpacity 
+                    onPress={onBack} 
+                    activeOpacity={0.7} 
+                    style={{ 
+                        width: 40, 
+                        height: 40, 
+                        borderRadius: 12, 
+                        backgroundColor: colors.background, 
+                        alignItems: 'center', 
+                        justifyContent: 'center' 
+                    }}
+                >
+                    <ArrowLeft size={20} color={colors.primary} />
                 </TouchableOpacity>
-                <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: '#0ea5e9', alignItems: 'center', justifyContent: 'center' }}>
-                    <Bot size={20} color="#fff" />
+                <View style={{ 
+                    width: 44, 
+                    height: 44, 
+                    borderRadius: 14, 
+                    backgroundColor: colors.primary, 
+                    alignItems: 'center', 
+                    justifyContent: 'center' 
+                }}>
+                    <Bot size={24} color="#fff" />
                 </View>
                 <View style={{ flex: 1 }}>
-                    <Text style={{ fontWeight: '600', fontSize: 14, color: '#0284c7' }}>AI Health Assistant</Text>
-                    <Text style={{ fontSize: 12, color: '#16a34a' }}>Always available</Text>
+                    <Text style={[typography.bodyMedium, { color: colors.primary, fontSize: 16 }]}>AI Health Assistant</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                        <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: colors.success }} />
+                        <Text style={[typography.label, { color: colors.success }]}>Always available</Text>
+                    </View>
                 </View>
             </View>
 
@@ -56,38 +91,121 @@ export default function AIAssistant({ onBack }: Props) {
                 ref={flatListRef}
                 data={messages}
                 keyExtractor={item => item.id}
-                contentContainerStyle={{ padding: 16, paddingBottom: 8 }}
+                contentContainerStyle={{ padding: 16, paddingBottom: 24 }}
+                showsVerticalScrollIndicator={false}
                 renderItem={({ item }) => (
-                    <View style={{ alignSelf: item.sender === 'user' ? 'flex-end' : 'flex-start', maxWidth: '85%', marginBottom: 10 }}>
+                    <View style={{ 
+                        alignSelf: item.sender === 'user' ? 'flex-end' : 'flex-start', 
+                        maxWidth: '82%', 
+                        marginBottom: 16 
+                    }}>
                         {item.sender === 'ai' && (
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                                <View style={{ width: 20, height: 20, borderRadius: 6, backgroundColor: '#0ea5e9', alignItems: 'center', justifyContent: 'center' }}>
-                                    <Bot size={12} color="#fff" />
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6, marginLeft: 4 }}>
+                                <View style={{ 
+                                    width: 24, 
+                                    height: 24, 
+                                    borderRadius: 8, 
+                                    backgroundColor: colors.secondary, 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center' 
+                                }}>
+                                    <Bot size={14} color="#fff" />
                                 </View>
-                                <Text style={{ fontSize: 10, color: '#64748b', fontWeight: '500' }}>AI Assistant</Text>
+                                <Text style={[typography.overline, { fontSize: 10, color: colors.textSecondary }]}>AI Assistant</Text>
                             </View>
                         )}
-                        <View style={{ backgroundColor: item.sender === 'user' ? '#0ea5e9' : '#f1f5f9', borderRadius: 16, borderBottomRightRadius: item.sender === 'user' ? 4 : 16, borderBottomLeftRadius: item.sender !== 'user' ? 4 : 16, paddingHorizontal: 14, paddingVertical: 10 }}>
-                            <Text style={{ fontSize: 14, color: item.sender === 'user' ? '#fff' : '#0284c7', lineHeight: 20 }}>{item.text}</Text>
+                        <View style={{ 
+                            backgroundColor: item.sender === 'user' ? colors.primary : colors.cardTint, 
+                            borderRadius: radius.lg, 
+                            borderBottomRightRadius: item.sender === 'user' ? 4 : radius.lg, 
+                            borderBottomLeftRadius: item.sender !== 'user' ? 4 : radius.lg, 
+                            paddingHorizontal: 16, 
+                            paddingVertical: 12,
+                            borderWidth: 1,
+                            borderColor: item.sender === 'user' ? colors.primary : colors.border,
+                            ...Shadows.sm
+                        }}>
+                            <Text style={{ 
+                                fontSize: 15, 
+                                color: item.sender === 'user' ? '#fff' : colors.text, 
+                                lineHeight: 22,
+                                fontFamily: fonts.regular
+                            }}>
+                                {item.text}
+                            </Text>
                         </View>
                     </View>
                 )}
             />
 
             {/* Quick Actions */}
-            <View style={{ flexDirection: 'row', gap: 6, paddingHorizontal: 16, paddingBottom: 8 }}>
-                {['Headache', 'Fever', 'Cough', 'Fatigue'].map(symptom => (
-                    <TouchableOpacity key={symptom} onPress={() => { setText(`I have a ${symptom.toLowerCase()}`); }} activeOpacity={0.7} style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, backgroundColor: '#f0fdfa' }}>
-                        <Text style={{ fontSize: 11, fontWeight: '500', color: '#0ea5e9' }}>{symptom}</Text>
-                    </TouchableOpacity>
-                ))}
+            <View style={{ paddingHorizontal: 16, paddingBottom: 12 }}>
+                <Text style={[typography.overline, { marginBottom: 8, marginLeft: 4 }]}>Quick Suggestions</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                    {['Headache', 'Fever', 'Cough', 'Fatigue'].map(symptom => (
+                        <TouchableOpacity 
+                            key={symptom} 
+                            onPress={() => { setText(`I have a ${symptom.toLowerCase()}`); }} 
+                            activeOpacity={0.7} 
+                            style={{ 
+                                paddingHorizontal: 14, 
+                                paddingVertical: 8, 
+                                borderRadius: 20, 
+                                backgroundColor: colors.accent,
+                                borderWidth: 1,
+                                borderColor: colors.border
+                            }}
+                        >
+                            <Text style={{ fontSize: 12, fontWeight: '600', color: colors.primary }}>{symptom}</Text>
+                        </TouchableOpacity>
+                    ))}
+                </View>
             </View>
 
             {/* Input */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, padding: 16, paddingBottom: Platform.OS === 'ios' ? 24 : 16, backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#f1f5f9' }}>
-                <TextInput value={text} onChangeText={setText} placeholder="Describe your symptoms..." placeholderTextColor="#94a3b8" style={{ flex: 1, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 24, backgroundColor: '#f1f5f9', fontSize: 14, color: '#0284c7' }} onSubmitEditing={handleSend} />
-                <TouchableOpacity onPress={handleSend} activeOpacity={0.7} style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: text.trim() ? '#0ea5e9' : '#e2e8f0', alignItems: 'center', justifyContent: 'center' }}>
-                    <Send size={18} color={text.trim() ? '#fff' : '#94a3b8'} />
+            <View style={{ 
+                flexDirection: 'row', 
+                alignItems: 'center', 
+                gap: 10, 
+                padding: 16, 
+                paddingBottom: Platform.OS === 'ios' ? 32 : 16, 
+                backgroundColor: colors.surface, 
+                borderTopWidth: 1, 
+                borderTopColor: colors.border 
+            }}>
+                <TextInput 
+                    value={text} 
+                    onChangeText={setText} 
+                    placeholder="Describe your symptoms..." 
+                    placeholderTextColor={colors.textMuted} 
+                    style={{ 
+                        flex: 1, 
+                        paddingHorizontal: 18, 
+                        paddingVertical: 12, 
+                        borderRadius: 25, 
+                        backgroundColor: colors.background, 
+                        fontSize: 15, 
+                        color: colors.text,
+                        fontFamily: fonts.regular,
+                        borderWidth: 1,
+                        borderColor: colors.border
+                    }} 
+                    onSubmitEditing={handleSend} 
+                />
+                <TouchableOpacity 
+                    onPress={handleSend} 
+                    activeOpacity={0.7} 
+                    style={{ 
+                        width: 48, 
+                        height: 48, 
+                        borderRadius: 24, 
+                        backgroundColor: text.trim() ? colors.primary : colors.disabled, 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        ...Shadows.sm
+                    }}
+                >
+                    <Send size={20} color="#fff" />
                 </TouchableOpacity>
             </View>
         </KeyboardAvoidingView>
