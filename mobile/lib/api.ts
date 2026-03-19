@@ -11,7 +11,7 @@ const getBaseUrl = () => {
         if (Platform.OS === 'android') {
             return 'http://10.0.2.2:5000/api';
         }
-        return 'http://192.168.1.100:5000/api';
+        return 'http://192.168.1.106:5000/api';
     }
     // Production URL
     return 'https://api.yourbackend.com/api';

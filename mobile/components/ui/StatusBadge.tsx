@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, Platform } from 'react-native';
 import { statusBadge, radius } from '@/lib/theme';
 
 type StatusKey = keyof typeof statusBadge;
@@ -22,9 +22,21 @@ export function StatusBadge({ status, label }: StatusBadgeProps) {
         paddingVertical: 5,
         borderRadius: radius.full,
         backgroundColor: style.bg,
+        // Subtle pill elevation — badges float slightly above card
+        ...Platform.select({
+          ios: {
+            shadowColor: style.text,
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.12,
+            shadowRadius: 4,
+          },
+          android: { elevation: 1 },
+          web: { boxShadow: `0 2px 4px 0 ${style.text}20` } as any,
+          default: {},
+        }),
       }}
     >
-      <Text style={{ fontSize: 11, fontWeight: '500', color: style.text, textTransform: 'capitalize' }}>
+      <Text style={{ fontSize: 11, fontWeight: '600', color: style.text, textTransform: 'capitalize' }}>
         {display}
       </Text>
     </View>

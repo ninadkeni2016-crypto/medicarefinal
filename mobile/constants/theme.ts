@@ -1,19 +1,27 @@
 import { Platform } from 'react-native';
 
+/**
+ * constants/theme.ts — NativeWind / Tailwind companion tokens
+ * Mirrors lib/theme.ts for components using Tailwind className approach.
+ * Primary palette: teal #1F4E5F family.
+ */
 export const Colors = {
-  primary: '#2563EB',
-  secondary: '#64748B',
-  background: '#F8FAFC',
-  card: '#FFFFFF',
-  border: '#E2E8F0',
-  success: '#16A34A',
-  warning: '#F59E0B',
-  danger: '#DC2626',
+  primary:   '#1F4E5F',   // Deep teal
+  secondary: '#6EC1C8',   // Soft cyan
+  accent:    '#A8DADC',   // Light aqua
+  blue:      '#457B9D',   // Steel blue
+  background:'#F4F7F9',   // Teal-tinted off-white
+  card:      '#FFFFFF',
+  border:    '#D8E8EC',   // Teal-tinted border
+  success:   '#6BCB77',
+  warning:   '#F4A261',
+  danger:    '#E76F51',
+  info:      '#6EC1C8',
   text: {
-    primary: '#0F172A',
-    secondary: '#64748B',
-    muted: '#94A3B8',
-    white: '#FFFFFF',
+    primary:   '#1C1C1E',
+    secondary: '#6B7280',
+    muted:     '#9CA3AF',
+    white:     '#FFFFFF',
   }
 };
 
@@ -27,23 +35,23 @@ export const Spacing = {
 };
 
 export const Radius = {
-  sm: 4,
-  md: 8,
-  lg: 12,
-  xl: 16,
+  sm: 8,
+  md: 12,
+  lg: 20,   // card radius
+  xl: 24,
   full: 9999,
 };
 
 export const Shadows = {
   sm: Platform.select({
-    ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 },
-    android: { elevation: 1 },
-    web: { boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' },
+    ios:     { shadowColor: '#0D2B36', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.08, shadowRadius: 12 },
+    android: { elevation: 3 },
+    web:     { boxShadow: '0 4px 12px 0 rgba(13, 43, 54, 0.08)' },
   }),
   md: Platform.select({
-    ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 4 },
-    android: { elevation: 2 },
-    web: { boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' },
+    ios:     { shadowColor: '#0D2B36', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.09, shadowRadius: 24 },
+    android: { elevation: 5 },
+    web:     { boxShadow: '0 6px 24px 0 rgba(13, 43, 54, 0.09)' },
   }),
 };
 

@@ -1,7 +1,8 @@
-﻿import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, Platform } from 'react-native';
 import { ArrowLeft, Bell, Shield, Lock, Globe, Moon, ChevronRight, LogOut } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
+import { colors, radius, typography, fonts, Shadows } from '@/lib/theme';
 
 interface SettingsScreenProps { onBack: () => void; }
 
@@ -21,17 +22,17 @@ export default function SettingsScreen({ onBack }: SettingsScreenProps) {
     );
 
     return (
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+        <ScrollView style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={{ padding: 16, paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-                <TouchableOpacity onPress={onBack} activeOpacity={0.7} style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: '#f1f5f9', alignItems: 'center', justifyContent: 'center' }}>
-                    <ArrowLeft size={16} color="#334155" />
+                <TouchableOpacity onPress={onBack} activeOpacity={0.7} style={{ width: 36, height: 36, borderRadius: radius.md, backgroundColor: colors.card, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border, ...Shadows.sm as object }}>
+                    <ArrowLeft size={16} color={colors.text} />
                 </TouchableOpacity>
-                <Text style={{ fontSize: 20, fontWeight: '700', color: '#0284c7' }}>Settings</Text>
+                <Text style={[typography.screenTitle, { fontSize: 20 }]}>Settings</Text>
             </View>
 
             {/* Notifications */}
-            <Text style={{ fontSize: 11, fontWeight: '600', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, paddingLeft: 4 }}>Notifications</Text>
-            <View style={{ backgroundColor: '#fff', borderRadius: 16, borderWidth: 1, borderColor: '#f1f5f9', overflow: 'hidden', marginBottom: 16 }}>
+            <Text style={[typography.overline, { marginBottom: 8, paddingLeft: 4 }]}>Notifications</Text>
+            <View style={{ backgroundColor: colors.card, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, overflow: 'hidden', marginBottom: 20, ...Shadows.md as object }}>
                 {[
                     { label: 'Push Notifications', desc: 'Receive push notifications', value: notifications, onChange: setNotifications },
                     { label: 'Appointment Reminders', desc: 'Get reminded before appointments', value: appointmentReminders, onChange: setAppointmentReminders },
@@ -51,8 +52,8 @@ export default function SettingsScreen({ onBack }: SettingsScreenProps) {
             </View>
 
             {/* Security */}
-            <Text style={{ fontSize: 11, fontWeight: '600', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, paddingLeft: 4 }}>Security</Text>
-            <View style={{ backgroundColor: '#fff', borderRadius: 16, borderWidth: 1, borderColor: '#f1f5f9', overflow: 'hidden', marginBottom: 16 }}>
+            <Text style={[typography.overline, { marginBottom: 8, paddingLeft: 4 }]}>Security</Text>
+            <View style={{ backgroundColor: colors.card, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, overflow: 'hidden', marginBottom: 20, ...Shadows.md as object }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16 }}>
                     <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: '#f0fdfa', alignItems: 'center', justifyContent: 'center' }}>
                         <Shield size={16} color="#0ea5e9" />
@@ -76,8 +77,8 @@ export default function SettingsScreen({ onBack }: SettingsScreenProps) {
             </View>
 
             {/* General */}
-            <Text style={{ fontSize: 11, fontWeight: '600', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, paddingLeft: 4 }}>General</Text>
-            <View style={{ backgroundColor: '#fff', borderRadius: 16, borderWidth: 1, borderColor: '#f1f5f9', overflow: 'hidden', marginBottom: 16 }}>
+            <Text style={[typography.overline, { marginBottom: 8, paddingLeft: 4 }]}>General</Text>
+            <View style={{ backgroundColor: colors.card, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, overflow: 'hidden', marginBottom: 20, ...Shadows.md as object }}>
                 <TouchableOpacity activeOpacity={0.7} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16 }}>
                     <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: '#f1f5f9', alignItems: 'center', justifyContent: 'center' }}>
                         <Globe size={16} color="#334155" />
@@ -101,14 +102,14 @@ export default function SettingsScreen({ onBack }: SettingsScreenProps) {
             </View>
 
             {/* App Info */}
-            <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#f1f5f9', alignItems: 'center', marginBottom: 16 }}>
-                <Text style={{ fontSize: 12, color: '#64748b' }}>MediCare v1.0.0</Text>
-                <Text style={{ fontSize: 10, color: '#94a3b8', marginTop: 2 }}>© 2026 MediCare. All rights reserved.</Text>
+            <View style={{ backgroundColor: colors.card, borderRadius: radius.lg, padding: 16, borderWidth: 1, borderColor: colors.border, alignItems: 'center', marginBottom: 20, ...Shadows.sm as object }}>
+                <Text style={[typography.label, { color: colors.textSecondary }]}>MediCare v1.0.0</Text>
+                <Text style={[typography.label, { color: colors.textMuted, marginTop: 2 }]}>© 2026 MediCare. All rights reserved.</Text>
             </View>
 
             {/* Logout */}
-            <TouchableOpacity onPress={logout} activeOpacity={0.7} style={{ width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 12, borderRadius: 16, backgroundColor: '#fef2f2' }}>
-                <LogOut size={16} color="#dc2626" /><Text style={{ color: '#dc2626', fontWeight: '600', fontSize: 14 }}>Sign Out</Text>
+            <TouchableOpacity onPress={logout} activeOpacity={0.8} style={{ width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, borderRadius: radius.lg, backgroundColor: '#FEF2F2', borderWidth: 1, borderColor: '#FECACA', ...Shadows.sm as object }}>
+                <LogOut size={16} color={colors.danger} /><Text style={{ color: colors.danger, fontWeight: '600', fontSize: 14 }}>Sign Out</Text>
             </TouchableOpacity>
         </ScrollView>
     );

@@ -145,7 +145,7 @@ export default function AppointmentsList({ onSelectAppointment }: Props) {
                                 {role === 'doctor' && (apt.status === 'upcoming' || apt.status === 'confirmed') && (
                                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
                                         {apt.status === 'upcoming' && (
-                                            <TouchableOpacity onPress={() => updateStatus('confirmed')} activeOpacity={0.7} style={{ paddingVertical: 4, paddingHorizontal: 8, borderRadius: radius.sm, backgroundColor: '#EFF6FF', borderWidth: 1, borderColor: colors.border }}>
+                                            <TouchableOpacity onPress={() => updateStatus('confirmed')} activeOpacity={0.7} style={{ paddingVertical: 4, paddingHorizontal: 8, borderRadius: radius.sm, backgroundColor: '#EAF5F7', borderWidth: 1, borderColor: colors.border }}>
                                                 <Text style={[typography.caption, { color: colors.primary, fontWeight: '600' }]}>Approve</Text>
                                             </TouchableOpacity>
                                         )}

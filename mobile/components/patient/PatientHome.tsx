@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import RazorpayCheckout from '../shared/RazorpayCheckout';
 import api from '@/lib/api';
-import { colors, spacing, radius, typography, cardShadow, fonts } from '@/lib/theme';
+import { colors, spacing, radius, typography, cardShadow, fonts, metricTints } from '@/lib/theme';
 import { MedCard } from '@/components/ui/MedCard';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { StatusBadge } from '@/components/ui/StatusBadge';
@@ -59,10 +59,10 @@ export default function PatientHome({ onNavigate }: PatientHomeProps) {
     ];
 
     const healthMetrics = [
-        { label: 'Heart Rate', value: patientProfile.vitals?.heartRate || '72 bpm', Icon: Heart, bg: '#FEF2F2', iconColor: '#F87171' },
-        { label: 'Blood Pressure', value: patientProfile.vitals?.bloodPressure || '120/80', Icon: Activity, bg: '#EFF6FF', iconColor: '#60A5FA' },
-        { label: 'Blood Sugar', value: patientProfile.vitals?.bloodSugar || '95 mg/dL', Icon: Droplets, bg: '#ECFDF5', iconColor: '#34D399' },
-        { label: 'Weight', value: patientProfile.vitals?.weight || '72 kg', Icon: Scale, bg: '#F5F3FF', iconColor: '#D8B4FE' },
+        { label: 'Heart Rate',      value: patientProfile.vitals?.heartRate      || '72 bpm',    Icon: Heart,     bg: metricTints.heartRate.bg,     iconColor: metricTints.heartRate.icon     },
+        { label: 'Blood Pressure',  value: patientProfile.vitals?.bloodPressure  || '120/80',    Icon: Activity,  bg: metricTints.bloodPressure.bg, iconColor: metricTints.bloodPressure.icon },
+        { label: 'Blood Sugar',     value: patientProfile.vitals?.bloodSugar     || '95 mg/dL',  Icon: Droplets,  bg: metricTints.bloodSugar.bg,    iconColor: metricTints.bloodSugar.icon    },
+        { label: 'Weight',          value: patientProfile.vitals?.weight         || '72 kg',     Icon: Scale,     bg: metricTints.weight.bg,        iconColor: metricTints.weight.icon        },
     ];
 
     const handleSuccess = () => {
@@ -140,6 +140,7 @@ export default function PatientHome({ onNavigate }: PatientHomeProps) {
                         backgroundColor: colors.primary,
                         borderColor: colors.primary,
                         padding: 20,
+                        borderRadius: radius.xl,    // 24px — hero card gets highest radius
                         overflow: 'hidden',
                     }}
                 >
@@ -176,20 +177,25 @@ export default function PatientHome({ onNavigate }: PatientHomeProps) {
                     <TouchableOpacity
                         key={label}
                         onPress={() => onNavigate(tab)}
-                        activeOpacity={0.7}
-                        style={{ 
-                            flex: 1, 
-                            alignItems: 'center', 
-                            gap: 8, 
-                            paddingVertical: 16, 
-                            backgroundColor: colors.card, 
-                            borderRadius: 20, 
-                            borderWidth: 1, 
-                            borderColor: colors.border, 
-                            ...cardShadow 
+                        activeOpacity={0.75}
+                        style={{
+                            flex: 1,
+                            alignItems: 'center',
+                            gap: 8,
+                            paddingVertical: 16,
+                            backgroundColor: colors.card,
+                            borderRadius: radius.lg,   // 20px — soft, premium
+                            borderWidth: 1,
+                            borderColor: colors.border,
+                            ...cardShadow as object,
                         }}
                     >
-                        <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(58, 190, 249, 0.10)', alignItems: 'center', justifyContent: 'center' }}>
+                        <View style={{
+                            width: 44, height: 44,
+                            borderRadius: radius.md,
+                            backgroundColor: 'rgba(29, 143, 212, 0.10)',
+                            alignItems: 'center', justifyContent: 'center',
+                        }}>
                             <Icon size={22} color={colors.primary} strokeWidth={2} />
                         </View>
                         <Text style={{ fontSize: 12, fontWeight: '600', color: colors.text }}>{label}</Text>

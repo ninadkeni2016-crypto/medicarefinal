@@ -53,15 +53,15 @@ export default function PatientProfile({ onNavigate }: { onNavigate?: (tab: stri
     const menuSections = [
         {
             title: 'Health Management', items: [
-                { icon: Activity, label: 'Medical Records', bg: 'rgba(16, 185, 129, 0.1)', color: colors.success },
-                { icon: Shield, label: 'Insurance Details', bg: 'rgba(99, 102, 241, 0.1)', color: colors.primary },
+                { icon: Activity, label: 'Medical Records',   bg: 'rgba(107, 203, 119, 0.10)', color: colors.success  },
+                { icon: Shield,   label: 'Insurance Details', bg: 'rgba(31, 78, 95, 0.10)',    color: colors.primary  },
             ]
         },
         {
             title: 'Account Settings', items: [
-                { icon: Bell, label: 'Notifications', bg: 'rgba(245, 158, 11, 0.1)', color: '#F59E0B' },
-                { icon: Settings, label: 'Preferences', bg: 'rgba(99, 102, 241, 0.1)', color: colors.primary },
-                { icon: HelpCircle, label: 'Support & FAQ', bg: 'rgba(148, 163, 184, 0.1)', color: colors.textSecondary },
+                { icon: Bell,       label: 'Notifications', bg: 'rgba(244, 162, 97, 0.10)',  color: colors.warning  },
+                { icon: Settings,   label: 'Preferences',  bg: 'rgba(31, 78, 95, 0.10)',    color: colors.primary  },
+                { icon: HelpCircle, label: 'Support & FAQ', bg: 'rgba(148, 163, 184, 0.10)', color: colors.textSecondary },
             ]
         },
     ];
@@ -73,7 +73,7 @@ export default function PatientProfile({ onNavigate }: { onNavigate?: (tab: stri
                 <TouchableOpacity 
                     onPress={() => setShowEdit(true)}
                     activeOpacity={0.8}
-                    style={{ paddingHorizontal: 20, paddingVertical: 10, borderRadius: 12, backgroundColor: 'rgba(99, 102, 241, 0.08)', borderWidth: 1, borderColor: 'rgba(99, 102, 241, 0.1)' }}
+                    style={{ paddingHorizontal: 20, paddingVertical: 10, borderRadius: 12, backgroundColor: 'rgba(31, 78, 95, 0.08)', borderWidth: 1, borderColor: 'rgba(31, 78, 95, 0.15)' }}
                 >
                     <Text style={{ fontFamily: fonts.semiBold, color: colors.primary, fontSize: 14 }}>Edit Profile</Text>
                 </TouchableOpacity>
@@ -98,9 +98,12 @@ export default function PatientProfile({ onNavigate }: { onNavigate?: (tab: stri
                 
                 <View style={{ flexDirection: 'row', gap: 12, marginTop: 28, width: '100%' }}>
                     {[
-                        { icon: Calendar, label: 'Age', value: `${age} yr`, color: colors.primary, bg: 'rgba(99, 102, 241, 0.08)' },
-                        { icon: Ruler, label: 'Height', value: p.height ? `${p.height} cm` : '—', color: colors.success, bg: 'rgba(16, 185, 129, 0.08)' },
-                        { icon: Weight, label: 'Weight', value: p.weight ? `${p.weight} kg` : '—', color: '#F59E0B', bg: 'rgba(245, 158, 11, 0.08)' },
+                        // Age — teal tint
+                        { icon: Calendar, label: 'Age',    value: `${age} yr`,                     color: colors.primary, bg: 'rgba(31, 78, 95, 0.08)' },
+                        // Height — teal-green tint
+                        { icon: Ruler,    label: 'Height', value: p.height ? `${p.height} cm` : '—', color: colors.success, bg: 'rgba(107, 203, 119, 0.10)' },
+                        // Weight — soft orange tint
+                        { icon: Weight,   label: 'Weight', value: p.weight ? `${p.weight} kg` : '—', color: colors.warning, bg: 'rgba(244, 162, 97, 0.10)' },
                     ].map((item) => (
                         <View key={item.label} style={{ flex: 1, backgroundColor: colors.background, borderRadius: 18, padding: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.border }}>
                             <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: item.bg, alignItems: 'center', justifyContent: 'center', marginBottom: 6 }}>
@@ -118,9 +121,9 @@ export default function PatientProfile({ onNavigate }: { onNavigate?: (tab: stri
                 <SectionHeader title="Contact Information" />
                 <MedCard style={{ padding: 20 }}>
                     {[
-                        { icon: Mail, label: p.email || 'No email added', color: colors.primary, bg: 'rgba(99, 102, 241, 0.08)' },
-                        { icon: Phone, label: p.phone || 'No phone added', color: colors.success, bg: 'rgba(16, 185, 129, 0.08)' },
-                        { icon: MapPin, label: [p.address, p.city].filter(Boolean).join(', ') || 'No address added', color: colors.danger, bg: 'rgba(239, 68, 68, 0.08)' },
+                        { icon: Mail,   label: p.email || 'No email added',                                         color: colors.primary,   bg: 'rgba(31, 78, 95, 0.08)'     },
+                        { icon: Phone,  label: p.phone || 'No phone added',                                         color: colors.success,   bg: 'rgba(107, 203, 119, 0.08)' },
+                        { icon: MapPin, label: [p.address, p.city].filter(Boolean).join(', ') || 'No address added', color: colors.danger,    bg: 'rgba(231, 111, 81, 0.08)'  },
                     ].map((item, i) => (
                         <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: i === 2 ? 0 : 20 }}>
                             <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border }}>

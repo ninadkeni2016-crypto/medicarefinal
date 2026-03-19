@@ -1,5 +1,6 @@
 import React from 'react';
-import { TouchableOpacity, Text, TouchableOpacityProps, View, ActivityIndicator } from 'react-native';
+import { TouchableOpacity, Text, TouchableOpacityProps, View, ActivityIndicator, Platform } from 'react-native';
+import { Shadows } from '@/lib/theme';
 
 export interface ButtonProps extends TouchableOpacityProps {
     variant?: 'primary' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
@@ -10,13 +11,13 @@ export interface ButtonProps extends TouchableOpacityProps {
 }
 
 export const Button = React.forwardRef<React.ElementRef<typeof TouchableOpacity>, ButtonProps>(
-    ({ className, variant = 'primary', size = 'default', loading, textClass, children, disabled, ...props }, ref) => {
+    ({ className, variant = 'primary', size = 'default', loading, textClass, children, disabled, style, ...props }, ref) => {
 
         // Base classes
         let buttonClass = 'inline-flex items-center justify-center rounded-xl transition-all active:scale-[0.98] ';
         let labelClass = 'font-semibold ';
 
-        // Variants
+        // Variant styles
         switch (variant) {
             case 'primary':
                 buttonClass += 'bg-primary ';
@@ -44,7 +45,7 @@ export const Button = React.forwardRef<React.ElementRef<typeof TouchableOpacity>
                 break;
         }
 
-        // Sizes
+        // Size styles
         switch (size) {
             case 'default':
                 buttonClass += 'h-11 px-5 ';
@@ -67,12 +68,17 @@ export const Button = React.forwardRef<React.ElementRef<typeof TouchableOpacity>
             buttonClass += 'opacity-50 ';
         }
 
+        // Elevation: primary/secondary get light shadow; ghost/link get none
+        const needsShadow = variant === 'primary' || variant === 'destructive' || variant === 'secondary' || variant === 'outline';
+        const elevationStyle = needsShadow ? Shadows.sm : {};
+
         return (
             <TouchableOpacity
                 ref={ref}
                 disabled={disabled || loading}
-                activeOpacity={0.8}
+                activeOpacity={0.82}
                 className={`${buttonClass} ${className || ''}`}
+                style={[elevationStyle as any, style]}
                 {...props}
             >
                 {loading ? (

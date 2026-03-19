@@ -28,7 +28,7 @@ export function SkeletonBox({ width = '100%', height, style }: SkeletonBoxProps)
         {
           width,
           height,
-          borderRadius: radius.md,
+          borderRadius: radius.lg,
           backgroundColor: colors.border,
           opacity,
         },

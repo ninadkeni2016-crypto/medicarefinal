@@ -1,16 +1,16 @@
 import React from 'react';
-import { View, Text, ViewStyle } from 'react-native';
-import { fonts } from '@/lib/theme';
+import { View, Text, Platform, ViewStyle } from 'react-native';
+import { fonts, Shadows } from '@/lib/theme';
 
 const PALETTE = [
-    { bg: '#EFF6FF', text: '#2563EB' },
-    { bg: '#F0FDF4', text: '#16A34A' },
-    { bg: '#FDF4FF', text: '#9333EA' },
-    { bg: '#FFF7ED', text: '#EA580C' },
-    { bg: '#F0FDFA', text: '#0D9488' },
-    { bg: '#FFFBEB', text: '#D97706' },
-    { bg: '#FEF2F2', text: '#DC2626' },
-    { bg: '#F5F3FF', text: '#7C3AED' },
+    { bg: '#EAF5F7', text: '#1F4E5F' },   // deep teal
+    { bg: '#E8F2FA', text: '#457B9D' },   // steel blue
+    { bg: '#EBF8FA', text: '#6EC1C8' },   // cyan
+    { bg: '#E8F5EE', text: '#2D7A43' },   // teal-green
+    { bg: '#FFF4E6', text: '#B5600E' },   // soft amber
+    { bg: '#EFF8FF', text: '#2A6B82' },   // light teal
+    { bg: '#FEE8E2', text: '#C0402A' },   // muted red
+    { bg: '#F0F9FA', text: '#1F4E5F' },   // aqua-teal
 ];
 
 export function getInitials(name: string): string {
@@ -39,9 +39,8 @@ interface InitialsAvatarProps {
 }
 
 /**
- * Renders a coloured initials avatar — no images, no external URLs.
- * Color is deterministic based on the name, so the same person always
- * gets the same colour across screens.
+ * Renders a coloured initials avatar with a subtle soft shadow ring.
+ * Color is deterministic based on the name.
  */
 export function InitialsAvatar({
     name,
@@ -65,6 +64,18 @@ export function InitialsAvatar({
                     backgroundColor: bg,
                     alignItems: 'center',
                     justifyContent: 'center',
+                    // Soft shadow ring — avatars feel slightly raised
+                    ...Platform.select({
+                        ios: {
+                            shadowColor: text,
+                            shadowOffset: { width: 0, height: 3 },
+                            shadowOpacity: 0.15,
+                            shadowRadius: 8,
+                        },
+                        android: { elevation: 3 },
+                        web: { boxShadow: `0 3px 8px 0 ${text}26` } as any,
+                        default: {},
+                    }),
                 },
                 style,
             ]}

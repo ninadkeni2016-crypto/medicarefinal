@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Platform } from 'react-native';
 import {
     Mail, Phone, MapPin, Award, Settings, Camera,
     Shield, Bell, HelpCircle, ChevronRight, LogOut, Stethoscope, Star, Users
@@ -7,7 +7,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import EditDoctorProfileForm from './EditDoctorProfileForm';
 import { MedCard } from '@/components/ui/MedCard';
-import { colors, cardShadow, radius, typography, fonts } from '@/lib/theme';
+import { colors, cardShadow, radius, typography, fonts, Shadows } from '@/lib/theme';
 
 function getInitials(name: string): string {
     return name.split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2);
@@ -54,7 +54,14 @@ export default function DoctorProfile({ onNavigate }: { onNavigate?: (tab: strin
                     <View style={{
                         width: 96, height: 96, borderRadius: 32,
                         backgroundColor: '#EFF6FF', alignItems: 'center', justifyContent: 'center',
-                        borderWidth: 3, borderColor: colors.border,
+                        borderWidth: 3, borderColor: 'rgba(29, 143, 212, 0.25)',
+                        // Soft tinted shadow around avatar
+                        ...Platform.select({
+                            ios: { shadowColor: colors.primary, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.18, shadowRadius: 16 },
+                            android: { elevation: 6 },
+                            web: { boxShadow: '0 6px 16px 0 rgba(29,143,212,0.18)' },
+                            default: {},
+                        }),
                     }}>
                         <Text style={{ fontFamily: fonts.bold, fontSize: 32, color: colors.primary }}>
                             {initials}
@@ -88,8 +95,15 @@ export default function DoctorProfile({ onNavigate }: { onNavigate?: (tab: strin
                         { icon: Award, label: 'Experience', value: '12 yr', bg: '#EFF6FF', color: '#2563EB' },
                     ].map((item) => (
                         <View key={item.label} style={{
-                            flex: 1, backgroundColor: item.bg, borderRadius: 16,
+                            flex: 1, backgroundColor: item.bg, borderRadius: radius.lg,
                             padding: 12, alignItems: 'center', gap: 4,
+                            // Tinted shadow matching icon color
+                            ...Platform.select({
+                                ios: { shadowColor: item.color, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.12, shadowRadius: 8 },
+                                android: { elevation: 2 },
+                                web: { boxShadow: `0 3px 8px 0 ${item.color}20` },
+                                default: {},
+                            }),
                         }}>
                             <item.icon size={16} color={item.color} />
                             <Text style={{ fontFamily: fonts.bold, fontSize: 15, color: item.color }}>
@@ -105,9 +119,9 @@ export default function DoctorProfile({ onNavigate }: { onNavigate?: (tab: strin
                 <TouchableOpacity
                     onPress={() => setIsEditing(true)}
                     style={{
-                        marginTop: 20, width: '100%', height: 52, borderRadius: 16,
+                        marginTop: 20, width: '100%', height: 52, borderRadius: radius.lg,
                         backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center',
-                        ...cardShadow,
+                        ...Shadows.sm as object,
                     }}
                 >
                     <Text style={{ fontFamily: fonts.semiBold, fontSize: 15, color: '#FFF' }}>
@@ -189,9 +203,15 @@ export default function DoctorProfile({ onNavigate }: { onNavigate?: (tab: strin
                 onPress={logout}
                 activeOpacity={0.8}
                 style={{
-                    height: 56, borderRadius: 18, backgroundColor: '#FEF2F2',
+                    height: 56, borderRadius: radius.lg, backgroundColor: '#FEF2F2',
                     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
                     gap: 10, borderWidth: 1, borderColor: '#FECACA',
+                    ...Platform.select({
+                        ios: { shadowColor: colors.danger, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.10, shadowRadius: 8 },
+                        android: { elevation: 2 },
+                        web: { boxShadow: '0 3px 8px 0 rgba(239,68,68,0.10)' },
+                        default: {},
+                    }),
                 }}
             >
                 <LogOut size={20} color={colors.danger} />

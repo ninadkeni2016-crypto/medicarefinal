@@ -3,7 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { Users, Calendar, Receipt, Bell, Clock, FileText, Pill, CreditCard, MessageSquare, ChevronRight, AlertCircle } from 'lucide-react-native';
 import api from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
-import { colors, spacing, radius, typography, cardShadow, fonts } from '@/lib/theme';
+import { colors, spacing, radius, typography, cardShadow, fonts, Shadows } from '@/lib/theme';
 import { MedCard } from '@/components/ui/MedCard';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { SkeletonBox } from '@/components/ui/SkeletonBox';
@@ -33,7 +33,7 @@ function BarChart({ data, labelKey, valueKey, height = 80 }: { data: any[]; labe
     <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-around', height, paddingVertical: 8 }}>
       {data.map((item: any, i: number) => (
         <View key={i} style={{ alignItems: 'center', flex: 1 }}>
-          <View style={{ width: 20, height: Math.max(4, (item[valueKey] / max) * (height - 24)), backgroundColor: colors.primary, borderRadius: 4, marginBottom: 4 }} />
+          <View style={{ width: 20, height: Math.max(4, (item[valueKey] / max) * (height - 24)), backgroundColor: colors.secondary, borderRadius: 6, marginBottom: 4 }} />
           <Text style={[typography.caption, { color: colors.textSecondary, fontSize: 10 }]} numberOfLines={1}>{item[labelKey]}</Text>
         </View>
       ))}
@@ -145,7 +145,15 @@ export default function DoctorHome({ onNavigate }: DoctorHomeProps) {
             showsVerticalScrollIndicator={false}
         >
             {demoData && (
-                <View style={{ backgroundColor: '#E0F2FE', paddingVertical: 8, paddingHorizontal: spacing.md, borderRadius: radius.md, marginBottom: spacing.md, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <View style={{
+                    backgroundColor: '#EBF5FF',
+                    paddingVertical: 10, paddingHorizontal: spacing.md,
+                    borderRadius: radius.lg,
+                    marginBottom: spacing.md,
+                    flexDirection: 'row', alignItems: 'center', gap: 10,
+                    borderLeftWidth: 3, borderLeftColor: colors.primary,
+                    ...Shadows.sm as object,
+                }}>
                     <AlertCircle size={18} color={colors.primary} />
                     <Text style={[typography.caption, { color: colors.primary, fontWeight: '600' }]}>Sample Data Loaded</Text>
                 </View>
@@ -154,7 +162,7 @@ export default function DoctorHome({ onNavigate }: DoctorHomeProps) {
             {/* Header */}
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.xl }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
-                    <Image source={require('../../assets/images/logo.png')} style={{ width: 60, height: 60 }} resizeMode="contain" />
+                    <Image source={require('../../assets/images/logo.png')} style={{ width: 84, height: 84 }} resizeMode="contain" />
                     <View>
                         <Text style={[typography.label, { color: colors.textSecondary }]}>Welcome back</Text>
                         <Text style={[typography.screenTitle, { marginTop: 2 }]}>{userName || 'Doctor'}</Text>
@@ -180,11 +188,15 @@ export default function DoctorHome({ onNavigate }: DoctorHomeProps) {
                     ].map(({ icon: Icon, label, value }) => (
                         <MedCard key={label} style={{ width: '48%', marginBottom: spacing.sm, padding: spacing.md }}>
                             <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-                                <View>
+                                <View style={{ flex: 1 }}>
                                     <Text style={[typography.cardValue, { color: colors.text }]}>{value}</Text>
                                     <Text style={[typography.label, { color: colors.textSecondary, marginTop: 4 }]}>{label}</Text>
                                 </View>
-                                <View style={{ width: 36, height: 36, borderRadius: radius.md, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center' }}>
+                                <View style={{
+                                    width: 38, height: 38, borderRadius: radius.md,
+                                    backgroundColor: 'rgba(29, 143, 212, 0.10)',
+                                    alignItems: 'center', justifyContent: 'center',
+                                }}>
                                     <Icon size={18} color={colors.primary} strokeWidth={2} />
                                 </View>
                             </View>
@@ -212,8 +224,19 @@ export default function DoctorHome({ onNavigate }: DoctorHomeProps) {
                 <Text style={[typography.section, { color: colors.text, marginBottom: spacing.md }]}>Quick actions</Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
                     {quickActions.map(({ icon: Icon, label, tab }) => (
-                        <TouchableOpacity key={tab} onPress={() => onNavigate(tab)} activeOpacity={0.7} style={{ width: '31%', backgroundColor: colors.card, borderRadius: radius.md, padding: spacing.md, borderWidth: 1, borderColor: colors.border, alignItems: 'center', gap: spacing.sm, ...cardShadow }}>
-                            <View style={{ width: 40, height: 40, borderRadius: radius.md, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center' }}>
+                        <TouchableOpacity key={tab} onPress={() => onNavigate(tab)} activeOpacity={0.75} style={{
+                            width: '31%', backgroundColor: colors.card,
+                            borderRadius: radius.lg,
+                            padding: spacing.md,
+                            borderWidth: 1, borderColor: colors.border,
+                            alignItems: 'center', gap: spacing.sm,
+                            ...cardShadow as object,
+                        }}>
+                            <View style={{
+                                width: 42, height: 42, borderRadius: radius.md,
+                                backgroundColor: 'rgba(29, 143, 212, 0.10)',
+                                alignItems: 'center', justifyContent: 'center',
+                            }}>
                                 <Icon size={20} color={colors.primary} strokeWidth={2} />
                             </View>
                             <Text style={[typography.caption, { color: colors.text, fontWeight: '500' }]}>{label}</Text>
