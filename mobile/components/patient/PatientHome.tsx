@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import { Calendar, FileText, Pill, Bell, ChevronRight, CreditCard, Clock, ShoppingBag, Heart, Activity, Droplets, Scale } from 'lucide-react-native';
-import { mockDoctors } from '@/lib/mock-data';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import RazorpayCheckout from '../shared/RazorpayCheckout';
@@ -19,6 +18,7 @@ export default function PatientHome({ onNavigate }: PatientHomeProps) {
     const { userName, patientProfile } = useAuth();
     const [appointments, setAppointments] = useState<any[]>([]);
     const [notifications, setNotifications] = useState<any[]>([]);
+    const [topDoctors, setTopDoctors] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [showPayment, setShowPayment] = useState(false);
     const [paymentDone, setPaymentDone] = useState(false);
@@ -26,12 +26,14 @@ export default function PatientHome({ onNavigate }: PatientHomeProps) {
     useEffect(() => {
         const fetchDashboard = async () => {
             try {
-                const [apptsRes, notifsRes] = await Promise.all([
+                const [apptsRes, notifsRes, docsRes] = await Promise.all([
                     api.get('/appointments'),
                     api.get('/notifications').catch(() => ({ data: [] })),
+                    api.get('/doctors').catch(() => ({ data: [] })),
                 ]);
                 setAppointments(apptsRes.data || []);
                 setNotifications(notifsRes.data || []);
+                setTopDoctors(docsRes.data || []);
             } catch (error) {
                 console.error('Failed to load patient dashboard:', error);
             } finally {
@@ -254,8 +256,8 @@ export default function PatientHome({ onNavigate }: PatientHomeProps) {
             <View style={{ marginBottom: spacing.xl }}>
                 <SectionHeader title="Recommended Doctors" onViewAll={() => onNavigate('find-doctor')} />
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingRight: 20 }}>
-                    {mockDoctors.slice(0, 5).map(doc => (
-                        <MedCard key={doc.id} onPress={() => onNavigate('find-doctor')} style={{ width: 280, padding: 16 }}>
+                    {topDoctors.slice(0, 5).map(doc => (
+                        <MedCard key={doc._id || doc.id} onPress={() => onNavigate('find-doctor')} style={{ width: 280, padding: 16 }}>
                             <View style={{ flexDirection: 'row', gap: 12 }}>
                                 <InitialsAvatar name={doc.name || ''} size={64} radius={16} />
                                 <View style={{ flex: 1 }}>

@@ -51,7 +51,7 @@ const AVATAR_COLORS = [
     { bg: '#FFFBEB', text: '#D97706' },
 ];
 
-export default function PatientsList({ onNavigate }: { onNavigate?: (tab: string) => void }) {
+export default function PatientsList({ onNavigate }: { onNavigate?: (tab: string, data?: any) => void }) {
     const [search, setSearch] = useState('');
     const [patients, setPatients] = useState<Patient[]>([]);
     const [loading, setLoading] = useState(true);
@@ -195,15 +195,15 @@ export default function PatientsList({ onNavigate }: { onNavigate?: (tab: string
                                         )}
 
                                         {/* Action Chips */}
-                                        <View style={{ flexDirection: 'row', gap: 8 }}>
+                                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                                             {[
-                                                { icon: User, label: 'Profile', tab: 'profile' },
+                                                { icon: User, label: 'Profile', tab: 'patient-detail' },
                                                 { icon: FileText, label: 'Records', tab: 'reports' },
                                                 { icon: MessageSquare, label: 'Message', tab: 'messages' },
                                             ].map(({ icon: Icon, label, tab }) => (
                                                 <TouchableOpacity
                                                     key={label}
-                                                    onPress={() => onNavigate?.(tab)}
+                                                    onPress={() => onNavigate?.(tab, { patient })}
                                                     activeOpacity={0.7}
                                                     style={{
                                                         flexDirection: 'row', alignItems: 'center', gap: 4,

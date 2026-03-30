@@ -1,35 +1,39 @@
-﻿import React from 'react';
-import { View, Text, ScrollView, Dimensions } from 'react-native';
-import { TrendingUp, Users, Calendar, Clock, DollarSign, Activity } from 'lucide-react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, Dimensions, ActivityIndicator } from 'react-native';
+import { TrendingUp, Users, Calendar, Clock, DollarSign, Activity, ArrowLeft } from 'lucide-react-native';
+import api from '@/lib/api';
 
 const { width } = Dimensions.get('window');
 
 export default function AnalyticsScreen() {
+    const [data, setData] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        api.get('/dashboard/data')
+            .then(res => setData(res.data))
+            .catch(err => console.error(err))
+            .finally(() => setLoading(false));
+    }, []);
+
     const metrics = [
-        { label: 'Total Patients', value: '1,240', change: '+12%', color: '#0ea5e9', bg: '#f0fdfa', up: true },
+        { label: 'Total Patients', value: data?.stats?.totalPatients?.toString() || '0', change: '+12%', color: '#0ea5e9', bg: '#f0fdfa', up: true },
         { label: 'Avg. Rating', value: '4.9', change: '+0.2', color: '#ca8a04', bg: '#fef9c3', up: true },
-        { label: 'Appointments', value: '156', change: '+18%', color: '#16a34a', bg: '#dcfce7', up: true },
-        { label: 'Revenue', value: '₹4.2L', change: '+8%', color: '#9333ea', bg: '#f3e8ff', up: true },
+        { label: 'Today Apps', value: data?.stats?.todayAppointments?.toString() || '0', change: '+18%', color: '#16a34a', bg: '#dcfce7', up: true },
+        { label: 'Revenue', value: `₹${((data?.stats?.totalRevenue || 0) / 1000).toFixed(1)}K`, change: '+8%', color: '#9333ea', bg: '#f3e8ff', up: true },
     ];
 
-    const weeklyData = [
-        { day: 'Mon', patients: 12 },
-        { day: 'Tue', patients: 18 },
-        { day: 'Wed', patients: 15 },
-        { day: 'Thu', patients: 22 },
-        { day: 'Fri', patients: 20 },
-        { day: 'Sat', patients: 8 },
-        { day: 'Sun', patients: 4 },
+    const weeklyData = data?.charts?.appointmentsPerWeek?.map((d: any) => ({ day: d.day, patients: d.count })) || [
+        { day: 'Mon', patients: 12 }, { day: 'Tue', patients: 18 }, { day: 'Wed', patients: 15 },
+        { day: 'Thu', patients: 22 }, { day: 'Fri', patients: 20 }, { day: 'Sat', patients: 8 }, { day: 'Sun', patients: 4 },
     ];
-    const maxPatients = Math.max(...weeklyData.map(d => d.patients));
+    const maxPatients = Math.max(...weeklyData.map((d: any) => d.patients), 1);
 
-    const topConditions = [
-        { name: 'Hypertension', pct: 28 },
-        { name: 'Diabetes', pct: 22 },
-        { name: 'Heart Disease', pct: 18 },
-        { name: 'Respiratory', pct: 15 },
-        { name: 'Other', pct: 17 },
+    const topConditions = data?.charts?.departmentVisits?.map((d: any) => ({ name: d.name, pct: d.count })) || [
+        { name: 'General', pct: 35 }, { name: 'Cardiology', pct: 28 }, { name: 'Dermatology', pct: 15 },
     ];
+
+    if (loading) return <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><ActivityIndicator size="large" color="#0284c7" /></View>;
 
     return (
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
@@ -59,7 +63,7 @@ export default function AnalyticsScreen() {
             <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#f1f5f9', marginBottom: 20 }}>
                 <Text style={{ fontWeight: '700', fontSize: 14, color: '#0284c7', marginBottom: 16 }}>Weekly Patients</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', height: 120 }}>
-                    {weeklyData.map(({ day, patients }) => (
+                    {weeklyData.map(({ day, patients }: { day: string; patients: number }) => (
                         <View key={day} style={{ alignItems: 'center', flex: 1 }}>
                             <View style={{ width: 24, height: (patients / maxPatients) * 100, borderRadius: 6, backgroundColor: '#0ea5e9', marginBottom: 6 }} />
                             <Text style={{ fontSize: 10, color: '#64748b', fontWeight: '500' }}>{day}</Text>
@@ -72,7 +76,7 @@ export default function AnalyticsScreen() {
             {/* Top Conditions */}
             <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#f1f5f9', marginBottom: 20 }}>
                 <Text style={{ fontWeight: '700', fontSize: 14, color: '#0284c7', marginBottom: 12 }}>Top Conditions</Text>
-                {topConditions.map(({ name, pct }) => (
+                {topConditions.map(({ name, pct }: { name: string; pct: number }) => (
                     <View key={name} style={{ marginBottom: 10 }}>
                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
                             <Text style={{ fontSize: 13, color: '#0284c7', fontWeight: '500' }}>{name}</Text>

@@ -1,8 +1,9 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { ArrowLeft, Save } from 'lucide-react-native';
 import { useAuth, PatientProfile as ProfileType } from '@/contexts/AuthContext';
 import api from '@/lib/api';
+import { colors, radius, fonts } from '@/lib/theme';
 
 const genderOptions = ['Male', 'Female', 'Other', 'Prefer not to say'];
 const bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
@@ -67,25 +68,25 @@ export default function EditProfileForm({ onBack }: EditProfileFormProps) {
 
     const renderField = (label: string, field: keyof ProfileType, placeholder: string) => (
         <View style={{ marginBottom: 12 }} key={field}>
-            <Text style={{ fontSize: 12, fontWeight: '600', color: '#0284c7', marginBottom: 6 }}>{label}</Text>
+            <Text style={{ fontSize: 13, fontFamily: fonts.semiBold, color: colors.primary, marginBottom: 6 }}>{label}</Text>
             <TextInput
-                value={form[field]}
+                value={(form[field] as string) || ''}
                 onChangeText={(v) => update(field, v)}
                 placeholder={placeholder}
-                placeholderTextColor="#94a3b8"
-                style={{ width: '100%', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, borderWidth: 1, borderColor: '#e2e8f0', backgroundColor: '#fff', color: '#0284c7', fontSize: 14 }}
+                placeholderTextColor={colors.textMuted}
+                style={{ width: '100%', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.background, color: colors.text, fontSize: 14, fontFamily: fonts.regular }}
             />
         </View>
     );
 
     const renderSelectRow = (label: string, options: string[], field: keyof ProfileType) => (
         <View style={{ marginBottom: 12 }} key={field}>
-            <Text style={{ fontSize: 12, fontWeight: '600', color: '#0284c7', marginBottom: 6 }}>{label}</Text>
+            <Text style={{ fontSize: 13, fontFamily: fonts.semiBold, color: colors.primary, marginBottom: 6 }}>{label}</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 <View style={{ flexDirection: 'row', gap: 6 }}>
                     {options.map(opt => (
-                        <TouchableOpacity key={opt} onPress={() => update(field, opt)} style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: form[field] === opt ? '#0ea5e9' : '#f1f5f9' }}>
-                            <Text style={{ fontSize: 12, fontWeight: '600', color: form[field] === opt ? '#fff' : '#334155' }}>{opt}</Text>
+                        <TouchableOpacity key={opt} onPress={() => update(field, opt)} style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: form[field] === opt ? colors.primary : colors.card, borderWidth: 1, borderColor: form[field] === opt ? colors.primary : colors.border }}>
+                            <Text style={{ fontSize: 13, fontFamily: fonts.semiBold, color: form[field] === opt ? '#fff' : colors.textSecondary }}>{opt}</Text>
                         </TouchableOpacity>
                     ))}
                 </View>
@@ -94,21 +95,21 @@ export default function EditProfileForm({ onBack }: EditProfileFormProps) {
     );
 
     const renderSectionHeader = (title: string) => (
-        <Text style={{ fontSize: 11, fontWeight: '700', color: '#0ea5e9', textTransform: 'uppercase', letterSpacing: 1, paddingTop: 12, paddingBottom: 4 }}>{title}</Text>
+        <Text style={{ fontSize: 11, fontFamily: fonts.bold, color: colors.primary, textTransform: 'uppercase', letterSpacing: 1, paddingTop: 12, paddingBottom: 4 }}>{title}</Text>
     );
 
     return (
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-            <ScrollView style={{ flex: 1, backgroundColor: '#f8fafc' }} contentContainerStyle={{ padding: 16, paddingBottom: 100 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+            <ScrollView style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={{ padding: 16, paddingBottom: 100 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
                 {/* Header */}
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                    <TouchableOpacity onPress={onBack} style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: '#f1f5f9', alignItems: 'center', justifyContent: 'center' }}>
-                        <ArrowLeft size={16} color="#334155" />
+                    <TouchableOpacity onPress={onBack} style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' }}>
+                        <ArrowLeft size={16} color={colors.text} />
                     </TouchableOpacity>
-                    <Text style={{ fontSize: 20, fontWeight: '700', color: '#0284c7', flex: 1 }}>Edit Profile</Text>
+                    <Text style={{ fontSize: 20, fontFamily: fonts.bold, color: colors.text, flex: 1 }}>Edit Profile</Text>
                 </View>
 
-                <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 20, borderWidth: 1, borderColor: '#f1f5f9' }}>
+                <View style={{ backgroundColor: colors.card, borderRadius: 16, padding: 20, borderWidth: 1, borderColor: colors.border }}>
                     {renderSectionHeader('Personal Information')}
                     {renderField('Full Name *', 'fullName', 'Enter your full name')}
                     {renderField('Email', 'email', 'you@email.com')}
@@ -142,9 +143,9 @@ export default function EditProfileForm({ onBack }: EditProfileFormProps) {
                 </View>
 
                 {/* Save Button */}
-                <TouchableOpacity onPress={handleSave} style={{ marginTop: 16, width: '100%', paddingVertical: 14, borderRadius: 12, backgroundColor: saved ? '#16a34a' : '#0ea5e9', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                <TouchableOpacity onPress={handleSave} style={{ marginTop: 16, width: '100%', paddingVertical: 14, borderRadius: 12, backgroundColor: saved ? colors.success : colors.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                     <Save size={16} color="#ffffff" />
-                    <Text style={{ color: '#fff', fontWeight: '600', fontSize: 14 }}>{saved ? 'Profile Saved!' : 'Save Profile'}</Text>
+                    <Text style={{ color: '#fff', fontFamily: fonts.semiBold, fontSize: 14 }}>{saved ? 'Profile Saved!' : 'Save Profile'}</Text>
                 </TouchableOpacity>
             </ScrollView>
         </KeyboardAvoidingView>

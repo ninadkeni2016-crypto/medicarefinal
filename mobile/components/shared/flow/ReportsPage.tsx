@@ -5,6 +5,7 @@ import { Appointment } from '@/lib/mock-data';
 import { useAuth } from '@/contexts/AuthContext';
 import { getAppointmentState, updateAppointmentState } from '@/lib/appointment-state';
 import { toast } from '@/hooks/use-toast';
+import api from '@/lib/api';
 
 interface Props { appointment: Appointment; onBack: () => void; }
 
@@ -34,14 +35,30 @@ export default function ReportsPage({ appointment, onBack }: Props) {
         }, 1500);
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!reportName.trim() || !uploadedFile) { toast({ title: 'Please upload a report and enter a name' }); return; }
-        updateAppointmentState(appointment.id, { 
-            reportName, reportType, reportDate, labName, reportRemarks, 
-            currentStep: Math.max(state.currentStep, 3) 
-        });
-        toast({ title: '✅ Reports saved successfully' });
-        onBack();
+        
+        try {
+            await api.post('/reports', {
+                name: reportName,
+                type: reportType,
+                date: reportDate,
+                status: 'Ready',
+                labName,
+                remarks: reportRemarks,
+                doctorName: appointment.doctorName,
+                patientName: appointment.patientName
+            });
+            updateAppointmentState(appointment.id, { 
+                reportName, reportType, reportDate, labName, reportRemarks, 
+                currentStep: Math.max(state.currentStep, 3) 
+            });
+            toast({ title: '✅ Reports saved successfully' });
+            onBack();
+        } catch (error) {
+            console.error('Report save failed', error);
+            toast({ title: 'Failed to save', variant: 'destructive' });
+        }
     };
 
     if (role === 'patient') {

@@ -1,7 +1,7 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { FileText, Calendar, Download, CheckCircle, Clock as ClockIcon } from 'lucide-react-native';
-import { mockReports, Report } from '@/lib/mock-data';
+import { Report } from '@/lib/mock-data';
 import { toast } from '@/hooks/use-toast';
 import api from '@/lib/api';
 
@@ -12,10 +12,10 @@ export default function ReportsList() {
     const fetchReports = async () => {
         try {
             const res = await api.get('/reports');
-            setReports(res.data);
+            setReports(res.data || []);
         } catch (error) {
             console.error('Failed to fetch reports:', error);
-            setReports(mockReports);
+            setReports([]);
         } finally {
             setLoading(false);
         }

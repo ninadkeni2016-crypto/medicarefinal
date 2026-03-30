@@ -5,6 +5,7 @@ import { Appointment } from '@/lib/mock-data';
 import { useAuth } from '@/contexts/AuthContext';
 import { getAppointmentState, updateAppointmentState, Medicine } from '@/lib/appointment-state';
 import { toast } from '@/hooks/use-toast';
+import api from '@/lib/api';
 
 interface Props { appointment: Appointment; onBack: () => void; }
 
@@ -21,11 +22,26 @@ export default function PrescriptionPage({ appointment, onBack }: Props) {
     const removeMedicine = (index: number) => setMedicines(medicines.filter((_, i) => i !== index));
     const updateMedicine = (i: number, field: string, value: string | boolean) => setMedicines(medicines.map((m, idx) => idx === i ? { ...m, [field]: value } : m));
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!medicines.some(m => m.name.trim())) { toast({ title: 'Please add at least one medicine' }); return; }
-        updateAppointmentState(appointment.id, { medicines: medicines.filter(m => m.name.trim()), prescriptionNotes: notes, currentStep: Math.max(state.currentStep, 2) });
-        toast({ title: '✅ Prescription generated' });
-        onBack();
+        
+        try {
+            await api.post('/prescriptions', {
+                doctorId: (appointment as any).doctorId || appointment.id,
+                doctorName: appointment.doctorName,
+                patientId: (appointment as any).patientId || appointment.id,
+                patientName: appointment.patientName,
+                date: appointment.date,
+                medicines: medicines.filter(m => m.name.trim()),
+                notes
+            });
+            updateAppointmentState(appointment.id, { medicines: medicines.filter(m => m.name.trim()), prescriptionNotes: notes, currentStep: Math.max(state.currentStep, 2) });
+            toast({ title: '✅ Prescription generated' });
+            onBack();
+        } catch (error) {
+            console.error('Prescription save failed', error);
+            toast({ title: 'Failed to save', variant: 'destructive' });
+        }
     };
 
     if (role === 'patient') {

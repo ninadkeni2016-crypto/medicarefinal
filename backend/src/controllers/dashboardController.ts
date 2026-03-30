@@ -16,6 +16,7 @@ import PatientProfile from '../models/PatientProfile';
 import Bill from '../models/Bill';
 import Report from '../models/Report';
 import Notification from '../models/Notification';
+import Conversation from '../models/Conversation';
 
 interface AuthRequest extends Request {
   user?: any;
@@ -95,11 +96,12 @@ export const getDashboardData = async (req: AuthRequest, res: Response): Promise
     }
 
     const doctorId = req.user._id;
-    const [patients, appointments, notifications, reports] = await Promise.all([
+    const [patients, appointments, notifications, reports, conversations] = await Promise.all([
       PatientProfile.find().sort({ updatedAt: -1 }).limit(5).lean(),
       Appointment.find({ $or: [{ doctorId }, { doctorEmail: req.user?.email }], status: 'upcoming' }).sort({ date: 1, time: 1 }).limit(5).lean(),
       Notification.find({ user: doctorId }).sort({ createdAt: -1 }).limit(10).lean(),
       Report.find({}).sort({ createdAt: -1 }).limit(4).lean(),
+      Conversation.find({ participants: doctorId }).sort({ lastMessageTime: -1, updatedAt: -1 }).limit(3).lean(),
     ]);
 
     const todayStr = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
@@ -138,7 +140,25 @@ export const getDashboardData = async (req: AuthRequest, res: Response): Promise
       upcomingAppointments: appointments,
       notifications,
       recentReports: reports,
-      messages: [],
+      messages: conversations.map((c: any) => {
+          // Identify the other participant's name
+          let otherName = 'Patient';
+          if (c.participantNames && c.participantNames.length === 2) {
+              const myNameIndex = c.participants.findIndex((p: any) => p.toString() === doctorId.toString());
+              if (myNameIndex !== -1 && c.participantNames[myNameIndex === 0 ? 1 : 0]) {
+                  otherName = c.participantNames[myNameIndex === 0 ? 1 : 0];
+              } else {
+                  // Fallback if not found correctly
+                  otherName = c.participantNames.find((n: string) => n && n !== req.user?.name) || 'Patient';
+              }
+          }
+          return {
+              _id: c._id,
+              participantName: otherName,
+              lastMessage: c.lastMessage || 'Start a conversation',
+              unreadCount: c.unreadCount || 0
+          };
+      }),
     });
   } catch (error: any) {
     res.status(500).json({ message: error.message });

@@ -12,11 +12,14 @@ export default function EditDoctorProfileForm({ onBack }: { onBack: () => void }
         name: '',
         email: '',
         phone: '',
-        location: '',
+        address: '',
         specialization: '',
         experience: '',
         consultationFee: '',
         bio: '',
+        education: '',
+        awards: '',
+        languages: '',
     });
 
     const [isSaving, setIsSaving] = useState(false);
@@ -31,11 +34,14 @@ export default function EditDoctorProfileForm({ onBack }: { onBack: () => void }
                 name: d.name || '',
                 email: d.email || '',
                 phone: d.phone || '',
-                location: d.location || '',
+                address: d.address || d.location || '',
                 specialization: d.specialization || '',
                 experience: String(d.experience || ''),
                 consultationFee: String(d.consultationFee || ''),
                 bio: d.bio || '',
+                education: d.education ? d.education.join(', ') : '',
+                awards: d.awards ? d.awards.join(', ') : '',
+                languages: d.languages ? d.languages.join(', ') : '',
             });
         }).catch(() => {
             // Profile might not exist yet — that's fine
@@ -53,6 +59,9 @@ export default function EditDoctorProfileForm({ onBack }: { onBack: () => void }
                 ...formData,
                 experience: formData.experience,
                 consultationFee: Number(formData.consultationFee),
+                education: formData.education.split(',').map(s => s.trim()).filter(Boolean),
+                awards: formData.awards.split(',').map(s => s.trim()).filter(Boolean),
+                languages: formData.languages.split(',').map(s => s.trim()).filter(Boolean),
             });
             toast({ title: '✅ Profile updated successfully' });
             onBack();
@@ -140,13 +149,28 @@ export default function EditDoctorProfileForm({ onBack }: { onBack: () => void }
                         </View>
 
                         <View style={{ marginBottom: 16 }}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}><MapPin size={16} color="#0ea5e9" /><Text style={{ fontSize: 14, fontWeight: '600', color: '#334155' }}>Clinic/Hospital Location</Text></View>
-                            <TextInput value={formData.location} onChangeText={(text) => updateField('location', text)} style={{ backgroundColor: '#fff', borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 12, padding: 16, fontSize: 16, color: '#0f172a' }} placeholderTextColor="#94a3b8" />
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}><MapPin size={16} color="#0ea5e9" /><Text style={{ fontSize: 14, fontWeight: '600', color: '#334155' }}>Clinic/Hospital Address</Text></View>
+                            <TextInput value={formData.address} onChangeText={(text) => updateField('address', text)} style={{ backgroundColor: '#fff', borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 12, padding: 16, fontSize: 16, color: '#0f172a' }} placeholderTextColor="#94a3b8" />
                         </View>
 
                         <View style={{ marginBottom: 24 }}>
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}><FileText size={16} color="#0ea5e9" /><Text style={{ fontSize: 14, fontWeight: '600', color: '#334155' }}>Professional Bio</Text></View>
                             <TextInput value={formData.bio} onChangeText={(text) => updateField('bio', text)} style={{ backgroundColor: '#fff', borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 12, padding: 16, fontSize: 16, color: '#0f172a', height: 120 }} placeholderTextColor="#94a3b8" multiline textAlignVertical="top" />
+                        </View>
+
+                        <Text style={{ fontSize: 12, fontWeight: '700', color: '#64748b', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>Advanced Details</Text>
+                        
+                        <View style={{ marginBottom: 16 }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}><Award size={16} color="#0ea5e9" /><Text style={{ fontSize: 14, fontWeight: '600', color: '#334155' }}>Education (comma separated)</Text></View>
+                            <TextInput value={formData.education} onChangeText={(text) => updateField('education', text)} style={{ backgroundColor: '#fff', borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 12, padding: 16, fontSize: 16, color: '#0f172a' }} placeholderTextColor="#94a3b8" placeholder="e.g. MBBS, MD (Cardiology)" />
+                        </View>
+                        <View style={{ marginBottom: 16 }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}><Award size={16} color="#0ea5e9" /><Text style={{ fontSize: 14, fontWeight: '600', color: '#334155' }}>Awards (comma separated)</Text></View>
+                            <TextInput value={formData.awards} onChangeText={(text) => updateField('awards', text)} style={{ backgroundColor: '#fff', borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 12, padding: 16, fontSize: 16, color: '#0f172a' }} placeholderTextColor="#94a3b8" placeholder="e.g. Best Doctor 2022" />
+                        </View>
+                        <View style={{ marginBottom: 24 }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}><Text style={{ fontSize: 14, fontWeight: '600', color: '#334155' }}>Languages (comma separated)</Text></View>
+                            <TextInput value={formData.languages} onChangeText={(text) => updateField('languages', text)} style={{ backgroundColor: '#fff', borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 12, padding: 16, fontSize: 16, color: '#0f172a' }} placeholderTextColor="#94a3b8" placeholder="e.g. English, Hindi, Spanish" />
                         </View>
                     </View>
 

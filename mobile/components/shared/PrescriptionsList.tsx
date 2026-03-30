@@ -1,7 +1,7 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
 import { Pill, Calendar } from 'lucide-react-native';
-import { mockPrescriptions, Prescription } from '@/lib/mock-data';
+import { Prescription } from '@/lib/mock-data';
 import api from '@/lib/api';
 
 export default function PrescriptionsList() {
@@ -11,10 +11,10 @@ export default function PrescriptionsList() {
     const fetchPrescriptions = async () => {
         try {
             const res = await api.get('/prescriptions');
-            setPrescriptions(res.data);
+            setPrescriptions(res.data || []);
         } catch (error) {
             console.error('Failed to fetch prescriptions:', error);
-            setPrescriptions(mockPrescriptions); // Fallback to mock data on error locally
+            setPrescriptions([]); // Empty state on error
         } finally {
             setLoading(false);
         }

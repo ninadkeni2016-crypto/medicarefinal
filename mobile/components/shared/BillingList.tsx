@@ -1,18 +1,35 @@
-﻿import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { Receipt, Calendar, ChevronDown, ChevronUp, CreditCard } from 'lucide-react-native';
-import { mockBills } from '@/lib/mock-data';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
+import api from '@/lib/api';
 
 export default function BillingList() {
     const { role } = useAuth();
+    const [bills, setBills] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
     const [expandedId, setExpandedId] = useState<string | null>(null);
     const [payingId, setPayingId] = useState<string | null>(null);
     const [paidIds, setPaidIds] = useState<string[]>([]);
 
-    const totalPaid = mockBills.filter(b => b.status === 'Paid' || paidIds.includes(b.id)).reduce((s, b) => s + b.total, 0);
-    const totalPending = mockBills.filter(b => b.status !== 'Paid' && !paidIds.includes(b.id)).reduce((s, b) => s + b.total, 0);
+    useEffect(() => {
+        const fetchBills = async () => {
+            try {
+                const res = await api.get('/bills');
+                setBills(res.data || []);
+            } catch (err) {
+                console.error(err);
+                setBills([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchBills();
+    }, []);
+
+    const totalPaid = bills.filter(b => b.status === 'Paid' || paidIds.includes(b.id || b._id)).reduce((s, b) => s + b.total, 0);
+    const totalPending = bills.filter(b => b.status !== 'Paid' && !paidIds.includes(b.id || b._id)).reduce((s, b) => s + b.total, 0);
 
     const handlePay = (id: string) => {
         setPayingId(id);
@@ -29,10 +46,18 @@ export default function BillingList() {
         Overdue: { color: '#dc2626', bg: '#fef2f2' },
     };
 
+    if (loading) {
+        return (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <ActivityIndicator size="large" color="#0284c7" />
+            </View>
+        );
+    }
+
     return (
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
             <Text style={{ fontSize: 20, fontWeight: '700', color: '#0284c7', marginBottom: 4 }}>Billing</Text>
-            <Text style={{ fontSize: 14, color: '#64748b', marginBottom: 16 }}>{mockBills.length} bills</Text>
+            <Text style={{ fontSize: 14, color: '#64748b', marginBottom: 16 }}>{bills.length} bills</Text>
 
             {/* Summary Cards */}
             <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
@@ -47,8 +72,9 @@ export default function BillingList() {
             </View>
 
             {/* Bills */}
-            {mockBills.map((bill) => {
-                const isPaid = bill.status === 'Paid' || paidIds.includes(bill.id);
+            {bills.map((bill) => {
+                const billId = bill.id || bill._id;
+                const isPaid = bill.status === 'Paid' || paidIds.includes(billId);
                 const status = isPaid ? 'Paid' : bill.status;
                 const cfg = statusConfig[status] || statusConfig.Pending;
                 const isExpanded = expandedId === bill.id;
@@ -61,8 +87,8 @@ export default function BillingList() {
                 ].filter(item => item.amount > 0);
 
                 return (
-                    <View key={bill.id} style={{ backgroundColor: '#fff', borderRadius: 16, borderWidth: 1, borderColor: '#f1f5f9', marginBottom: 8, overflow: 'hidden' }}>
-                        <TouchableOpacity onPress={() => setExpandedId(isExpanded ? null : bill.id)} activeOpacity={0.7} style={{ padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                    <View key={billId} style={{ backgroundColor: '#fff', borderRadius: 16, borderWidth: 1, borderColor: '#f1f5f9', marginBottom: 8, overflow: 'hidden' }}>
+                        <TouchableOpacity onPress={() => setExpandedId(isExpanded ? null : billId)} activeOpacity={0.7} style={{ padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                             <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: '#fef9c3', alignItems: 'center', justifyContent: 'center' }}>
                                 <Receipt size={20} color="#ca8a04" />
                             </View>
@@ -95,8 +121,8 @@ export default function BillingList() {
                                     <Text style={{ fontSize: 14, fontWeight: '700', color: '#0ea5e9' }}>₹{bill.total.toLocaleString()}</Text>
                                 </View>
                                 {!isPaid && role === 'patient' && (
-                                    <TouchableOpacity onPress={() => handlePay(bill.id)} disabled={payingId === bill.id} activeOpacity={0.7} style={{ marginTop: 12, width: '100%', paddingVertical: 12, borderRadius: 12, backgroundColor: payingId === bill.id ? '#818cf8' : '#0ea5e9', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                                        {payingId === bill.id ? <><ActivityIndicator size="small" color="#fff" /><Text style={{ color: '#fff', fontWeight: '600', fontSize: 14 }}>Processing...</Text></> : <><CreditCard size={16} color="#fff" /><Text style={{ color: '#fff', fontWeight: '600', fontSize: 14 }}>Pay ₹{bill.total.toLocaleString()}</Text></>}
+                                    <TouchableOpacity onPress={() => handlePay(billId)} disabled={payingId === billId} activeOpacity={0.7} style={{ marginTop: 12, width: '100%', paddingVertical: 12, borderRadius: 12, backgroundColor: payingId === billId ? '#818cf8' : '#0ea5e9', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                                        {payingId === billId ? <><ActivityIndicator size="small" color="#fff" /><Text style={{ color: '#fff', fontWeight: '600', fontSize: 14 }}>Processing...</Text></> : <><CreditCard size={16} color="#fff" /><Text style={{ color: '#fff', fontWeight: '600', fontSize: 14 }}>Pay ₹{bill.total.toLocaleString()}</Text></>}
                                     </TouchableOpacity>
                                 )}
                             </View>

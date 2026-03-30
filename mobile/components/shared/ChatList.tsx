@@ -14,31 +14,58 @@ import { colors, spacing, radius, typography, cardShadow, fonts } from '@/lib/th
 interface Props { onSelectConversation: (c: Conversation) => void; onOpenAI?: () => void; }
 
 export default function ChatList({ onSelectConversation, onOpenAI }: Props) {
-    const { role } = useAuth();
+    const { role, userName } = useAuth();
     const [search, setSearch] = useState('');
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         api.get('/chat/conversations')
-            .then(res => {
-                if (res.data && res.data.length > 0) {
-                    const mapped: Conversation[] = res.data.map((c: any) => ({
+            .then((res) => {
+                const mapped: Conversation[] = (res.data || []).map((c: any) => {
+                    const rawNames = c.participantNames || [];
+                    const otherName = rawNames.find((n: string) => n && n !== userName) || rawNames.find((n: string) => n) || 'Unknown';
+                    
+                    return {
                         id: c._id,
-                        participantName: c.participantNames?.find((n: string) => n !== '') || 'Unknown',
+                        participantName: otherName,
                         participantAvatar: '',
                         lastMessage: c.lastMessage || '',
                         lastMessageTime: c.lastMessageTime ? new Date(c.lastMessageTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '',
                         unreadCount: c.unreadCount || 0,
                         online: false,
-                    }));
-                    setConversations(mapped);
-                } else {
-                    setConversations(role === 'doctor' ? doctorConversations : patientConversations);
+                    };
+                });
+                
+                // Ensure Dr. Sameer Mahadik's chat is visible for patients as requested
+                if (role === 'patient') {
+                    const hasMahadik = mapped.some(c => c.participantName.toLowerCase().includes('sameer') || c.id === 'conv-1');
+                    if (!hasMahadik && patientConversations.length > 0) {
+                        mapped.unshift(patientConversations[0]);
+                    }
+                } else if (role === 'doctor') {
+                    // Pre-fill doctor's chat with mock recent patients
+                    const existingNames = new Set(mapped.map(c => c.participantName.toLowerCase()));
+                    doctorConversations.forEach(dc => {
+                        if (!existingNames.has(dc.participantName.toLowerCase())) {
+                            mapped.push(dc);
+                        }
+                    });
                 }
+                
+                setConversations(mapped);
             })
-            .catch(() => {
-                setConversations(role === 'doctor' ? doctorConversations : patientConversations);
+            .catch((err) => {
+                console.error('Failed to fetch conversations:', err);
+                
+                // Fallback for Demo
+                if (role === 'patient' && patientConversations.length > 0) {
+                     setConversations([patientConversations[0]]);
+                } else if (role === 'doctor' && doctorConversations.length > 0) {
+                     setConversations(doctorConversations);
+                } else {
+                     setConversations([]);
+                }
             })
             .finally(() => setLoading(false));
     }, [role]);

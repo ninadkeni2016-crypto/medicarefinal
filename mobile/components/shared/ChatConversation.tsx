@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, Image, Dimensions } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, Image, Dimensions, ActivityIndicator } from 'react-native';
 import { ArrowLeft, Send, Phone, Video, MoreHorizontal, Check, CheckCheck } from 'lucide-react-native';
 import { Conversation, ChatMsg, conversationMessages } from '@/lib/chat-data';
+import { useAuth } from '@/contexts/AuthContext';
+import api from '@/lib/api';
 
 const { width } = Dimensions.get('window');
 
@@ -12,49 +14,89 @@ import { MedCard } from '../ui/MedCard';
 interface Props { conversation: Conversation; onBack: () => void; onViewProfile?: () => void; }
 
 export default function ChatConversation({ conversation, onBack, onViewProfile }: Props) {
-    const initialMsgs = conversationMessages[conversation.id] || [];
-    const [messages, setMessages] = useState<ChatMsg[]>(initialMsgs);
+    const { role } = useAuth();
+    const [messages, setMessages] = useState<ChatMsg[]>([]);
     const [text, setText] = useState('');
+    const [loading, setLoading] = useState(true);
     const flatListRef = useRef<FlatList>(null);
 
-    const handleSend = () => {
+    useEffect(() => {
+        const fetchMessages = async () => {
+            try {
+                if (conversation.id.startsWith('new-')) {
+                    setMessages([]);
+                    return;
+                }
+                if (conversation.id.startsWith('conv-')) {
+                    setMessages(conversationMessages[conversation.id] || []);
+                    setLoading(false);
+                    return;
+                }
+                const res = await api.get(`/chat/messages/${conversation.id}`);
+                const mapped: ChatMsg[] = (res.data || []).map((m: any) => ({
+                    id: m._id,
+                    conversationId: m.conversationId,
+                    senderId: m.sender,
+                    content: m.content,
+                    time: new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    isOwn: m.senderName !== conversation.participantName,
+                    type: m.type || 'text'
+                }));
+                // Set the mapped messages
+                setMessages(mapped);
+            } catch (error) {
+                console.error('Failed to fetch messages:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchMessages();
+    }, [conversation.id]);
+
+    const handleSend = async () => {
         if (!text.trim()) return;
-        const newMsg: ChatMsg = { 
+        const msgText = text.trim();
+        setText('');
+        
+        // Optimistic UI
+        const optimisticMsg: ChatMsg = { 
             id: String(Date.now()), 
             conversationId: conversation.id, 
-            senderId: 'user', 
-            content: text.trim(), 
+            senderId: 'own', 
+            content: msgText, 
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), 
             isOwn: true, 
             type: 'text' 
         };
-        setMessages(prev => [...prev, newMsg]);
-        setText('');
+        setMessages(prev => [...prev, optimisticMsg]);
         
-        // Mock Reply Logic
-        setTimeout(() => {
-            const replies = [
-                "Thank you for your message! I'll review this and get back to you shortly.",
-                "I understand. Let me check your medical records and respond.",
-                "That's helpful information. Please continue monitoring and let me know if anything changes.",
-                "I've noted this down. We can discuss it further during your next appointment.",
-            ];
-            const reply: ChatMsg = {
-                id: String(Date.now() + 1),
-                conversationId: conversation.id,
-                senderId: 'other',
-                content: replies[Math.floor(Math.random() * replies.length)],
-                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                isOwn: false,
-                type: 'text'
+        try {
+            if (conversation.id.startsWith('conv-')) {
+                // Read-only mock fallback scenario
+                return;
+            }
+            
+            const payload: any = {
+                content: msgText,
+                type: 'text',
+                receiverName: conversation.participantName
             };
-            setMessages(prev => [...prev, reply]);
-        }, 1500);
+            if (conversation.id.startsWith('new-')) {
+                payload.receiverId = (conversation as any).participantId;
+            } else {
+                payload.conversationId = conversation.id;
+            }
+            await api.post('/chat/messages', payload);
+        } catch (error) {
+            console.error('Failed to send message:', error);
+        }
     };
 
     useEffect(() => {
-        setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
-    }, [messages]);
+        if (!loading) {
+            setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
+        }
+    }, [messages, loading]);
 
     return (
         <View style={{ flex: 1, backgroundColor: colors.background }}>

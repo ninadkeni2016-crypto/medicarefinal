@@ -24,10 +24,10 @@ export default function AppointmentsList({ onSelectAppointment }: Props) {
     const fetchAppointments = async () => {
         try {
             const res = await api.get('/appointments');
-            setAppointments(res.data);
+            setAppointments(res.data || []);
         } catch (error) {
             console.error('Failed to fetch appointments:', error);
-            setAppointments(mockAppointments);
+            setAppointments([]); // Remove mock data fallback
         } finally {
             setLoading(false);
         }
@@ -97,7 +97,7 @@ export default function AppointmentsList({ onSelectAppointment }: Props) {
             {filtered.map((apt, idx) => {
                 const updateStatus = async (status: string) => {
                     try {
-                        await api.put(`/appointments/${apt._id || apt.id}`, { status });
+                        await api.put(`/appointments/${(apt as any)._id || apt.id}`, { status });
                         fetchAppointments();
                     } catch (error) {
                         console.error('Failed to update appointment status:', error);
@@ -105,7 +105,7 @@ export default function AppointmentsList({ onSelectAppointment }: Props) {
                 };
 
                 return (
-                    <AnimatedListItem key={apt._id || apt.id} index={idx} staggerMs={55}>
+                    <AnimatedListItem key={(apt as any)._id || apt.id} index={idx} staggerMs={55}>
                     <MedCard
                         onPress={() => onSelectAppointment?.(apt)}
                         style={{ marginBottom: spacing.sm }}
@@ -142,24 +142,24 @@ export default function AppointmentsList({ onSelectAppointment }: Props) {
                                     )}
                                     <Text style={[typography.caption, { color: colors.textSecondary }]}>{apt.type}</Text>
                                 </View>
-                                {role === 'doctor' && (apt.status === 'upcoming' || apt.status === 'confirmed') && (
-                                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
-                                        {apt.status === 'upcoming' && (
-                                            <TouchableOpacity onPress={() => updateStatus('confirmed')} activeOpacity={0.7} style={{ paddingVertical: 4, paddingHorizontal: 8, borderRadius: radius.sm, backgroundColor: '#EAF5F7', borderWidth: 1, borderColor: colors.border }}>
-                                                <Text style={[typography.caption, { color: colors.primary, fontWeight: '600' }]}>Approve</Text>
-                                            </TouchableOpacity>
-                                        )}
-                                        <TouchableOpacity onPress={() => updateStatus('completed')} activeOpacity={0.7} style={{ paddingVertical: 4, paddingHorizontal: 8, borderRadius: radius.sm, backgroundColor: '#F0FDF4', borderWidth: 1, borderColor: colors.border }}>
-                                            <Text style={[typography.caption, { color: colors.success, fontWeight: '600' }]}>Complete</Text>
-                                        </TouchableOpacity>
-                                        <TouchableOpacity onPress={() => updateStatus('cancelled')} activeOpacity={0.7} style={{ paddingVertical: 4, paddingHorizontal: 8, borderRadius: radius.sm, backgroundColor: '#FEF2F2', borderWidth: 1, borderColor: colors.border }}>
-                                            <Text style={[typography.caption, { color: colors.danger, fontWeight: '600' }]}>Cancel</Text>
-                                        </TouchableOpacity>
-                                    </View>
-                                )}
                                 <ChevronRight size={16} color={colors.textMuted} />
                             </View>
                         </View>
+                        {role === 'doctor' && ((apt as any).status === 'upcoming' || (apt as any).status === 'confirmed' || (apt.status as string) === 'Upcoming') && (
+                            <View style={{ flexDirection: 'row', gap: 8, marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.border }}>
+                                {apt.status === 'upcoming' && (
+                                    <TouchableOpacity onPress={() => updateStatus('confirmed')} activeOpacity={0.7} style={{ flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: radius.md, backgroundColor: colors.primary }}>
+                                        <Text style={[typography.button, { color: '#fff', fontSize: 13 }]}>Approve</Text>
+                                    </TouchableOpacity>
+                                )}
+                                <TouchableOpacity onPress={() => updateStatus('completed')} activeOpacity={0.7} style={{ flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: radius.md, backgroundColor: '#F0FDF4', borderWidth: 1, borderColor: '#BBF7D0' }}>
+                                    <Text style={[typography.button, { color: colors.success, fontSize: 13 }]}>Complete</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={() => updateStatus('cancelled')} activeOpacity={0.7} style={{ flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: radius.md, backgroundColor: '#FEF2F2', borderWidth: 1, borderColor: '#FECDD3' }}>
+                                    <Text style={[typography.button, { color: colors.danger, fontSize: 13 }]}>Cancel</Text>
+                                </TouchableOpacity>
+                            </View>
+                        )}
                     </MedCard>
                     </AnimatedListItem>
                 );

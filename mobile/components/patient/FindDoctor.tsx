@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Platform, Dimensions, SafeAreaView } from 'react-native';
 import { Search, Star, MapPin, CheckCircle2, SlidersHorizontal } from 'lucide-react-native';
-import { mockDoctors, Doctor } from '@/lib/mock-data';
+import { Doctor } from '@/lib/mock-data';
 import api from '@/lib/api';
 import { MedCard } from '../ui/MedCard';
 import { AnimatedListItem } from '../ui/Animations';
@@ -11,34 +11,25 @@ import { colors, spacing, radius, typography, cardShadow, fonts } from '@/lib/th
 const { width } = Dimensions.get('window');
 const specs = ['All', 'Cardiologist', 'Dermatologist', 'Pediatrician', 'Orthopedic', 'Neurologist', 'Gynecologist', 'Endocrinologist', 'Psychiatrist', 'Ophthalmologist', 'Pulmonologist', 'Gastroenterologist', 'Oncologist', 'Urologist', 'General Medicine'];
 
-function mergeWithMockDoctors(apiDoctors: any[]): Doctor[] {
-    // Always show mock doctors; prepend any real API doctors that aren't duplicates
-    const mockIds = new Set(mockDoctors.map((d) => d.id));
-    const apiUnique = apiDoctors.filter((d: any) => !mockIds.has(d.id || d._id));
-    return [...apiUnique, ...mockDoctors];
-}
-
 export default function FindDoctor({ onSelectDoctor }: { onSelectDoctor: (d: Doctor) => void }) {
     const [search, setSearch] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
     const [activeSpec, setActiveSpec] = useState('All');
-    const [allDoctors, setAllDoctors] = useState<Doctor[]>(mockDoctors);
+    const [allDoctors, setAllDoctors] = useState<Doctor[]>([]);
 
     useEffect(() => {
         const handler = setTimeout(() => setDebouncedSearch(search), 400);
         return () => clearTimeout(handler);
     }, [search]);
 
-    // Fetch from API and merge with mock doctors on mount
+    // Fetch from API on mount
     useEffect(() => {
         api.get('/doctors')
             .then((res) => {
-                const merged = mergeWithMockDoctors(res.data || []);
-                setAllDoctors(merged);
+                setAllDoctors(res.data || []);
             })
             .catch(() => {
-                // Keep mockDoctors showing even if API fails
-                setAllDoctors(mockDoctors);
+                setAllDoctors([]);
             });
     }, []);
 

@@ -135,6 +135,66 @@ export default function PatientProfile({ onNavigate }: { onNavigate?: (tab: stri
                 </MedCard>
             </View>
 
+            {/* Emergency Contact */}
+            {(p.emergencyContactName || p.emergencyContactPhone) && (
+                <View style={{ marginBottom: 32 }}>
+                    <SectionHeader title="Emergency Contact" />
+                    <MedCard style={{ padding: 20 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+                            <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: 'rgba(239, 68, 68, 0.08)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(239, 68, 68, 0.2)' }}>
+                                <Shield size={18} color={colors.danger} />
+                            </View>
+                            <View style={{ flex: 1 }}>
+                                <Text style={{ fontFamily: fonts.semiBold, fontSize: 16, color: colors.text }}>{p.emergencyContactName || 'No Name Provided'}</Text>
+                                <Text style={{ fontFamily: fonts.medium, fontSize: 14, color: colors.textSecondary, marginTop: 2 }}>{p.emergencyContactPhone || 'No Phone Provided'}</Text>
+                            </View>
+                        </View>
+                    </MedCard>
+                </View>
+            )}
+
+            {/* Medical History */}
+            <View style={{ marginBottom: 32 }}>
+                <SectionHeader title="Medical History" />
+                <MedCard style={{ padding: 20 }}>
+                    <View style={{ gap: 16 }}>
+                        {[
+                            { label: 'Allergies', value: p.allergies },
+                            { label: 'Chronic Conditions', value: p.chronicConditions },
+                            { label: 'Current Medications', value: p.currentMedications },
+                            { label: 'Past Surgeries', value: p.pastSurgeries }
+                        ].map((item, i) => item.value ? (
+                            <View key={i} style={{ borderBottomWidth: i === 3 ? 0 : 1, borderBottomColor: colors.border, paddingBottom: i === 3 ? 0 : 12 }}>
+                                <Text style={{ fontFamily: fonts.semiBold, fontSize: 13, color: colors.textMuted, textTransform: 'uppercase' }}>{item.label}</Text>
+                                <Text style={{ fontFamily: fonts.medium, fontSize: 15, color: colors.text, marginTop: 4 }}>{item.value}</Text>
+                            </View>
+                        ) : null)}
+                        {!p.allergies && !p.chronicConditions && !p.currentMedications && !p.pastSurgeries && (
+                            <Text style={{ fontFamily: fonts.medium, fontSize: 14, color: colors.textSecondary, fontStyle: 'italic' }}>No medical history provided.</Text>
+                        )}
+                    </View>
+                </MedCard>
+            </View>
+
+            {/* Insurance Details */}
+            {(p.insuranceProvider || p.insurancePolicyNumber) && (
+                <View style={{ marginBottom: 32 }}>
+                    <SectionHeader title="Insurance Info" />
+                    <MedCard style={{ padding: 20 }}>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <View>
+                                <Text style={{ fontFamily: fonts.semiBold, fontSize: 13, color: colors.textMuted, textTransform: 'uppercase' }}>Provider</Text>
+                                <Text style={{ fontFamily: fonts.bold, fontSize: 16, color: colors.primary, marginTop: 4 }}>{p.insuranceProvider || 'N/A'}</Text>
+                            </View>
+                            <View style={{ alignItems: 'flex-end' }}>
+                                <Text style={{ fontFamily: fonts.semiBold, fontSize: 13, color: colors.textMuted, textTransform: 'uppercase' }}>Policy No.</Text>
+                                <Text style={{ fontFamily: fonts.medium, fontSize: 16, color: colors.text, marginTop: 4 }}>{p.insurancePolicyNumber || 'N/A'}</Text>
+                            </View>
+                        </View>
+                    </MedCard>
+                </View>
+            )}
+
             {/* Menu Sections */}
             {menuSections.map(section => (
                 <View key={section.title} style={{ marginBottom: 32 }}>

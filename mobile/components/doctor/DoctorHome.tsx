@@ -357,20 +357,6 @@ export default function DoctorHome({ onNavigate }: DoctorHomeProps) {
                 </View>
             )}
 
-            {/* Notifications */}
-            <View style={{ marginBottom: spacing.xl }}>
-                <SectionHeader title="Notifications" onViewAll={() => onNavigate('profile')} />
-                {loading ? <SkeletonBox height={60} style={{ marginBottom: spacing.sm }} /> : notifications.length === 0 ? (
-                    <MedCard><Text style={[typography.body, { color: colors.textSecondary }]}>No new notifications.</Text></MedCard>
-                ) : (
-                    notifications.slice(0, 4).map((n: any) => (
-                        <MedCard key={n._id} style={{ marginBottom: spacing.sm, opacity: n.read ? 0.9 : 1 }}>
-                            <Text style={[typography.section, { color: colors.text }]}>{n.title}</Text>
-                            <Text style={[typography.caption, { color: colors.textSecondary, marginTop: 4 }]}>{n.body}</Text>
-                        </MedCard>
-                    ))
-                )}
-            </View>
         </ScrollView>
     );
 }

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, Platform, ActivityIndicator } from 'react-native';
 import {
     Mail, Phone, MapPin, Award, Settings, Camera,
     Shield, Bell, HelpCircle, ChevronRight, LogOut, Stethoscope, Star, Users
@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import EditDoctorProfileForm from './EditDoctorProfileForm';
 import { MedCard } from '@/components/ui/MedCard';
 import { colors, cardShadow, radius, typography, fonts, Shadows } from '@/lib/theme';
+import api from '@/lib/api';
 
 function getInitials(name: string): string {
     return name.split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2);
@@ -16,10 +17,27 @@ function getInitials(name: string): string {
 export default function DoctorProfile({ onNavigate }: { onNavigate?: (tab: string) => void }) {
     const { logout, userName, patientProfile } = useAuth();
     const [isEditing, setIsEditing] = useState(false);
+    const [profile, setProfile] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
 
-    const doctorName = userName || 'Doctor';
+    const fetchProfile = async () => {
+        try {
+            const res = await api.get('/doctors/profile');
+            setProfile(res.data);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (!isEditing) fetchProfile();
+    }, [isEditing]);
+
+    const doctorName = profile?.name || userName || 'Doctor';
     const initials = getInitials(doctorName);
-    const email = patientProfile?.email || 'doctor@medicare.com';
+    const email = profile?.email || patientProfile?.email || 'doctor@medicare.com';
 
     const menuItems = [
         { icon: Award, label: 'Professional Certifications', bg: '#EFF6FF', color: '#2563EB' },
@@ -31,6 +49,14 @@ export default function DoctorProfile({ onNavigate }: { onNavigate?: (tab: strin
 
     if (isEditing) {
         return <EditDoctorProfileForm onBack={() => setIsEditing(false)} />;
+    }
+
+    if (loading) {
+        return (
+            <View style={{ flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }}>
+                <ActivityIndicator size="large" color={colors.primary} />
+            </View>
+        );
     }
 
     return (
@@ -83,16 +109,16 @@ export default function DoctorProfile({ onNavigate }: { onNavigate?: (tab: strin
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
                     <Stethoscope size={14} color={colors.primary} />
                     <Text style={{ fontFamily: fonts.medium, fontSize: 14, color: colors.primary }}>
-                        Senior Physician
+                        {profile?.specialization || 'Senior Physician'}
                     </Text>
                 </View>
 
                 {/* Stats Row */}
                 <View style={{ flexDirection: 'row', gap: 12, marginTop: 24, width: '100%' }}>
                     {[
-                        { icon: Star, label: 'Rating', value: '4.9', bg: '#FFFBEB', color: '#D97706' },
-                        { icon: Users, label: 'Patients', value: '1.2k+', bg: '#ECFDF5', color: '#059669' },
-                        { icon: Award, label: 'Experience', value: '12 yr', bg: '#EFF6FF', color: '#2563EB' },
+                        { icon: Star, label: 'Rating', value: profile?.rating ? String(profile.rating) : '4.9', bg: '#FFFBEB', color: '#D97706' },
+                        { icon: Users, label: 'Patients', value: profile?.patientsCount ? `${profile.patientsCount}+` : '0', bg: '#ECFDF5', color: '#059669' },
+                        { icon: Award, label: 'Experience', value: profile?.experience ? `${profile.experience} yr` : '0 yr', bg: '#EFF6FF', color: '#2563EB' },
                     ].map((item) => (
                         <View key={item.label} style={{
                             flex: 1, backgroundColor: item.bg, borderRadius: radius.lg,
@@ -130,6 +156,43 @@ export default function DoctorProfile({ onNavigate }: { onNavigate?: (tab: strin
                 </TouchableOpacity>
             </MedCard>
 
+            {/* Bio */}
+            {profile?.bio ? (
+                <View style={{ marginBottom: 20 }}>
+                    <Text style={{ fontFamily: fonts.semiBold, fontSize: 11, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>About Me</Text>
+                    <MedCard style={{ padding: 20 }}>
+                        <Text style={[typography.body, { color: colors.textSecondary }]}>{profile.bio}</Text>
+                    </MedCard>
+                </View>
+            ) : null}
+
+            {/* Professional Details */}
+            {(profile?.education?.length > 0 || profile?.languages?.length > 0 || profile?.awards?.length > 0) && (
+                <View style={{ marginBottom: 20 }}>
+                     <Text style={{ fontFamily: fonts.semiBold, fontSize: 11, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>Professional Expertise</Text>
+                     <MedCard style={{ padding: 20 }}>
+                         {profile?.education?.length > 0 && (
+                             <View style={{ marginBottom: 16 }}>
+                                 <Text style={{ fontFamily: fonts.semiBold, fontSize: 13, color: colors.text }}>Education</Text>
+                                 <Text style={{ fontFamily: fonts.medium, fontSize: 14, color: colors.textSecondary, marginTop: 4 }}>{profile.education.join(' • ')}</Text>
+                             </View>
+                         )}
+                         {profile?.awards?.length > 0 && (
+                             <View style={{ marginBottom: 16 }}>
+                                 <Text style={{ fontFamily: fonts.semiBold, fontSize: 13, color: colors.text }}>Awards</Text>
+                                 <Text style={{ fontFamily: fonts.medium, fontSize: 14, color: colors.textSecondary, marginTop: 4 }}>{profile.awards.join(' • ')}</Text>
+                             </View>
+                         )}
+                         {profile?.languages?.length > 0 && (
+                             <View>
+                                 <Text style={{ fontFamily: fonts.semiBold, fontSize: 13, color: colors.text }}>Languages</Text>
+                                 <Text style={{ fontFamily: fonts.medium, fontSize: 14, color: colors.textSecondary, marginTop: 4 }}>{profile.languages.join(', ')}</Text>
+                             </View>
+                         )}
+                     </MedCard>
+                </View>
+            )}
+
             {/* Contact Information */}
             <View style={{ marginBottom: 20 }}>
                 <Text style={{
@@ -141,8 +204,8 @@ export default function DoctorProfile({ onNavigate }: { onNavigate?: (tab: strin
                 <MedCard style={{ padding: 20 }}>
                     {[
                         { icon: Mail, label: email, color: colors.primary },
-                        { icon: Phone, label: '+91 98765 43210', color: colors.success },
-                        { icon: MapPin, label: 'Apollo Hospital, Mumbai', color: colors.danger },
+                        { icon: Phone, label: profile?.phone || '+91 98765 43210', color: colors.success },
+                        { icon: MapPin, label: profile?.address || 'Location not set', color: colors.danger },
                     ].map((item, i) => (
                         <View key={item.label} style={{
                             flexDirection: 'row', alignItems: 'center', gap: 14,

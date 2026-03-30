@@ -4,6 +4,8 @@ import User from '../models/User';
 import Doctor from '../models/Doctor';
 import { sendAppointmentConfirmationEmail, sendCancellationEmail } from '../utils/sendEmail';
 import Notification from '../models/Notification';
+import Conversation from '../models/Conversation';
+import Message from '../models/Message';
 import { isDemoMode } from '../config/demoMode';
 import { demoAppointments } from '../data/demoData';
 
@@ -74,14 +76,27 @@ export const createAppointment = async (req: AuthRequest, res: Response): Promis
 
     try {
         // Resolve the doctor's User account to link the appointment
-        // Priority: 1) doctorId sent from client, 2) look up Doctor profile by name
-        let resolvedDoctorId = bodyDoctorId || null;
+        // Priority: 1) Find Doctor profile by frontend docId to get user ID, 2) look up Doctor profile by name
+        let resolvedDoctorId = null;
         let resolvedDoctorEmail = '';
 
-        if (resolvedDoctorId) {
-            const doctorUser = await User.findById(resolvedDoctorId).select('email');
-            resolvedDoctorEmail = doctorUser?.email || '';
-        } else if (doctorName) {
+        if (bodyDoctorId) {
+            const isValidObjectId = /^[0-9a-fA-F]{24}$/.test(bodyDoctorId);
+            if (isValidObjectId) {
+                const doctorProfile = await Doctor.findById(bodyDoctorId).catch(() => null);
+                if (doctorProfile && doctorProfile.user) {
+                    resolvedDoctorId = doctorProfile.user;
+                } else {
+                    resolvedDoctorId = bodyDoctorId;
+                }
+                const doctorUser = await User.findById(resolvedDoctorId).select('email').catch(() => null);
+                resolvedDoctorEmail = doctorUser?.email || '';
+            } else {
+                resolvedDoctorId = bodyDoctorId;
+            }
+        } 
+        
+        if (!resolvedDoctorEmail && doctorName) {
             const doctorProfile = await Doctor.findOne({ name: { $regex: `^${doctorName}$`, $options: 'i' } });
             if (doctorProfile) {
                 resolvedDoctorId = doctorProfile.user;
@@ -137,6 +152,34 @@ export const createAppointment = async (req: AuthRequest, res: Response): Promis
                 body: `${patientName} has booked an appointment with you on ${date} at ${time}.`,
                 type: 'appointment'
             }).catch(err => console.error('Doctor notification failed:', err));
+
+            // Auto-Initialize Chat Conversation between Patient and Doctor
+            try {
+                let conversation = await Conversation.findOne({
+                    participants: { $all: [req.user?._id, resolvedDoctorId] }
+                });
+
+                if (!conversation) {
+                    conversation = await Conversation.create({
+                        participants: [req.user?._id, resolvedDoctorId],
+                        participantNames: [patientName, doctorName],
+                        lastMessage: `Appointment scheduled for ${date} at ${time}`,
+                        lastMessageTime: new Date(),
+                        unreadCount: 1
+                    });
+                    
+                    // Add an introductory greeting message from the doctor
+                    await Message.create({
+                        conversationId: conversation._id.toString(),
+                        sender: resolvedDoctorId,
+                        senderName: doctorName,
+                        content: `Hello ${patientName}, your appointment has been confirmed for ${date} at ${time}. Please let me know if you have any preliminary questions or symptoms you'd like to share before our consultation.`,
+                        type: 'text'
+                    });
+                }
+            } catch (chatError) {
+                console.error('Failed to auto-initialize chat:', chatError);
+            }
         }
 
         // Send confirmation email to patient

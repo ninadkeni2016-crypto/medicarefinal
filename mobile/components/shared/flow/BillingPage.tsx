@@ -42,7 +42,7 @@ export default function BillingPage({ appointment, onBack }: Props) {
                 gst: gstPercentage,
                 total: finalTotal,
                 status: 'Pending',
-            }).catch(() => { /* mock fallback ignores error */ });
+            });
             
             updateAppointmentState(appointment.id, { 
                 billItems, discount, gst: gstPercentage, 
@@ -52,10 +52,7 @@ export default function BillingPage({ appointment, onBack }: Props) {
             onBack();
         } catch (error) {
             console.error('Failed to submit bill:', error);
-            // Even if it fails, we mock success for UI
-            updateAppointmentState(appointment.id, { billItems, discount, gst: gstPercentage, currentStep: Math.max(state.currentStep, 4) });
-            toast({ title: `✅ Invoice generated for ₹${finalTotal.toFixed(2)}` });
-            onBack();
+            toast({ title: 'Failed to generate invoice', variant: 'destructive' });
         } finally {
             setIsSubmitting(false);
         }
