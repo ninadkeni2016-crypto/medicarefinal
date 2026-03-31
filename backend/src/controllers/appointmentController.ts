@@ -70,7 +70,7 @@ export const createAppointment = async (req: AuthRequest, res: Response): Promis
     const {
         doctorName, patientName, specialization,
         date, time, status, type, avatar,
-        patientEmail,
+        patientEmail, notes,
         doctorId: bodyDoctorId,
     } = req.body;
 
@@ -132,6 +132,7 @@ export const createAppointment = async (req: AuthRequest, res: Response): Promis
             status: status || 'upcoming',
             type,
             avatar,
+            notes,
         });
 
         const createdAppointment = await appointment.save();
@@ -219,6 +220,10 @@ export const updateAppointmentStatus = async (req: AuthRequest, res: Response): 
                 return;
             }
 
+            if (req.body.status === 'cancelled') {
+                const cancelledBy = req.user?.role === 'patient' ? 'Patient' : 'Doctor';
+                appointment.cancelledBy = cancelledBy;
+            }
             appointment.status = req.body.status || appointment.status;
             const updatedAppointment = await appointment.save();
 
@@ -246,9 +251,10 @@ export const rescheduleAppointment = async (req: AuthRequest, res: Response): Pr
         }
 
         const isPatientOwner = appointment.user.toString() === req.user?._id.toString();
-        const isAdmin = req.user?.role === 'admin';
+        const isDoctorOwner  = appointment.doctorId?.toString() === req.user?._id.toString();
+        const isAdmin        = req.user?.role === 'admin';
 
-        if (!isPatientOwner && !isAdmin) {
+        if (!isPatientOwner && !isDoctorOwner && !isAdmin) {
             res.status(401).json({ message: 'Not authorized to reschedule this appointment' });
             return;
         }
@@ -271,9 +277,10 @@ export const rescheduleAppointment = async (req: AuthRequest, res: Response): Pr
             }
         }
 
+        appointment.rescheduledFrom = { date: appointment.date, time: appointment.time };
         appointment.date = date;
         appointment.time = time;
-        appointment.status = 'upcoming'; // reset status
+        appointment.status = 'rescheduled'; // per requirements
         const rescheduledAppointment = await appointment.save();
 
         res.json(rescheduledAppointment);
@@ -303,7 +310,10 @@ export const cancelAppointment = async (req: AuthRequest, res: Response): Promis
             return;
         }
 
+        const cancelledBy = req.user?.role === 'patient' ? 'Patient' : 'Doctor';
+
         appointment.status = 'cancelled';
+        appointment.cancelledBy = cancelledBy;
         const cancelledAppointment = await appointment.save();
         
         // Send notification to the other party
@@ -319,8 +329,6 @@ export const cancelAppointment = async (req: AuthRequest, res: Response): Promis
                 type: 'appointment'
             }).catch(err => console.error('Cancellation notification failed:', err));
         }
-
-        const cancelledBy = req.user?.role === 'patient' ? 'Patient' : 'Doctor';
 
         // Send cancellation email to the patient
         const patientUser = await User.findById(appointment.user).select('email');

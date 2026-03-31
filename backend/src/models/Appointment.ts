@@ -24,7 +24,7 @@ const appointmentSchema = new mongoose.Schema(
         },
         status: {
             type: String,
-            enum: ['upcoming', 'confirmed', 'completed', 'cancelled'],
+            enum: ['upcoming', 'confirmed', 'completed', 'cancelled', 'rescheduled'],
             default: 'upcoming',
         },
         type: {
@@ -50,6 +50,19 @@ const appointmentSchema = new mongoose.Schema(
             // Fallback lookup: doctor's email for matching when doctorId is not set
             type: String,
             default: '',
+        },
+        notes: {
+            type: String,
+            default: '',
+        },
+        cancelledBy: {
+            type: String,
+            enum: ['Patient', 'Doctor', null],
+            default: null,
+        },
+        rescheduledFrom: {
+            type: Object, // { date, time }
+            default: null,
         },
     },
     {

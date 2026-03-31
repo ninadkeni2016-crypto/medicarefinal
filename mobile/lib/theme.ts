@@ -225,14 +225,15 @@ export const cardShadow = Shadows.md;
 // ─── Status Badge Colors ──────────────────────────────────────────────────────
 // Teal-family tints for status pills
 export const statusBadge = {
-  stable:    { bg: '#E8F5EE', text: '#2D7A43' },   // soft green
-  critical:  { bg: '#FEE8E2', text: '#C0402A' },   // muted red
-  review:    { bg: '#FFF4E6', text: '#B5600E' },   // soft amber
-  upcoming:  { bg: '#E8F2FA', text: '#1C567A' },   // teal-blue tint
-  completed: { bg: '#E8F5EE', text: '#2D7A43' },   // soft green
-  cancelled: { bg: '#FEE8E2', text: '#C0402A' },   // muted red
-  confirmed: { bg: '#EAF5F7', text: '#1F4E5F' },   // primary teal tint
-  info:      { bg: '#EAF5F7', text: '#457B9D' },   // steel blue tint
+  stable:      { bg: '#E8F5EE', text: '#2D7A43' },   // soft green
+  critical:    { bg: '#FEE8E2', text: '#C0402A' },   // muted red
+  review:      { bg: '#FFF4E6', text: '#B5600E' },   // soft amber
+  upcoming:    { bg: '#E8F2FA', text: '#1C567A' },   // teal-blue tint
+  completed:   { bg: '#E8F5EE', text: '#2D7A43' },   // soft green
+  cancelled:   { bg: '#FEE8E2', text: '#C0402A' },   // muted red
+  confirmed:   { bg: '#EAF5F7', text: '#1F4E5F' },   // primary teal tint
+  rescheduled: { bg: '#F5F3FF', text: '#6D28D9' },   // purple tint
+  info:        { bg: '#EAF5F7', text: '#457B9D' },   // steel blue tint
 } as const;
 
 // ─── Dark Mode Tokens (reference only — toggle manually if dark mode added) ──

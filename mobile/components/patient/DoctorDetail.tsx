@@ -29,6 +29,7 @@ export default function DoctorDetail({ doctor, onBack, onBook, onNavigate }: Doc
     const [selectedDate, setSelectedDate] = useState(dates[0].value);
     const [selectedSlot, setSelectedSlot] = useState('');
     const [selectedType, setSelectedType] = useState<'In-Person' | 'Video Call'>('In-Person');
+    const [notes, setNotes] = useState('');
     const [booked, setBooked] = useState(false);
     const [loading, setLoading] = useState(false);
     
@@ -67,7 +68,8 @@ export default function DoctorDetail({ doctor, onBack, onBook, onNavigate }: Doc
                 time: selectedSlot,
                 type: selectedType,
                 avatar: doctor.avatar,
-                status: 'upcoming'
+                status: 'upcoming',
+                notes: notes.trim(),
             });
 
             setBooked(true);
@@ -266,6 +268,17 @@ export default function DoctorDetail({ doctor, onBack, onBook, onNavigate }: Doc
                                 <Text style={{ fontSize: 13, color: '#D97706', fontFamily: fonts.semiBold }}>Please select a date and time slot above</Text>
                             </View>
                         )}
+
+                        <View style={{ marginBottom: 20 }}>
+                            <TextInput 
+                                placeholder="Optional Notes (e.g. Symptoms...)"
+                                multiline
+                                numberOfLines={2}
+                                value={notes}
+                                onChangeText={setNotes}
+                                style={{ backgroundColor: colors.background, borderRadius: 16, padding: 16, fontSize: 15, color: colors.text, textAlignVertical: 'top', borderWidth: 1, borderColor: colors.border }}
+                            />
+                        </View>
 
                         <TouchableOpacity
                             onPress={handleBook}

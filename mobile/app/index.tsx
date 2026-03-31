@@ -63,6 +63,12 @@ export default function Index() {
         });
     };
 
+    useEffect(() => {
+        if (isLoggedIn) {
+            setActiveTab('home');
+        }
+    }, [isLoggedIn]);
+
     if (!isLoggedIn) {
         return <LoginPage />;
     }
@@ -88,22 +94,22 @@ export default function Index() {
             if (tab !== 'find-doctor') setSelectedDoctor(null);
             if (tab !== 'patient-detail') setSelectedPatient(null);
             if (tab !== 'appointments') setSelectedAppointment(null);
-            
+
             if (tab === 'patient-detail' && data?.patient) {
                 setSelectedPatient(data.patient);
             }
-            
+
             if (tab === 'messages' && (data?.patient || data?.doctor)) {
                 const target = data.patient || data.doctor;
                 const roleType = data.doctor ? 'doctor' : 'patient';
                 const id = target._id || target.id;
-                setActiveConversation({ 
-                    id: 'new-' + Date.now(), 
-                    participantName: target.fullName || target.name || 'Unknown', 
-                    participantAvatar: target.avatar || '', 
-                    lastMessage: '', 
-                    lastMessageTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), 
-                    unreadCount: 0, 
+                setActiveConversation({
+                    id: 'new-' + Date.now(),
+                    participantName: target.fullName || target.name || 'Unknown',
+                    participantAvatar: target.avatar || '',
+                    lastMessage: '',
+                    lastMessageTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    unreadCount: 0,
                     online: true,
                     participantRole: roleType,
                     participantId: id
@@ -173,7 +179,7 @@ export default function Index() {
         switch (activeTab) {
             case 'home': return <DoctorHome onNavigate={handleTabChange} />;
             case 'patients': return <PatientsList onNavigate={handleTabChange} />;
-            case 'patient-detail': 
+            case 'patient-detail':
                 if (selectedPatient) return <PatientDetail patient={selectedPatient} onBack={() => setActiveTab('patients')} onNavigate={handleTabChange} />;
                 return <PatientsList onNavigate={handleTabChange} />;
             case 'appointments': return renderAppointments();
