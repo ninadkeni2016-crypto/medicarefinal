@@ -26,6 +26,9 @@ dotenv.config();
 
 const app = express();
 
+// Tell Express to trust the proxy (Render) so rate limiting works correctly
+app.set('trust proxy', 1);
+
 // Global middleware
 // Improved CORS configuration for production
 app.use(cors({
