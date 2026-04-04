@@ -19,7 +19,8 @@ const getTransporter = () => {
     port: 465,
     secure: true, // Use SSL
     auth: { user, pass },
-  });
+    family: 4 // Force IPv4 to avoid ENETUNREACH issues with IPv6 on some hosts like Render
+  } as any);
 };
 
 export const sendVerificationEmail = async (to: string, otp: string, name: string) => {
