@@ -43,4 +43,14 @@ A modern full-stack healthcare web application that allows users to find doctors
 
 ---
 
-## 📁 Project Structure
+## 📁 Project Structure 
+
+🔧 Backend Setup
+cd backend
+npm install
+npm run dev
+
+📱 Frontend Setup
+cd mobile
+npm install
+npm start
