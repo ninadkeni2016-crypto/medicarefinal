@@ -14,7 +14,7 @@ const getBaseUrl = () => {
         return 'http://192.168.1.104:5000/api';
     }
     // Production URL
-    return 'https://api.yourbackend.com/api';
+    return 'https://medicarefinal-7yor.onrender.com';
 };
 
 export const API_URL = getBaseUrl();
