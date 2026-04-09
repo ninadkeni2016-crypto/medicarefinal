@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import crypto from 'crypto';
 import User from '../models/User';
+import Doctor from '../models/Doctor';
 import AuditLog from '../models/AuditLog';
 import generateToken from '../utils/generateToken';
 import { sendVerificationEmail } from '../utils/sendEmail';
@@ -149,6 +150,21 @@ export const verifyOTP = async (req: Request, res: Response): Promise<void> => {
         user.verificationOTP = undefined;
         user.verificationOTPExpire = undefined;
         await user.save({ validateBeforeSave: false });
+
+        // If user is a doctor, ensure a profile exists so they are immediately visible to patients
+        if (user.role === 'doctor') {
+            const existingProfile = await Doctor.findOne({ user: user._id });
+            if (!existingProfile) {
+                await Doctor.create({
+                    user: user._id,
+                    name: user.name,
+                    email: user.email,
+                    specialization: 'General Medicine', // Default specialization
+                    isAvailable: true,
+                    availableSlots: ['9:00 AM', '10:00 AM', '11:00 AM', '2:00 PM', '3:00 PM', '4:00 PM']
+                });
+            }
+        }
 
         res.json({
             _id: user._id,

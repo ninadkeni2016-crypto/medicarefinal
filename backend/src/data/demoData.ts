@@ -13,11 +13,11 @@ export const demoPatients = [
 
 export const demoAppointments = [
   { _id: 'demo-a1', patientName: 'John Carter', doctorName: 'Dr. Smith', specialization: 'Cardiology', date: 'Today', time: '10:30 AM', status: 'upcoming', type: 'In-Person', avatar: 'https://ui-avatars.com/api/?name=John+Carter&background=E0F2FE&color=0369A1' },
-  { _id: 'demo-a2', patientName: 'Sarah Williams', doctorName: 'Dr. Smith', specialization: 'Dermatology', date: 'Tomorrow', time: '2:00 PM', status: 'upcoming', type: 'Video Call', avatar: 'https://ui-avatars.com/api/?name=Sarah+Williams&background=FCE7F3&color=9D174D' },
+  { _id: 'demo-a2', patientName: 'Sarah Williams', doctorName: 'Dr. Smith', specialization: 'Dermatology', date: 'Tomorrow', time: '2:00 PM', status: 'upcoming', type: 'In-Person', avatar: 'https://ui-avatars.com/api/?name=Sarah+Williams&background=FCE7F3&color=9D174D' },
   { _id: 'demo-a3', patientName: 'Michael Brown', doctorName: 'Dr. Smith', specialization: 'Orthopedic', date: '16 June', time: '11:00 AM', status: 'upcoming', type: 'In-Person', avatar: 'https://ui-avatars.com/api/?name=Michael+Brown&background=D1FAE5&color=047857' },
-  { _id: 'demo-a4', patientName: 'Emily Davis', doctorName: 'Dr. Smith', specialization: 'General', date: '14 Mar', time: '9:00 AM', status: 'completed', type: 'Video Call', avatar: 'https://ui-avatars.com/api/?name=Emily+Davis&background=E0E7FF&color=3730A3' },
+  { _id: 'demo-a4', patientName: 'Emily Davis', doctorName: 'Dr. Smith', specialization: 'General', date: '14 Mar', time: '9:00 AM', status: 'completed', type: 'In-Person', avatar: 'https://ui-avatars.com/api/?name=Emily+Davis&background=E0E7FF&color=3730A3' },
   { _id: 'demo-a5', patientName: 'Robert Johnson', doctorName: 'Dr. Smith', specialization: 'Cardiology', date: '12 Mar', time: '3:30 PM', status: 'completed', type: 'In-Person', avatar: 'https://ui-avatars.com/api/?name=Robert+Johnson&background=FEF3C7&color=B45309' },
-  { _id: 'demo-a6', patientName: 'John Carter', doctorName: 'Dr. Smith', specialization: 'Cardiology', date: '18 Mar', time: '4:00 PM', status: 'cancelled', type: 'Video Call', avatar: 'https://ui-avatars.com/api/?name=John+Carter&background=E0F2FE&color=0369A1' },
+  { _id: 'demo-a6', patientName: 'John Carter', doctorName: 'Dr. Smith', specialization: 'Cardiology', date: '18 Mar', time: '4:00 PM', status: 'cancelled', type: 'In-Person', avatar: 'https://ui-avatars.com/api/?name=John+Carter&background=E0F2FE&color=0369A1' },
 ];
 
 export const demoNotifications = [

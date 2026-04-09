@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator } from 'react-native';
+import api from '@/lib/api';
+import { toast } from '@/hooks/use-toast';
 import { 
-    ArrowLeft, Calendar, Clock, Video, CheckCircle2, 
+    ArrowLeft, Calendar, Clock, CheckCircle2, 
     Stethoscope, Pill, FileText, Receipt, CreditCard, Download, 
     MessageSquare, ChevronRight, Activity, ShieldCheck, User,
     Droplets, AlertCircle, HeartPulse, History
@@ -17,13 +19,13 @@ import BillingPage from '@/components/shared/flow/BillingPage';
 import PaymentPage from '@/components/shared/flow/PaymentPage';
 import CompletedPage from '@/components/shared/flow/CompletedPage';
 import { InitialsAvatar } from '@/components/ui/InitialsAvatar';
+import { useEffect } from 'react';
 
 
 interface AppointmentDetailProps {
     appointment: Appointment;
     onBack: () => void;
     onChat: () => void;
-    onVideoCall?: () => void;
 }
 
 const STEPS = [
@@ -35,36 +37,97 @@ const STEPS = [
     { key: 'completed', label: 'Download Documents', icon: Download, step: 6, color: '#2563EB' },
 ];
 
-export default function AppointmentDetail({ appointment, onBack, onChat, onVideoCall }: AppointmentDetailProps) {
+export default function AppointmentDetail({ appointment: initialAppointment, onBack, onChat }: AppointmentDetailProps) {
     const { role } = useAuth();
+    const [appointment, setAppointment] = useState<any>(initialAppointment);
     const [activeFlow, setActiveFlow] = useState<string | null>(null);
-    const [, forceUpdate] = useState(0);
-    const state = getAppointmentState(appointment.id);
+    const [loading, setLoading] = useState(true);
+    const [completing, setCompleting] = useState(false);
+
+    const fetchAppointmentDetails = async () => {
+        const id = (appointment as any)._id || appointment.id;
+        try {
+            const res = await api.get(`/appointments/${id}`);
+            setAppointment(res.data);
+        } catch (error) {
+            console.error('Failed to fetch appointment details:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchAppointmentDetails();
+    }, []);
+
+    const handleComplete = async () => {
+        const id = (appointment as any)._id || appointment.id;
+        setCompleting(true);
+        try {
+             await api.put(`/appointments/${id}`, { status: 'completed' });
+             toast({ title: 'Success', description: 'Appointment marked as completed successfully.' });
+             onBack(); // Go back after completion
+        } catch (error: any) {
+             toast({ title: 'Error', description: error.response?.data?.message || 'Failed to complete appointment', variant: 'destructive' });
+        } finally {
+             setCompleting(false);
+        }
+    };
 
     const handleFlowBack = () => {
         setActiveFlow(null);
-        forceUpdate(n => n + 1);
+        fetchAppointmentDetails(); // Refresh when coming back from a sub-page
     };
+
+    // Use default values if clinicalData is missing (new appointments)
+    const clinicalData = appointment.clinicalData || {
+        currentStep: 0,
+        vitals: { bp: '', hr: '', temp: '', weight: '' },
+        symptoms: [],
+        consultationNotes: '',
+        diagnosis: '',
+        medicines: [],
+        prescriptionNotes: '',
+        reportName: '',
+        reportType: '',
+        reportDate: '',
+        labName: '',
+        reportRemarks: '',
+        billItems: { consultationFee: 500, treatmentCost: 0, labCharges: 0, medicineCost: 0, otherCharges: 0 },
+        discount: 0,
+        gst: 18,
+        paymentDone: false,
+        paymentMethod: ''
+    };
+
+    if (loading) {
+        return (
+            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F8FAFC' }}>
+                <ActivityIndicator size="large" color="#2563EB" />
+                <Text style={{ marginTop: 12, color: '#64748B', fontWeight: '500' }}>Loading clinical data...</Text>
+            </View>
+        );
+    }
 
     if (activeFlow) {
         switch (activeFlow) {
-            case 'consultation': return <ConsultationPage appointment={appointment} onBack={handleFlowBack} />;
-            case 'prescription': return <PrescriptionPage appointment={appointment} onBack={handleFlowBack} />;
-            case 'reports': return <ReportsPage appointment={appointment} onBack={handleFlowBack} />;
-            case 'billing': return <BillingPage appointment={appointment} onBack={handleFlowBack} />;
-            case 'payment': return <PaymentPage appointment={appointment} onBack={handleFlowBack} />;
-            case 'completed': return <CompletedPage appointment={appointment} onBack={handleFlowBack} />;
+            case 'consultation': return <ConsultationPage appointment={appointment} onBack={handleFlowBack} clinicalData={clinicalData} />;
+            case 'prescription': return <PrescriptionPage appointment={appointment} onBack={handleFlowBack} clinicalData={clinicalData} />;
+            case 'reports': return <ReportsPage appointment={appointment} onBack={handleFlowBack} clinicalData={clinicalData} />;
+            case 'billing': return <BillingPage appointment={appointment} onBack={handleFlowBack} clinicalData={clinicalData} />;
+            case 'payment': return <PaymentPage appointment={appointment} onBack={handleFlowBack} clinicalData={clinicalData} />;
+            case 'completed': return <CompletedPage appointment={appointment} onBack={handleFlowBack} clinicalData={clinicalData} />;
         }
     }
 
-    const { currentStep } = state;
+    const { currentStep } = clinicalData;
     const progressText = `Visit Progress: ${currentStep} / 6 Completed`;
     const progressPercent = (currentStep / 6) * 100;
 
     // Use mock values for demonstration
     const age = '34';
     const gender = 'Male';
-    const patientId = `P-${String(appointment.id).padStart(4, '0')}`;
+    const patientId = `P-${String((appointment as any)._id || appointment.id).slice(-4).toUpperCase()}`;
     const bloodGroup = 'O+';
     const allergies = 'Penicillin';
     const chronicCondition = 'None';
@@ -145,7 +208,6 @@ export default function AppointmentDetail({ appointment, onBack, onChat, onVideo
                     </View>
 
                     {/* Appointment Details */}
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 16, backgroundColor: '#F8FAFC', padding: 12, borderRadius: 12 }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                             <Calendar size={16} color="#2563EB" />
                             <Text style={{ fontSize: 13, color: '#334155', fontWeight: '600' }}>{appointment.date}</Text>
@@ -154,21 +216,7 @@ export default function AppointmentDetail({ appointment, onBack, onChat, onVideo
                             <Clock size={16} color="#2563EB" />
                             <Text style={{ fontSize: 13, color: '#334155', fontWeight: '600' }}>{appointment.time}</Text>
                         </View>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                            <Video size={16} color="#2563EB" />
-                            <Text style={{ fontSize: 13, color: '#334155', fontWeight: '600' }}>{appointment.type || 'Physical'}</Text>
-                        </View>
-                    </View>
 
-                    {appointment.type === 'Video Call' && currentStep < 2 && (
-                        <TouchableOpacity 
-                            onPress={onVideoCall}
-                            style={{ marginTop: 16, height: 48, borderRadius: 12, backgroundColor: '#2563EB', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 }}
-                        >
-                            <Video size={18} color="#FFFFFF" fill="#FFFFFF" />
-                            <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 15 }}>Start Video Consultation</Text>
-                        </TouchableOpacity>
-                    )}
                 </View>
 
                 {/* Patient Quick Stats Grid */}
@@ -321,6 +369,37 @@ export default function AppointmentDetail({ appointment, onBack, onChat, onVideo
                     })}
                 </View>
 
+                {/* Final Completion Button for Doctors - Only shown when workflow is complete */}
+                {role === 'doctor' && appointment.status !== 'completed' && currentStep >= 6 && (
+                    <TouchableOpacity
+                        onPress={handleComplete}
+                        disabled={completing}
+                        style={{
+                            marginTop: 32,
+                            height: 56,
+                            borderRadius: 12,
+                            backgroundColor: '#16A34A',
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 10,
+                            shadowColor: '#16A34A',
+                            shadowOffset: { width: 0, height: 4 },
+                            shadowOpacity: 0.2,
+                            shadowRadius: 8,
+                            elevation: 4
+                        }}
+                    >
+                        {completing ? (
+                            <ActivityIndicator color="#FFF" />
+                        ) : (
+                            <>
+                                <CheckCircle2 size={20} color="#FFFFFF" />
+                                <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 16 }}>Complete Appointment</Text>
+                            </>
+                        )}
+                    </TouchableOpacity>
+                )}
             </ScrollView>
         </SafeAreaView>
     );

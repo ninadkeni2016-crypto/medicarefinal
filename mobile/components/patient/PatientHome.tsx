@@ -11,6 +11,7 @@ import { SectionHeader } from '@/components/ui/SectionHeader';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { SkeletonBox } from '@/components/ui/SkeletonBox';
 import { InitialsAvatar } from '@/components/ui/InitialsAvatar';
+import { QueueStatusCard } from './QueueStatusCard';
 
 interface PatientHomeProps { onNavigate: (tab: string) => void; }
 
@@ -46,6 +47,9 @@ export default function PatientHome({ onNavigate }: PatientHomeProps) {
     const upcoming = appointments.filter(a => a.status === 'upcoming');
     const completed = appointments.filter(a => a.status === 'completed');
     const nextAppointment = upcoming[0];
+    
+    const todayStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const todaysAppointment = upcoming.find(a => a.date === todayStr);
 
     const stats = [
         { label: 'Upcoming', value: upcoming.length },
@@ -114,6 +118,14 @@ export default function PatientHome({ onNavigate }: PatientHomeProps) {
                     <View style={{ position: 'absolute', top: 12, right: 12, width: 8, height: 8, borderRadius: 4, backgroundColor: colors.danger, borderWidth: 2, borderColor: colors.card }} />
                 </TouchableOpacity>
             </View>
+
+            {/* Live Queue Status */}
+            {todaysAppointment && (
+                <QueueStatusCard 
+                    doctorId={(todaysAppointment.doctorId?._id || todaysAppointment.doctorId).toString()} 
+                    date={todaysAppointment.date} 
+                />
+            )}
 
             {/* Stats */}
             {loading ? (

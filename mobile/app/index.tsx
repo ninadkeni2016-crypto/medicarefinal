@@ -33,7 +33,6 @@ import BillingList from '@/components/shared/BillingList';
 import ChatList from '@/components/shared/ChatList';
 import ChatConversation from '@/components/shared/ChatConversation';
 import SettingsScreen from '@/components/shared/SettingsScreen';
-import VideoCall from '@/components/shared/VideoCall';
 import BottomNav from '@/components/BottomNav';
 
 export default function Index() {
@@ -45,7 +44,6 @@ export default function Index() {
     const [selectedPatient, setSelectedPatient] = useState<any | null>(null);
     const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
     const [showSettings, setShowSettings] = useState(false);
-    const [showVideoCall, setShowVideoCall] = useState(false);
     const fadeAnim = useRef(new Animated.Value(1)).current;
     const slideAnim = useRef(new Animated.Value(0)).current;
 
@@ -83,9 +81,6 @@ export default function Index() {
         );
     }
 
-    if (showVideoCall) {
-        return <VideoCall onEndCall={() => setShowVideoCall(false)} patientName={role === 'doctor' ? selectedAppointment?.patientName : userName} doctorName={selectedAppointment?.doctorName} isDoctor={role === 'doctor'} />;
-    }
 
     const handleTabChange = (tab: string, data?: any) => {
         if (tab === 'settings') { setShowSettings(true); return; }
@@ -155,7 +150,7 @@ export default function Index() {
 
     const renderAppointments = () => {
         if (selectedAppointment) {
-            return <AppointmentDetail appointment={selectedAppointment} onBack={() => setSelectedAppointment(null)} onChat={() => { setSelectedAppointment(null); setActiveTab('messages'); }} onVideoCall={() => setShowVideoCall(true)} />;
+            return <AppointmentDetail appointment={selectedAppointment} onBack={() => setSelectedAppointment(null)} onChat={() => { setSelectedAppointment(null); setActiveTab('messages'); }} />;
         }
         return <AppointmentsList onSelectAppointment={setSelectedAppointment} />;
     };

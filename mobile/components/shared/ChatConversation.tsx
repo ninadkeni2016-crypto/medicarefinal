@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, Image, Dimensions, ActivityIndicator } from 'react-native';
-import { ArrowLeft, Send, Phone, Video, MoreHorizontal, Check, CheckCheck } from 'lucide-react-native';
+import { ArrowLeft, Send, Phone, MoreHorizontal, Check, CheckCheck } from 'lucide-react-native';
 import { Conversation, ChatMsg, conversationMessages } from '@/lib/chat-data';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
@@ -57,25 +57,25 @@ export default function ChatConversation({ conversation, onBack, onViewProfile }
         if (!text.trim()) return;
         const msgText = text.trim();
         setText('');
-        
+
         // Optimistic UI
-        const optimisticMsg: ChatMsg = { 
-            id: String(Date.now()), 
-            conversationId: conversation.id, 
-            senderId: 'own', 
-            content: msgText, 
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), 
-            isOwn: true, 
-            type: 'text' 
+        const optimisticMsg: ChatMsg = {
+            id: String(Date.now()),
+            conversationId: conversation.id,
+            senderId: 'own',
+            content: msgText,
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            isOwn: true,
+            type: 'text'
         };
         setMessages(prev => [...prev, optimisticMsg]);
-        
+
         try {
             if (conversation.id.startsWith('conv-')) {
                 // Read-only mock fallback scenario
                 return;
             }
-            
+
             const payload: any = {
                 content: msgText,
                 type: 'text',
@@ -100,35 +100,35 @@ export default function ChatConversation({ conversation, onBack, onViewProfile }
 
     return (
         <View style={{ flex: 1, backgroundColor: colors.background }}>
-            <KeyboardAvoidingView 
-                style={{ flex: 1 }} 
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+            <KeyboardAvoidingView
+                style={{ flex: 1 }}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 20}
             >
                 {/* Header */}
-                <View style={{ 
-                    flexDirection: 'row', 
-                    alignItems: 'center', 
-                    gap: 12, 
-                    padding: 16, 
-                    backgroundColor: 'rgba(255, 255, 255, 0.9)', 
-                    borderBottomWidth: 1, 
+                <View style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: 16,
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    borderBottomWidth: 1,
                     borderBottomColor: colors.border,
                     zIndex: 10,
                     ...Platform.select({
                         web: { position: 'sticky', top: 0 }
                     })
                 }}>
-                    <TouchableOpacity 
-                        onPress={onBack} 
+                    <TouchableOpacity
+                        onPress={onBack}
                         activeOpacity={0.7}
                         style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: colors.card, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border, ...cardShadow }}
                     >
                         <ArrowLeft size={20} color={colors.text} />
                     </TouchableOpacity>
-                    
-                    <TouchableOpacity 
-                        onPress={onViewProfile} 
+
+                    <TouchableOpacity
+                        onPress={onViewProfile}
                         activeOpacity={0.8}
                         style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}
                     >
@@ -141,13 +141,10 @@ export default function ChatConversation({ conversation, onBack, onViewProfile }
                             <Text style={[typography.label, { color: conversation.online ? colors.success : colors.textMuted }]}>{conversation.online ? 'Active Now' : 'Offline'}</Text>
                         </View>
                     </TouchableOpacity>
-                    
+
                     <View style={{ flexDirection: 'row', gap: 10 }}>
                         <TouchableOpacity style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(99, 102, 241, 0.08)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(99, 102, 241, 0.1)' }}>
                             <Phone size={20} color={colors.primary} />
-                        </TouchableOpacity>
-                        <TouchableOpacity style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(16, 185, 129, 0.08)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(16, 185, 129, 0.1)' }}>
-                            <Video size={20} color={colors.success} />
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -157,20 +154,20 @@ export default function ChatConversation({ conversation, onBack, onViewProfile }
                     ref={flatListRef}
                     data={messages}
                     keyExtractor={item => item.id}
-                    contentContainerStyle={{ padding: 20, paddingBottom: 10 }}
+                    contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
                     showsVerticalScrollIndicator={false}
                     renderItem={({ item }) => (
-                        <View style={{ 
-                            alignSelf: item.isOwn ? 'flex-end' : 'flex-start', 
-                            maxWidth: '85%', 
-                            marginBottom: 20 
+                        <View style={{
+                            alignSelf: item.isOwn ? 'flex-end' : 'flex-start',
+                            maxWidth: '85%',
+                            marginBottom: 20
                         }}>
-                            <View style={{ 
-                                backgroundColor: item.isOwn ? colors.primary : colors.card, 
-                                borderRadius: 24, 
-                                borderBottomRightRadius: item.isOwn ? 4 : 24, 
-                                borderBottomLeftRadius: !item.isOwn ? 4 : 24, 
-                                paddingHorizontal: 18, 
+                            <View style={{
+                                backgroundColor: item.isOwn ? colors.primary : colors.card,
+                                borderRadius: 24,
+                                borderBottomRightRadius: item.isOwn ? 4 : 24,
+                                borderBottomLeftRadius: !item.isOwn ? 4 : 24,
+                                paddingHorizontal: 18,
                                 paddingVertical: 14,
                                 borderWidth: item.isOwn ? 0 : 1,
                                 borderColor: colors.border,
@@ -190,23 +187,42 @@ export default function ChatConversation({ conversation, onBack, onViewProfile }
                     )}
                 />
 
+                {/* Disclaimer Box */}
+                <View style={{
+                    position: 'absolute',
+                    bottom: 110,
+                    right: 20,
+                    backgroundColor: 'rgba(231, 111, 81, 0.1)',
+                    padding: 8,
+                    borderRadius: 10,
+                    borderWidth: 1,
+                    borderColor: 'rgba(231, 111, 81, 0.15)',
+                    maxWidth: width * 0.5,
+                    zIndex: 50,
+                    pointerEvents: 'none'
+                }}>
+                    <Text style={{ fontSize: 9, color: colors.danger, fontFamily: fonts.semiBold, textAlign: 'right', lineHeight: 12 }}>
+                        ⚠️ These features are currently unavailable and will be added in future updates.
+                    </Text>
+                </View>
+
                 {/* Input Area */}
-                <View style={{ 
-                    padding: 20, 
-                    paddingBottom: Platform.OS === 'ios' ? 32 : 20, 
-                    backgroundColor: colors.card, 
-                    borderTopWidth: 1, 
+                <View style={{
+                    padding: 20,
+                    paddingBottom: Platform.OS === 'ios' ? 32 : 20,
+                    backgroundColor: colors.card,
+                    borderTopWidth: 1,
                     borderTopColor: colors.border,
                     ...cardShadow
                 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-                        <View style={{ 
-                            flex: 1, 
-                            flexDirection: 'row', 
-                            alignItems: 'center', 
-                            backgroundColor: colors.background, 
-                            borderRadius: 22, 
-                            borderWidth: 1, 
+                        <View style={{
+                            flex: 1,
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            backgroundColor: colors.background,
+                            borderRadius: 22,
+                            borderWidth: 1,
                             borderColor: colors.border,
                             paddingHorizontal: 16
                         }}>
@@ -223,16 +239,16 @@ export default function ChatConversation({ conversation, onBack, onViewProfile }
                                 <MoreHorizontal size={22} color={colors.textMuted} />
                             </TouchableOpacity>
                         </View>
-                        <TouchableOpacity 
-                            onPress={handleSend} 
+                        <TouchableOpacity
+                            onPress={handleSend}
                             disabled={!text.trim()}
                             activeOpacity={0.8}
-                            style={{ 
-                                width: 52, 
-                                height: 52, 
-                                borderRadius: 18, 
-                                backgroundColor: text.trim() ? colors.primary : colors.background, 
-                                alignItems: 'center', 
+                            style={{
+                                width: 52,
+                                height: 52,
+                                borderRadius: 18,
+                                backgroundColor: text.trim() ? colors.primary : colors.background,
+                                alignItems: 'center',
                                 justifyContent: 'center',
                                 ... (text.trim() ? cardShadow : {})
                             }}

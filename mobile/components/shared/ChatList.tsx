@@ -25,7 +25,7 @@ export default function ChatList({ onSelectConversation, onOpenAI }: Props) {
                 const mapped: Conversation[] = (res.data || []).map((c: any) => {
                     const rawNames = c.participantNames || [];
                     const otherName = rawNames.find((n: string) => n && n !== userName) || rawNames.find((n: string) => n) || 'Unknown';
-                    
+
                     return {
                         id: c._id,
                         participantName: otherName,
@@ -36,7 +36,7 @@ export default function ChatList({ onSelectConversation, onOpenAI }: Props) {
                         online: false,
                     };
                 });
-                
+
                 // Ensure Dr. Sameer Mahadik's chat is visible for patients as requested
                 if (role === 'patient') {
                     const hasMahadik = mapped.some(c => c.participantName.toLowerCase().includes('sameer') || c.id === 'conv-1');
@@ -52,19 +52,19 @@ export default function ChatList({ onSelectConversation, onOpenAI }: Props) {
                         }
                     });
                 }
-                
+
                 setConversations(mapped);
             })
             .catch((err) => {
                 console.error('Failed to fetch conversations:', err);
-                
+
                 // Fallback for Demo
                 if (role === 'patient' && patientConversations.length > 0) {
-                     setConversations([patientConversations[0]]);
+                    setConversations([patientConversations[0]]);
                 } else if (role === 'doctor' && doctorConversations.length > 0) {
-                     setConversations(doctorConversations);
+                    setConversations(doctorConversations);
                 } else {
-                     setConversations([]);
+                    setConversations([]);
                 }
             })
             .finally(() => setLoading(false));
@@ -89,35 +89,35 @@ export default function ChatList({ onSelectConversation, onOpenAI }: Props) {
                 </View>
 
                 {/* Search Bar */}
-                <MedCard style={{ 
-                    flexDirection: 'row', 
-                    alignItems: 'center', 
-                    gap: 12, 
-                    paddingVertical: 2, 
-                    paddingHorizontal: 16, 
-                    marginBottom: 24, 
+                <MedCard style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 12,
+                    paddingVertical: 2,
+                    paddingHorizontal: 16,
+                    marginBottom: 24,
                     borderRadius: 18,
                     backgroundColor: colors.card,
                     borderWidth: 1,
                     borderColor: colors.border
                 }}>
                     <Search size={20} color={colors.textMuted} />
-                    <TextInput 
-                        value={search} 
-                        onChangeText={setSearch} 
-                        placeholder="Search conversations..." 
-                        placeholderTextColor={colors.textMuted} 
-                        style={{ flex: 1, height: 52, fontSize: 15, color: colors.text, fontFamily: fonts.regular }} 
+                    <TextInput
+                        value={search}
+                        onChangeText={setSearch}
+                        placeholder="Search conversations..."
+                        placeholderTextColor={colors.textMuted}
+                        style={{ flex: 1, height: 52, fontSize: 15, color: colors.text, fontFamily: fonts.regular }}
                     />
                 </MedCard>
 
                 {onOpenAI && role === 'patient' && (
                     <TouchableOpacity onPress={onOpenAI} activeOpacity={0.9} style={{ marginBottom: 32 }}>
-                        <MedCard style={{ 
-                            backgroundColor: colors.primary, 
-                            padding: 20, 
-                            flexDirection: 'row', 
-                            alignItems: 'center', 
+                        <MedCard style={{
+                            backgroundColor: colors.primary,
+                            padding: 20,
+                            flexDirection: 'row',
+                            alignItems: 'center',
                             gap: 16,
                             overflow: 'hidden',
                             position: 'relative'
@@ -136,7 +136,7 @@ export default function ChatList({ onSelectConversation, onOpenAI }: Props) {
                         </MedCard>
                     </TouchableOpacity>
                 )}
-                
+
                 <SectionHeader title="Recent Conversations" />
             </View>
 
@@ -146,15 +146,15 @@ export default function ChatList({ onSelectConversation, onOpenAI }: Props) {
                 contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 100 }}
                 showsVerticalScrollIndicator={false}
                 renderItem={({ item }) => (
-                    <TouchableOpacity 
-                        onPress={() => onSelectConversation(item)} 
-                        activeOpacity={0.8} 
+                    <TouchableOpacity
+                        onPress={() => onSelectConversation(item)}
+                        activeOpacity={0.8}
                         style={{ marginBottom: 14 }}
                     >
-                        <MedCard style={{ 
-                            flexDirection: 'row', 
-                            alignItems: 'center', 
-                            gap: 16, 
+                        <MedCard style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 16,
                             padding: 14,
                             borderRadius: 22
                         }}>
@@ -201,6 +201,25 @@ export default function ChatList({ onSelectConversation, onOpenAI }: Props) {
                     </TouchableOpacity>
                 )}
             />
+
+            {/* Disclaimer Box */}
+            <View style={{
+                position: 'absolute',
+                bottom: 120,
+                right: 20,
+                backgroundColor: 'rgba(231, 111, 81, 0.1)',
+                padding: 10,
+                borderRadius: 12,
+                borderWidth: 1,
+                borderColor: 'rgba(231, 111, 81, 0.2)',
+                maxWidth: width * 0.6,
+                zIndex: 100,
+                pointerEvents: 'none'
+            }}>
+                <Text style={{ fontSize: 10, color: colors.danger, fontFamily: fonts.semiBold, textAlign: 'right', lineHeight: 14 }}>
+                    ⚠️ These features are currently unavailable and will be added in future updates.
+                </Text>
+            </View>
         </View>
     );
 }

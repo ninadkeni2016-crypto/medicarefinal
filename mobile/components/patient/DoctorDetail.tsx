@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Image, TextInput, ActivityIndicator, Dimensions, SafeAreaView } from 'react-native';
-import { ArrowLeft, Star, MapPin, Clock, Calendar, Users, Award, Video, CheckCircle2, ChevronRight, ShieldCheck, MessageSquare } from 'lucide-react-native';
+import { ArrowLeft, Star, MapPin, Clock, Calendar, Users, Award, CheckCircle2, ChevronRight, ShieldCheck, MessageSquare } from 'lucide-react-native';
 import { Doctor } from '@/lib/mock-data';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
@@ -10,25 +10,23 @@ import { Button } from '../ui/button';
 import { SectionHeader } from '../ui/SectionHeader';
 import { colors, spacing, radius, typography, cardShadow, fonts } from '@/lib/theme';
 import { InitialsAvatar } from '../ui/InitialsAvatar';
+import { CalendarPicker } from '../ui/CalendarPicker';
 
 
 const { width } = Dimensions.get('window');
 
 interface DoctorDetailProps { doctor: Doctor; onBack: () => void; onBook: () => void; onNavigate?: (tab: string, data?: any) => void; }
 
-const dates = [
-    { label: 'Today', value: 'Mar 14' },
-    { label: 'Tomorrow', value: 'Mar 15' },
-    { label: 'Mon', value: 'Mar 16' },
-    { label: 'Tue', value: 'Mar 17' },
-    { label: 'Wed', value: 'Mar 18' },
-];
+
 
 export default function DoctorDetail({ doctor, onBack, onBook, onNavigate }: DoctorDetailProps) {
     const { userName, patientProfile } = useAuth();
-    const [selectedDate, setSelectedDate] = useState(dates[0].value);
+    const todayStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const [selectedDate, setSelectedDate] = useState(todayStr);
     const [selectedSlot, setSelectedSlot] = useState('');
-    const [selectedType, setSelectedType] = useState<'In-Person' | 'Video Call'>('In-Person');
+    const [availableSlots, setAvailableSlots] = useState<{ time: string; available: boolean }[]>([]);
+    const [slotsLoading, setSlotsLoading] = useState(false);
+    const [selectedType, setSelectedType] = useState<'In-Person'>('In-Person');
     const [notes, setNotes] = useState('');
     const [booked, setBooked] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -51,6 +49,29 @@ export default function DoctorDetail({ doctor, onBack, onBook, onNavigate }: Doc
         };
         fetchReviews();
     }, [doctor]);
+
+    useEffect(() => {
+        const fetchSlots = async () => {
+            setSlotsLoading(true);
+            try {
+                const docId = (doctor as any)._id || doctor.id;
+                const res = await api.get(`/appointments/available-slots`, {
+                    params: { doctorId: docId, date: selectedDate }
+                });
+                setAvailableSlots(res.data || []);
+                // Deselect slot if it's no longer available on new date
+                if (!res.data.find((s: any) => s.time === selectedSlot && s.available)) {
+                    setSelectedSlot('');
+                }
+            } catch (err) {
+                console.error('Failed to fetch slots', err);
+                toast({ title: 'Error', description: 'Failed to load available slots.', variant: 'destructive' });
+            } finally {
+                setSlotsLoading(false);
+            }
+        };
+        fetchSlots();
+    }, [doctor, selectedDate]);
 
     const handleBook = async () => {
         if (!selectedSlot) return;
@@ -155,7 +176,6 @@ export default function DoctorDetail({ doctor, onBack, onBook, onNavigate }: Doc
                         <View style={{ flexDirection: 'row', gap: 12 }}>
                             {[
                                 { type: 'In-Person' as const, icon: MapPin, desc: 'Clinic Visit' },
-                                { type: 'Video Call' as const, icon: Video, desc: 'Telehealth' },
                             ].map((t) => (
                                 <TouchableOpacity 
                                     key={t.type} 
@@ -193,29 +213,10 @@ export default function DoctorDetail({ doctor, onBack, onBook, onNavigate }: Doc
                             <Text style={{ fontSize: 18, fontFamily: fonts.bold, color: colors.text, letterSpacing: -0.3 }}>Select Date</Text>
                             <Calendar size={18} color={colors.textSecondary} />
                         </View>
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}>
-                            {dates.map(d => (
-                                <TouchableOpacity 
-                                    key={d.value} 
-                                    onPress={() => setSelectedDate(d.value)}
-                                    activeOpacity={0.8}
-                                    style={{ 
-                                        width: 80, 
-                                        paddingVertical: 16,
-                                        borderRadius: 16, 
-                                        backgroundColor: selectedDate === d.value ? colors.primary : colors.card,
-                                        borderWidth: 1,
-                                        borderColor: selectedDate === d.value ? colors.primary : colors.border,
-                                        alignItems: 'center',
-                                        ... (selectedDate === d.value ? cardShadow : {})
-                                    }}
-                                >
-                                    <Text style={{ fontSize: 11, fontFamily: fonts.bold, color: selectedDate === d.value ? 'rgba(255,255,255,0.7)' : colors.textMuted, marginBottom: 6, textTransform: 'uppercase' }}>{d.label}</Text>
-                                    <Text style={{ fontSize: 20, fontFamily: fonts.bold, color: selectedDate === d.value ? '#FFF' : colors.text }}>{d.value.split(' ')[1]}</Text>
-                                    <Text style={{ fontSize: 11, fontFamily: fonts.bold, color: selectedDate === d.value ? 'rgba(255,255,255,0.7)' : colors.textSecondary, marginTop: 4 }}>{d.value.split(' ')[0]}</Text>
-                                </TouchableOpacity>
-                            ))}
-                        </ScrollView>
+                        <CalendarPicker 
+                            selectedDate={selectedDate} 
+                            onDateSelect={(date) => setSelectedDate(date)} 
+                        />
                     </View>
 
                     {/* Time Selection */}
@@ -224,26 +225,68 @@ export default function DoctorDetail({ doctor, onBack, onBook, onNavigate }: Doc
                             <Text style={{ fontSize: 18, fontFamily: fonts.bold, color: colors.text, letterSpacing: -0.3 }}>Available Slots</Text>
                             <Clock size={18} color={colors.textSecondary} />
                         </View>
-                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
-                            {doctor.availableSlots.map(slot => (
-                                <TouchableOpacity 
-                                    key={slot} 
-                                    onPress={() => setSelectedSlot(slot)}
-                                    activeOpacity={0.8}
-                                    style={{ 
-                                        paddingHorizontal: 20, 
-                                        paddingVertical: 12, 
-                                        borderRadius: 12, 
-                                        backgroundColor: selectedSlot === slot ? colors.text : colors.card,
-                                        borderWidth: 1,
-                                        borderColor: selectedSlot === slot ? colors.text : colors.border,
-                                        ... (selectedSlot === slot ? cardShadow : {})
-                                    }}
-                                >
-                                    <Text style={{ fontSize: 14, fontFamily: fonts.bold, color: selectedSlot === slot ? '#FFF' : colors.text }}>{slot}</Text>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
+                        {slotsLoading ? (
+                            <ActivityIndicator size="small" color={colors.primary} style={{ padding: 20 }} />
+                        ) : availableSlots.length === 0 ? (
+                            <View style={{ padding: 20, backgroundColor: colors.background, borderRadius: 12, alignItems: 'center' }}>
+                                <Text style={{ color: colors.textMuted, fontFamily: fonts.medium }}>No slots available for this date.</Text>
+                            </View>
+                        ) : (
+                            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+                                {availableSlots.map(slot => {
+                                    const isSelected = selectedSlot === slot.time;
+                                    const isAvailable = slot.available;
+                                    
+                                    // Base styles for the slot pill
+                                    const slotBg = isSelected 
+                                        ? colors.primary 
+                                        : isAvailable 
+                                            ? 'rgba(107, 203, 119, 0.12)' // colors.success 12% alpha
+                                            : 'rgba(231, 111, 81, 0.08)'; // colors.danger 8% alpha
+                                            
+                                    const slotBorder = isSelected 
+                                        ? colors.primary 
+                                        : isAvailable 
+                                            ? 'rgba(107, 203, 119, 0.3)' 
+                                            : 'rgba(231, 111, 81, 0.2)';
+                                            
+                                    const textColor = isSelected 
+                                        ? '#FFF' 
+                                        : isAvailable 
+                                            ? '#2D7A43' // Darker green for readability
+                                            : colors.danger;
+
+                                    return (
+                                        <TouchableOpacity 
+                                            key={slot.time} 
+                                            onPress={() => isAvailable && setSelectedSlot(slot.time)}
+                                            activeOpacity={isAvailable ? 0.7 : 1}
+                                            style={{ 
+                                                paddingHorizontal: 18, 
+                                                paddingVertical: 12, 
+                                                borderRadius: 14, 
+                                                backgroundColor: slotBg,
+                                                borderWidth: 1.5,
+                                                borderColor: slotBorder,
+                                                minWidth: width * 0.28,
+                                                alignItems: 'center',
+                                                ... (isSelected ? cardShadow : {})
+                                            }}
+                                        >
+                                            <Text style={{ 
+                                                fontSize: 14, 
+                                                fontFamily: fonts.bold, 
+                                                color: textColor,
+                                                opacity: isAvailable || isSelected ? 1 : 0.6,
+                                                textDecorationLine: isAvailable ? 'none' : 'line-through'
+                                            }}>
+                                                {slot.time}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    );
+                                })}
+                            </View>
+                        )}
                     </View>
 
                     {/* Booking Action */}

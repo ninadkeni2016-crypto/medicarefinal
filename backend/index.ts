@@ -18,6 +18,7 @@ import notificationRoutes from './src/routes/notificationRoutes';
 import paymentRoutes from './src/routes/paymentRoutes';
 import reviewRoutes from './src/routes/reviewRoutes';
 import dashboardRoutes from './src/routes/dashboardRoutes';
+import waitlistRoutes from './src/routes/waitlistRoutes';
 import { notFound, errorHandler } from './src/middlewares/errorMiddleware';
 import { isDemoMode } from './src/config/demoMode';
 
@@ -84,6 +85,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/waitlist', waitlistRoutes);
 
 // Basic health check route
 app.get('/api/health', (req: Request, res: Response) => {

@@ -3,21 +3,26 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView, ActivityIndicator 
 import { ArrowLeft, Stethoscope, Activity, Thermometer, Heart, FileText, Zap, Check } from 'lucide-react-native';
 import { Appointment } from '@/lib/mock-data';
 import { useAuth } from '@/contexts/AuthContext';
-import { getAppointmentState, updateAppointmentState } from '@/lib/appointment-state';
 import { toast } from '@/hooks/use-toast';
+import { AppointmentFlowState } from '@/lib/appointment-state';
+import api from '@/lib/api';
 
-interface Props { appointment: Appointment; onBack: () => void; }
+interface Props { 
+    appointment: Appointment; 
+    onBack: () => void; 
+    clinicalData: AppointmentFlowState;
+}
 
 const COMMON_SYMPTOMS = ['Fever', 'Headache', 'Cough', 'Fatigue', 'Body Ache', 'Nausea', 'Dizziness', 'Chills'];
 
-export default function ConsultationPage({ appointment, onBack }: Props) {
+export default function ConsultationPage({ appointment, onBack, clinicalData }: Props) {
     const { role } = useAuth();
-    const state = getAppointmentState(appointment.id);
-    const [notes, setNotes] = useState(state.consultationNotes);
-    const [diagnosis, setDiagnosis] = useState(state.diagnosis);
-    const [vitals, setVitals] = useState(state.vitals || { bp: '', hr: '', temp: '', weight: '' });
-    const [symptoms, setSymptoms] = useState<string[]>(state.symptoms || []);
+    const [notes, setNotes] = useState(clinicalData.consultationNotes);
+    const [diagnosis, setDiagnosis] = useState(clinicalData.diagnosis);
+    const [vitals, setVitals] = useState(clinicalData.vitals || { bp: '', hr: '', temp: '', weight: '' });
+    const [symptoms, setSymptoms] = useState<string[]>(clinicalData.symptoms || []);
     const [isGenerating, setIsGenerating] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
 
     const toggleSymptom = (sym: string) => {
         setSymptoms(prev => prev.includes(sym) ? prev.filter(s => s !== sym) : [...prev, sym]);
@@ -34,17 +39,28 @@ export default function ConsultationPage({ appointment, onBack }: Props) {
         }, 1500);
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!notes.trim() && !diagnosis.trim()) { toast({ title: 'Please add diagnosis or notes' }); return; }
-        updateAppointmentState(appointment.id, { 
-            consultationNotes: notes, 
-            diagnosis,
-            vitals,
-            symptoms,
-            currentStep: Math.max(state.currentStep, 1) 
-        });
-        toast({ title: '✅ Consultation completed' });
-        onBack();
+        
+        setIsSaving(true);
+        const id = (appointment as any)._id || appointment.id;
+        
+        try {
+            await api.patch(`/appointments/${id}/clinical-data`, { 
+                consultationNotes: notes, 
+                diagnosis,
+                vitals,
+                symptoms,
+                currentStep: Math.max(clinicalData.currentStep, 1) 
+            });
+            toast({ title: '✅ Consultation completed' });
+            onBack();
+        } catch (error) {
+            console.error('Failed to save consultation:', error);
+            toast({ title: '❌ Error', description: 'Failed to save data to backend' });
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     if (role === 'patient') {

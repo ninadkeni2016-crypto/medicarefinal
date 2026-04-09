@@ -155,7 +155,7 @@ const seedData = async () => {
                 date: 'Mar 18',
                 time: '2:00 PM',
                 status: 'completed',
-                type: 'Video Call',
+                type: 'In-Person',
                 avatar: doctors[1].avatar,
                 user: patientUsers[1]._id,
                 doctorId: doctorUsers[1]._id

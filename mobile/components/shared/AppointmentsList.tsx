@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Modal, Platform } from 'react-native';
-import { Calendar, Clock, Video, MapPin, ChevronRight, X, AlertCircle } from 'lucide-react-native';
+import { Calendar, Clock, MapPin, ChevronRight, X, AlertCircle } from 'lucide-react-native';
 import { Appointment } from '@/lib/mock-data';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
@@ -11,20 +11,25 @@ import { InitialsAvatar } from '@/components/ui/InitialsAvatar';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { SkeletonBox } from '@/components/ui/SkeletonBox';
 import { toast } from '@/hooks/use-toast';
+import { CalendarPicker } from '@/components/ui/CalendarPicker';
 
 interface Props { onSelectAppointment?: (apt: Appointment) => void; }
 
 const FILTERS = ['all', 'upcoming', 'rescheduled', 'completed', 'cancelled'] as const;
 
-const dates = [
-    { label: 'Today', value: 'Mar 14' },
-    { label: 'Tomorrow', value: 'Mar 15' },
-    { label: 'Mon', value: 'Mar 16' },
-    { label: 'Tue', value: 'Mar 17' },
-    { label: 'Wed', value: 'Mar 18' },
-];
-
-const mockTimeSlots = ['09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '12:00 PM', '02:00 PM'];
+const generateDates = () => {
+    const dats = [];
+    const today = new Date();
+    for (let i = 0; i < 5; i++) {
+        const d = new Date(today);
+        d.setDate(today.getDate() + i);
+        const label = i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : d.toLocaleDateString('en-US', { weekday: 'short' });
+        const value = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        dats.push({ label, value });
+    }
+    return dats;
+};
+const dates = generateDates();
 
 export default function AppointmentsList({ onSelectAppointment }: Props) {
     const { role } = useAuth();
@@ -34,9 +39,11 @@ export default function AppointmentsList({ onSelectAppointment }: Props) {
 
     // Reschedule State
     const [rescheduleModalVisible, setRescheduleModalVisible] = useState(false);
-    const [reschedulingAptId, setReschedulingAptId] = useState<string | null>(null);
+    const [reschedulingApt, setReschedulingApt] = useState<any | null>(null);
     const [selectedDate, setSelectedDate] = useState(dates[0].value);
     const [selectedSlot, setSelectedSlot] = useState('');
+    const [availableSlots, setAvailableSlots] = useState<{time: string, available: boolean}[]>([]);
+    const [slotsLoading, setSlotsLoading] = useState(false);
     const [reschedulingLoader, setReschedulingLoader] = useState(false);
 
     const fetchAppointments = useCallback(async () => {
@@ -57,6 +64,29 @@ export default function AppointmentsList({ onSelectAppointment }: Props) {
         return () => clearInterval(interval);
     }, [fetchAppointments]);
 
+    // Fetch slots when rescheduling
+    useEffect(() => {
+        const fetchAvailableSlots = async () => {
+            if (!reschedulingApt) return;
+            setSlotsLoading(true);
+            try {
+                const docId = reschedulingApt.doctorId?._id || reschedulingApt.doctorId;
+                if (!docId) return;
+                const res = await api.get('/appointments/available-slots', {
+                    params: { doctorId: docId, date: selectedDate }
+                });
+                setAvailableSlots(res.data || []);
+            } catch (err) {
+                console.error('Failed to fetchSlots:', err);
+            } finally {
+                setSlotsLoading(false);
+            }
+        };
+        if (rescheduleModalVisible) {
+            fetchAvailableSlots();
+        }
+    }, [reschedulingApt, selectedDate, rescheduleModalVisible]);
+
     const filtered = filter === 'all' ? appointments : appointments.filter(a => a.status === filter);
 
     const updateStatus = async (id: string, status: string) => {
@@ -71,10 +101,11 @@ export default function AppointmentsList({ onSelectAppointment }: Props) {
     };
 
     const handleReschedule = async () => {
-        if (!reschedulingAptId || !selectedSlot) return;
+        const aptId = reschedulingApt?._id || reschedulingApt?.id;
+        if (!aptId || !selectedSlot) return;
         setReschedulingLoader(true);
         try {
-             await api.patch(`/appointments/${reschedulingAptId}/reschedule`, {
+             await api.patch(`/appointments/${aptId}/reschedule`, {
                  date: selectedDate,
                  time: selectedSlot
              });
@@ -88,10 +119,10 @@ export default function AppointmentsList({ onSelectAppointment }: Props) {
         }
     };
 
-    const openRescheduleModal = (id: string) => {
-        setReschedulingAptId(id);
+    const openRescheduleModal = (apt: any) => {
+        setReschedulingApt(apt);
         setRescheduleModalVisible(true);
-        setSelectedDate(dates[0].value);
+        setSelectedDate(apt.date || dates[0].value);
         setSelectedSlot('');
     };
 
@@ -188,12 +219,8 @@ export default function AppointmentsList({ onSelectAppointment }: Props) {
                             <View style={{ alignItems: 'flex-end', gap: 6 }}>
                                 <StatusBadge status={apt.status} />
                                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                                    {apt.type === 'Video Call' ? (
-                                        <Video size={12} color={colors.textMuted} />
-                                    ) : (
-                                        <MapPin size={12} color={colors.textMuted} />
-                                    )}
-                                    <Text style={[typography.caption, { color: colors.textSecondary }]}>{apt.type}</Text>
+                                    <MapPin size={12} color={colors.textMuted} />
+                                    <Text style={[typography.caption, { color: colors.textSecondary }]}>{apt.type || 'In-Person'}</Text>
                                 </View>
                             </View>
                         </View>
@@ -224,18 +251,13 @@ export default function AppointmentsList({ onSelectAppointment }: Props) {
                             <View style={{ flexDirection: 'row', gap: 8, marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: colors.border }}>
                                 {role === 'doctor' && (
                                     <>
-                                        {apt.status === 'upcoming' && (
-                                            <TouchableOpacity onPress={() => updateStatus(id, 'confirmed')} activeOpacity={0.7} style={{ flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: radius.md, backgroundColor: colors.primary }}>
-                                                <Text style={[typography.button, { color: '#fff', fontSize: 13 }]}>Confirm</Text>
-                                            </TouchableOpacity>
-                                        )}
-                                        <TouchableOpacity onPress={() => updateStatus(id, 'completed')} activeOpacity={0.7} style={{ flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: radius.md, backgroundColor: '#F0FDF4', borderWidth: 1, borderColor: '#BBF7D0' }}>
+                                        <TouchableOpacity onPress={() => onSelectAppointment?.(apt)} activeOpacity={0.7} style={{ flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: radius.md, backgroundColor: '#F0FDF4', borderWidth: 1, borderColor: '#BBF7D0' }}>
                                             <Text style={[typography.button, { color: colors.success, fontSize: 13 }]}>Complete</Text>
                                         </TouchableOpacity>
                                     </>
                                 )}
                                 
-                                <TouchableOpacity onPress={() => openRescheduleModal(id)} activeOpacity={0.7} style={{ flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: radius.md, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: colors.border }}>
+                                <TouchableOpacity onPress={() => openRescheduleModal(apt)} activeOpacity={0.7} style={{ flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: radius.md, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: colors.border }}>
                                     <Text style={[typography.button, { color: colors.text, fontSize: 13 }]}>Reschedule</Text>
                                 </TouchableOpacity>
 
@@ -265,50 +287,78 @@ export default function AppointmentsList({ onSelectAppointment }: Props) {
                                </TouchableOpacity>
                           </View>
 
-                          {/* Simplified Date Selection */}
+                          {/* Professional Calendar Grid */}
                           <Text style={[typography.section, { marginBottom: 12 }]}>Select New Date</Text>
-                          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, marginBottom: 20 }}>
-                                {dates.map(d => (
-                                    <TouchableOpacity 
-                                        key={d.value} 
-                                        onPress={() => setSelectedDate(d.value)}
-                                        activeOpacity={0.8}
-                                        style={{ 
-                                            width: 70, 
-                                            paddingVertical: 14,
-                                            borderRadius: 12, 
-                                            backgroundColor: selectedDate === d.value ? colors.primary : colors.card,
-                                            borderWidth: 1,
-                                            borderColor: selectedDate === d.value ? colors.primary : colors.border,
-                                            alignItems: 'center',
-                                        }}
-                                    >
-                                        <Text style={{ fontSize: 10, fontFamily: typography.bodyMedium.fontFamily, color: selectedDate === d.value ? '#FFF' : colors.textMuted, marginBottom: 4 }}>{d.label}</Text>
-                                        <Text style={{ fontSize: 16, fontFamily: typography.title.fontFamily, color: selectedDate === d.value ? '#FFF' : colors.text }}>{d.value.split(' ')[1]}</Text>
-                                    </TouchableOpacity>
-                                ))}
-                          </ScrollView>
-
-                          {/* Time Selection */}
-                          <Text style={[typography.section, { marginBottom: 12 }]}>Select New Time</Text>
-                          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 30 }}>
-                                {mockTimeSlots.map(slot => (
-                                    <TouchableOpacity 
-                                        key={slot} 
-                                        onPress={() => setSelectedSlot(slot)}
-                                        style={{ 
-                                            paddingHorizontal: 16, 
-                                            paddingVertical: 10, 
-                                            borderRadius: 10, 
-                                            backgroundColor: selectedSlot === slot ? colors.text : colors.card,
-                                            borderWidth: 1,
-                                            borderColor: selectedSlot === slot ? colors.text : colors.border,
-                                        }}
-                                    >
-                                        <Text style={{ fontSize: 13, fontFamily: typography.bodyMedium.fontFamily, color: selectedSlot === slot ? '#FFF' : colors.text }}>{slot}</Text>
-                                    </TouchableOpacity>
-                                ))}
+                          <View style={{ marginBottom: 20 }}>
+                              <CalendarPicker 
+                                  selectedDate={selectedDate} 
+                                  onDateSelect={(date) => setSelectedDate(date)} 
+                              />
                           </View>
+
+                          {/* Time Selection with real slots */}
+                          <Text style={[typography.section, { marginBottom: 12 }]}>Select New Time</Text>
+                          {slotsLoading ? (
+                               <ActivityIndicator size="small" color={colors.primary} style={{ padding: 20 }} />
+                          ) : availableSlots.length === 0 ? (
+                               <View style={{ padding: 16, backgroundColor: colors.background, borderRadius: 12, alignItems: 'center', marginBottom: 20 }}>
+                                    <Text style={{ color: colors.textMuted, fontSize: 13 }}>No available slots for this date</Text>
+                               </View>
+                          ) : (
+                                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 30 }}>
+                                    {availableSlots.map(slot => {
+                                        const isSelected = selectedSlot === slot.time;
+                                        const isAvailable = slot.available;
+
+                                        const slotBg = isSelected 
+                                            ? colors.primary 
+                                            : isAvailable 
+                                                ? 'rgba(107, 203, 119, 0.12)'
+                                                : 'rgba(231, 111, 81, 0.08)';
+                                        
+                                        const slotBorder = isSelected 
+                                            ? colors.primary 
+                                            : isAvailable 
+                                                ? 'rgba(107, 203, 119, 0.3)' 
+                                                : 'rgba(231, 111, 81, 0.2)';
+
+                                        const textColor = isSelected 
+                                            ? '#FFF' 
+                                            : isAvailable 
+                                                ? '#2D7A43'
+                                                : colors.danger;
+
+                                        return (
+                                            <TouchableOpacity 
+                                                key={slot.time} 
+                                                disabled={!isAvailable}
+                                                onPress={() => setSelectedSlot(slot.time)}
+                                                activeOpacity={isAvailable ? 0.7 : 1}
+                                                style={{ 
+                                                    paddingHorizontal: 16, 
+                                                    paddingVertical: 10, 
+                                                    borderRadius: 12, 
+                                                    backgroundColor: slotBg,
+                                                    borderWidth: 1.5,
+                                                    borderColor: slotBorder,
+                                                    minWidth: '30%',
+                                                    alignItems: 'center'
+                                                }}
+                                            >
+                                                <Text style={{ 
+                                                    fontSize: 13, 
+                                                    fontFamily: typography.bodyMedium.fontFamily, 
+                                                    color: textColor,
+                                                    opacity: isAvailable || isSelected ? 1 : 0.6,
+                                                    textDecorationLine: isAvailable ? 'none' : 'line-through'
+                                                }}>
+                                                    {slot.time}
+                                                </Text>
+                                            </TouchableOpacity>
+                                        );
+                                    })}
+                                </View>
+                          )}
 
                           <TouchableOpacity
                               onPress={handleReschedule}

@@ -29,7 +29,7 @@ const appointmentSchema = new mongoose.Schema(
         },
         type: {
             type: String,
-            enum: ['In-Person', 'Video Call'],
+            enum: ['In-Person'],
             required: true,
         },
         avatar: {
@@ -40,11 +40,17 @@ const appointmentSchema = new mongoose.Schema(
             required: true,
             ref: 'User',
         },
+        patientId: {
+            // Explicit patientId field to match requirement, points to the same User as 'user'
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            required: true,
+        },
         doctorId: {
             // The User._id of the doctor — set when booking so the doctor can query their appointments
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User',
-            default: null,
+            required: true,
         },
         doctorEmail: {
             // Fallback lookup: doctor's email for matching when doctorId is not set
@@ -64,6 +70,48 @@ const appointmentSchema = new mongoose.Schema(
             type: Object, // { date, time }
             default: null,
         },
+        checkInTime: {
+            type: Date,
+        },
+        consultationStartTime: {
+            type: Date,
+        },
+        consultationEndTime: {
+            type: Date,
+        },
+        visitStatus: {
+            type: String,
+            enum: ['pending', 'checked-in', 'in-consultation', 'completed'],
+            default: 'pending',
+        },
+        clinicalData: {
+            type: Object,
+            default: {
+                currentStep: 0,
+                vitals: { bp: '', hr: '', temp: '', weight: '' },
+                symptoms: [],
+                consultationNotes: '',
+                diagnosis: '',
+                medicines: [],
+                prescriptionNotes: '',
+                reportName: '',
+                reportType: '',
+                reportDate: '',
+                labName: '',
+                reportRemarks: '',
+                billItems: { 
+                    consultationFee: 500, 
+                    treatmentCost: 0, 
+                    labCharges: 0, 
+                    medicineCost: 0, 
+                    otherCharges: 0 
+                },
+                discount: 0,
+                gst: 18,
+                paymentDone: false,
+                paymentMethod: ''
+            }
+        }
     },
     {
         timestamps: true,

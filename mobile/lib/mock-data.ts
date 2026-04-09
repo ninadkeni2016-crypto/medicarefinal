@@ -27,7 +27,7 @@ export interface Appointment {
   date: string;
   time: string;
   status: 'upcoming' | 'completed' | 'cancelled';
-  type: 'In-Person' | 'Video Call';
+  type: 'In-Person';
   avatar: string;
 }
 
@@ -234,13 +234,7 @@ export const mockDoctors: Doctor[] = [
   },
 ];
 
-export const mockAppointments: Appointment[] = [
-  { id: '1', doctorName: 'Dr. Sameer Mahadik', patientName: 'Arjun Verma', specialization: 'Cardiology', date: 'Mar 12, 2026', time: '10:30 AM', status: 'upcoming', type: 'In-Person', avatar: 'https://randomuser.me/api/portraits/men/75.jpg' },
-  { id: '2', doctorName: 'Dr. Vikram Patel', patientName: 'Kavya Reddy', specialization: 'Dermatology', date: 'Mar 10, 2026', time: '2:00 PM', status: 'completed', type: 'Video Call', avatar: 'https://randomuser.me/api/portraits/women/26.jpg' },
-  { id: '3', doctorName: 'Dr. Meera Iyer', patientName: 'Rohan Gupta', specialization: 'Pediatrics', date: 'Mar 15, 2026', time: '9:00 AM', status: 'upcoming', type: 'In-Person', avatar: 'https://randomuser.me/api/portraits/men/22.jpg' },
-  { id: '4', doctorName: 'Dr. Rajesh Khanna', patientName: 'Sneha Joshi', specialization: 'Orthopedics', date: 'Mar 8, 2026', time: '11:00 AM', status: 'completed', type: 'In-Person', avatar: 'https://randomuser.me/api/portraits/women/33.jpg' },
-  { id: '5', doctorName: 'Dr. Priya Nair', patientName: 'Aditya Kumar', specialization: 'Neurology', date: 'Mar 20, 2026', time: '3:30 PM', status: 'upcoming', type: 'Video Call', avatar: 'https://randomuser.me/api/portraits/men/85.jpg' },
-];
+export const mockAppointments: Appointment[] = [];
 
 export const mockPrescriptions: Prescription[] = [
   { id: '1', doctorName: 'Dr. Sameer Mahadik', patientName: 'Arjun Verma', date: 'Mar 8, 2026', medicines: [{ name: 'Amlodipine', dosage: '5mg', frequency: 'Once daily', duration: '30 days' }, { name: 'Aspirin', dosage: '75mg', frequency: 'Once daily', duration: '30 days' }], notes: 'Take after meals. Follow up in 2 weeks.' },

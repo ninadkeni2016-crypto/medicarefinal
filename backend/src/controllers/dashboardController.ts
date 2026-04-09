@@ -47,9 +47,9 @@ export const getDashboardStats = async (req: AuthRequest, res: Response): Promis
       Report.find({}),
     ]);
 
-    const todayStr = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    const todayStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     const todayAppointments = appointments.filter(
-      (a: any) => (a.date === todayStr || a.date === 'Today') && ['upcoming', 'confirmed'].includes(a.status)
+      (a: any) => (a.date === todayStr || a.date === 'Today') && ['upcoming', 'confirmed', 'rescheduled'].includes(a.status)
     ).length;
     const totalRevenue = bills.filter((b: any) => b.status === 'Paid').reduce((s: number, b: any) => s + b.total, 0);
     const pendingReports = reports.filter((r: any) => r.status === 'Pending').length;
@@ -98,7 +98,7 @@ export const getDashboardData = async (req: AuthRequest, res: Response): Promise
     const doctorId = req.user._id;
     const [patients, appointments, notifications, reports, conversations] = await Promise.all([
       PatientProfile.find().sort({ updatedAt: -1 }).limit(5).lean(),
-      Appointment.find({ $or: [{ doctorId }, { doctorEmail: req.user?.email }], status: 'upcoming' }).sort({ date: 1, time: 1 }).limit(5).lean(),
+      Appointment.find({ $or: [{ doctorId }, { doctorEmail: req.user?.email }], status: { $in: ['upcoming', 'confirmed', 'rescheduled'] } }).sort({ date: 1, time: 1 }).limit(5).lean(),
       Notification.find({ user: doctorId }).sort({ createdAt: -1 }).limit(10).lean(),
       Report.find({}).sort({ createdAt: -1 }).limit(4).lean(),
       Conversation.find({ participants: doctorId }).sort({ lastMessageTime: -1, updatedAt: -1 }).limit(3).lean(),
@@ -126,7 +126,7 @@ export const getDashboardData = async (req: AuthRequest, res: Response): Promise
         todayAppointments: await Appointment.countDocuments({
           $or: [{ doctorId }, { doctorEmail: req.user?.email }],
           date: { $in: [todayStr, 'Today'] },
-          status: { $in: ['upcoming', 'confirmed'] },
+          status: { $in: ['upcoming', 'confirmed', 'rescheduled'] },
         }),
         pendingReports: await Report.countDocuments({ status: 'Pending' }),
         totalRevenue: (await Bill.aggregate([{ $match: { status: 'Paid' } }, { $group: { _id: null, total: { $sum: '$total' } } }]))[0]?.total || 0,

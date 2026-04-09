@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Image, RefreshControl } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { Users, Calendar, Receipt, Bell, Clock, FileText, Pill, CreditCard, MessageSquare, ChevronRight, AlertCircle } from 'lucide-react-native';
 import api from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from '@/hooks/use-toast';
 import { colors, spacing, radius, typography, cardShadow, fonts, Shadows } from '@/lib/theme';
 import { MedCard } from '@/components/ui/MedCard';
 import { SectionHeader } from '@/components/ui/SectionHeader';
@@ -63,72 +65,93 @@ export default function DoctorHome({ onNavigate }: DoctorHomeProps) {
     const [demoData, setDemoData] = useState(false);
     const [fallback, setFallback] = useState<{ appointments: any[]; bills: any[]; patientsCount: number }>({ appointments: [], bills: [], patientsCount: 0 });
 
-    useEffect(() => {
-        let dashboardSet = false;
-        const load = async () => {
-            try {
-                const res = await api.get('/dashboard/data').catch(() => null);
-                if (res?.data) {
-                    setDashboard(res.data);
-                    setDemoData(!!res.data.demoData || res.headers?.['x-demo-data'] === 'true');
-                    dashboardSet = true;
-                }
-            } catch (_) {}
-            try {
-                const [apptsRes, billsRes, patientsRes] = await Promise.all([
-                    api.get('/appointments').catch(() => ({ data: [] })),
-                    api.get('/bills').catch(() => ({ data: [] })),
-                    api.get('/patients').catch(() => ({ data: [] })),
-                ]);
-                const appointments = apptsRes?.data || [];
-                const bills = billsRes?.data || [];
-                const patients = patientsRes?.data || [];
-                setFallback({ appointments, bills, patientsCount: Array.isArray(patients) ? patients.length : 0 });
-                if (!dashboardSet) {
-                    const built = {
-                        stats: {
-                            totalPatients: Array.isArray(patients) ? patients.length : 0,
-                            todayAppointments: (appointments || []).filter((a: any) => a.status === 'upcoming').length,
-                            pendingReports: 0,
-                            totalRevenue: (bills || []).filter((b: any) => b.status === 'Paid').reduce((s: number, b: any) => s + (b.total || 0), 0),
-                        },
-                        recentPatients: (patients || []).slice(0, 5),
-                        upcomingAppointments: (appointments || []).filter((a: any) => a.status === 'upcoming').slice(0, 5),
-                        notifications: [],
-                        recentReports: [],
-                        messages: [],
-                        charts: {
-                            appointmentsPerWeek: [{ day: 'Mon', count: 4 }, { day: 'Tue', count: 6 }, { day: 'Wed', count: 5 }, { day: 'Thu', count: 8 }, { day: 'Fri', count: 7 }, { day: 'Sat', count: 3 }, { day: 'Sun', count: 2 }],
-                            patientRegistrations: [{ month: 'Oct', count: 12 }, { month: 'Nov', count: 18 }, { month: 'Dec', count: 15 }, { month: 'Jan', count: 22 }, { month: 'Feb', count: 19 }, { month: 'Mar', count: 25 }],
-                            departmentVisits: [{ name: 'Cardiology', count: 28 }, { name: 'Dermatology', count: 15 }, { name: 'General', count: 35 }],
-                        },
-                    };
-                    setDashboard(built);
-                    setDemoData(patientsRes?.data?.[0] && (patientsRes.data[0]._id || '').toString().startsWith('demo-'));
-                }
-            } catch (e) {
-                if (!dashboardSet) setDashboard({ stats: { totalPatients: 0, todayAppointments: 0, pendingReports: 0, totalRevenue: 0 }, recentPatients: [], upcomingAppointments: [], notifications: [], recentReports: [], messages: [] });
-            } finally {
-                setLoading(false);
+    const loadDashboard = useCallback(async () => {
+        setLoading(true);
+        let dashboardData: any = null;
+        let dashboardRes: any = null;
+        
+        try {
+            dashboardRes = await api.get('/dashboard/data').catch(() => null);
+            if (dashboardRes?.data) {
+                dashboardData = dashboardRes.data;
+                setDemoData(!!dashboardRes.data.demoData || dashboardRes.headers?.['x-demo-data'] === 'true');
             }
-        };
-        load();
-    }, []);
+        } catch (_) {}
+        
+        try {
+            const [apptsRes, billsRes, patientsRes] = await Promise.all([
+                api.get('/appointments').catch(() => ({ data: [] })),
+                api.get('/bills').catch(() => ({ data: [] })),
+                api.get('/patients').catch(() => ({ data: [] })),
+            ]);
+            
+            const appointments = apptsRes?.data || [];
+            const bills = billsRes?.data || [];
+            const patients = patientsRes?.data || [];
+            
+            setFallback({ appointments, bills, patientsCount: Array.isArray(patients) ? patients.length : 0 });
+            
+            const built = {
+                ...(dashboardData || {}),
+                stats: {
+                    totalPatients: Array.isArray(patients) ? patients.length : 0,
+                    todayAppointments: (appointments || []).filter((a: any) => ['upcoming', 'confirmed', 'rescheduled'].includes(a.status)).length,
+                    pendingReports: dashboardData?.stats?.pendingReports || 0,
+                    totalRevenue: (bills || []).filter((b: any) => b.status === 'Paid').reduce((s: number, b: any) => s + (b.total || 0), 0),
+                },
+                recentPatients: (patients || []).slice(0, 5),
+                upcomingAppointments: (appointments || []).filter((a: any) => ['upcoming', 'confirmed', 'rescheduled'].includes(a.status)).slice(0, 5),
+                notifications: dashboardData?.notifications || [],
+                recentReports: dashboardData?.recentReports || [],
+                messages: dashboardData?.messages || [],
+                charts: dashboardData?.charts || {
+                    appointmentsPerWeek: [{ day: 'Mon', count: 4 }, { day: 'Tue', count: 6 }, { day: 'Wed', count: 5 }, { day: 'Thu', count: 8 }, { day: 'Fri', count: 7 }, { day: 'Sat', count: 3 }, { day: 'Sun', count: 2 }],
+                    patientRegistrations: [{ month: 'Oct', count: 12 }, { month: 'Nov', count: 18 }, { month: 'Dec', count: 15 }, { month: 'Jan', count: 22 }, { month: 'Feb', count: 19 }, { month: 'Mar', count: 25 }],
+                    departmentVisits: [{ name: 'Cardiology', count: 28 }, { name: 'Dermatology', count: 15 }, { name: 'General', count: 35 }],
+                },
+            };
+            
+            setDashboard(built as DashboardData);
+            setDemoData(dashboardRes?.headers?.['x-demo-data'] === 'true' || (appointments.length === 0 && bills.length === 0));
+            
+        } catch (e) {
+            console.error('Failed to load fallback data', e);
+        } finally {
+            setLoading(false);
+        }
+    }, [userName]);
+
+    useFocusEffect(
+        useCallback(() => {
+            loadDashboard();
+        }, [loadDashboard])
+    );
 
     const stats = dashboard?.stats ?? {
         totalPatients: fallback.patientsCount,
-        todayAppointments: fallback.appointments.filter(a => a.status === 'upcoming').length,
+        todayAppointments: fallback.appointments.filter(a => ['upcoming', 'confirmed', 'rescheduled'].includes(a.status)).length,
         pendingReports: 0,
         totalRevenue: fallback.bills.filter((b: any) => b.status === 'Paid').reduce((s: number, b: any) => s + (b.total || 0), 0),
     };
     const pendingBills = fallback.bills.filter((b: any) => b.status !== 'Paid');
     const pendingPayments = pendingBills.reduce((s: number, b: any) => s + (b.total || 0), 0);
     const recentPatients = dashboard?.recentPatients ?? [];
-    const upcomingAppointments = dashboard?.upcomingAppointments ?? fallback.appointments.filter((a: any) => a.status === 'upcoming').slice(0, 5);
+    const upcomingAppointments = dashboard?.upcomingAppointments ?? fallback.appointments.filter((a: any) => ['upcoming', 'confirmed', 'rescheduled'].includes(a.status)).slice(0, 5);
     const notifications = dashboard?.notifications ?? [];
     const recentReports = dashboard?.recentReports ?? [];
     const messages = dashboard?.messages ?? [];
     const charts = dashboard?.charts;
+
+    const handleVisitAction = async (id: string, action: string) => {
+        try {
+            await api.put(`/appointments/${id}/${action}`);
+            toast({ title: 'Success', description: `Appointment updated: ${action.split('-').join(' ')}` });
+            loadDashboard();
+        } catch (err) {
+            console.error('Visit action failed:', err);
+            toast({ title: 'Error', description: 'Failed to update visit status', variant: 'destructive' });
+        }
+    };
 
     const quickActions = [
         { icon: Calendar, label: 'Schedule', tab: 'appointments' },
@@ -143,6 +166,9 @@ export default function DoctorHome({ onNavigate }: DoctorHomeProps) {
             style={{ flex: 1, backgroundColor: colors.background }}
             contentContainerStyle={{ padding: spacing.lg, paddingBottom: 100 }}
             showsVerticalScrollIndicator={false}
+            refreshControl={
+                <RefreshControl refreshing={loading} onRefresh={loadDashboard} colors={[colors.primary]} />
+            }
         >
             {demoData && (
                 <View style={{
@@ -292,16 +318,37 @@ export default function DoctorHome({ onNavigate }: DoctorHomeProps) {
                                 <InitialsAvatar name={apt.patientName || ''} size={40} radius={10} />
                                 <View style={{ flex: 1 }}>
                                     <Text style={[typography.section, { color: colors.text }]}>{apt.patientName}</Text>
-                                    <Text style={[typography.caption, { color: colors.textSecondary }]}>{apt.specialization} · {apt.date}</Text>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                                        <Text style={[typography.caption, { color: colors.textSecondary }]}>{apt.specialization}</Text>
+                                        <View style={{ width: 3, height: 3, borderRadius: 1.5, backgroundColor: colors.textMuted }} />
+                                        <Text style={[typography.caption, { color: colors.primary, fontWeight: '600' }]}>{apt.visitStatus || 'upcoming'}</Text>
+                                    </View>
                                 </View>
-                                <View style={{ alignItems: 'flex-end' }}>
+                                <View style={{ alignItems: 'flex-end', gap: 4 }}>
                                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                                         <Clock size={14} color={colors.primary} />
                                         <Text style={[typography.caption, { color: colors.primary, fontWeight: '600' }]}>{apt.time}</Text>
                                     </View>
-                                    <Text style={[typography.caption, { color: colors.textSecondary }]}>{apt.type}</Text>
+                                    
+                                    {/* Visit Actions */}
+                                    {apt.visitStatus === 'pending' || !apt.visitStatus ? (
+                                        <TouchableOpacity 
+                                            onPress={() => handleVisitAction(apt._id, 'start-consultation')}
+                                            style={{ backgroundColor: colors.primary, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 }}
+                                        >
+                                            <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>Start Visit</Text>
+                                        </TouchableOpacity>
+                                    ) : apt.visitStatus === 'in-consultation' ? (
+                                        <TouchableOpacity 
+                                            onPress={() => handleVisitAction(apt._id, 'complete-consultation')}
+                                            style={{ backgroundColor: colors.success, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 }}
+                                        >
+                                            <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>Complete</Text>
+                                        </TouchableOpacity>
+                                    ) : (
+                                        <ChevronRight size={16} color={colors.textMuted} />
+                                    )}
                                 </View>
-                                <ChevronRight size={16} color={colors.textMuted} />
                             </View>
                         </MedCard>
                     ))
