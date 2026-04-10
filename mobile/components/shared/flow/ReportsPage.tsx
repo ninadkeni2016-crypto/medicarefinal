@@ -3,26 +3,30 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView } from 'react-nativ
 import { ArrowLeft, FileText, UploadCloud, FileType, CheckCircle2, Calendar, Building2 } from 'lucide-react-native';
 import { Appointment } from '@/lib/mock-data';
 import { useAuth } from '@/contexts/AuthContext';
-import { getAppointmentState, updateAppointmentState } from '@/lib/appointment-state';
+import { AppointmentFlowState } from '@/lib/appointment-state';
 import { toast } from '@/hooks/use-toast';
 import api from '@/lib/api';
 
-interface Props { appointment: Appointment; onBack: () => void; }
+interface Props { 
+    appointment: Appointment; 
+    onBack: () => void; 
+    clinicalData: AppointmentFlowState;
+}
 
 const REPORT_CATEGORIES = ['Blood Test', 'X-Ray', 'MRI', 'Ultrasound', 'CT Scan'];
 
-export default function ReportsPage({ appointment, onBack }: Props) {
+export default function ReportsPage({ appointment, onBack, clinicalData }: Props) {
     const { role } = useAuth();
-    const state = getAppointmentState(appointment.id);
-    const [reportName, setReportName] = useState(state.reportName);
-    const [reportType, setReportType] = useState(state.reportType || 'Blood Test');
-    const [reportDate, setReportDate] = useState(state.reportDate || new Date().toISOString().split('T')[0]);
-    const [labName, setLabName] = useState(state.labName || '');
-    const [reportRemarks, setReportRemarks] = useState(state.reportRemarks || '');
+    const [reportName, setReportName] = useState(clinicalData.reportName || '');
+    const [reportType, setReportType] = useState(clinicalData.reportType || 'Blood Test');
+    const [reportDate, setReportDate] = useState(clinicalData.reportDate || new Date().toISOString().split('T')[0]);
+    const [labName, setLabName] = useState(clinicalData.labName || '');
+    const [reportRemarks, setReportRemarks] = useState(clinicalData.reportRemarks || '');
+    const [isSaving, setIsSaving] = useState(false);
     
     // Simulate file upload
     const [isUploading, setIsUploading] = useState(false);
-    const [uploadedFile, setUploadedFile] = useState(state.reportName ? `${state.reportName.replace(/\s+/g, '_').toLowerCase()}.pdf` : null);
+    const [uploadedFile, setUploadedFile] = useState(clinicalData.reportName ? `${clinicalData.reportName.replace(/\s+/g, '_').toLowerCase()}.pdf` : null);
 
     const handleSimulateUpload = () => {
         setIsUploading(true);
@@ -38,26 +42,25 @@ export default function ReportsPage({ appointment, onBack }: Props) {
     const handleSubmit = async () => {
         if (!reportName.trim() || !uploadedFile) { toast({ title: 'Please upload a report and enter a name' }); return; }
         
+        setIsSaving(true);
+        const id = (appointment as any)._id || appointment.id;
+        
         try {
-            await api.post('/reports', {
-                name: reportName,
-                type: reportType,
-                date: reportDate,
-                status: 'Ready',
-                labName,
-                remarks: reportRemarks,
-                doctorName: appointment.doctorName,
-                patientName: appointment.patientName
-            });
-            updateAppointmentState(appointment.id, { 
-                reportName, reportType, reportDate, labName, reportRemarks, 
-                currentStep: Math.max(state.currentStep, 3) 
+            await api.patch(`/appointments/${id}/clinical-data`, { 
+                reportName, 
+                reportType, 
+                reportDate, 
+                labName, 
+                reportRemarks, 
+                currentStep: Math.max(clinicalData.currentStep, 3) 
             });
             toast({ title: '✅ Reports saved successfully' });
             onBack();
         } catch (error) {
             console.error('Report save failed', error);
-            toast({ title: 'Failed to save', variant: 'destructive' });
+            toast({ title: '❌ Error', description: 'Failed to save data to backend' });
+        } finally {
+            setIsSaving(false);
         }
     };
 

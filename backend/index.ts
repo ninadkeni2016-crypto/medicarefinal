@@ -40,13 +40,14 @@ app.use(cors({
         }
         
         const allowedOrigins = [
-            'https://medicareapp-eosin.vercel.app', 
             'http://localhost:3000', 
             'http://localhost:19006', 
             'http://localhost:8081'
         ];
         
-        if (allowedOrigins.indexOf(origin) !== -1) {
+        const isVercel = origin.endsWith('.vercel.app');
+        
+        if (allowedOrigins.indexOf(origin) !== -1 || isVercel) {
             callback(null, true);
         } else {
             callback(new Error('Not allowed by CORS'));

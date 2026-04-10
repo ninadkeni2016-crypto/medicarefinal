@@ -3,11 +3,15 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView, ActivityIndicator 
 import { ArrowLeft, Receipt, CheckCircle, Plus, Percent, HeartHandshake } from 'lucide-react-native';
 import { Appointment } from '@/lib/mock-data';
 import { useAuth } from '@/contexts/AuthContext';
-import { getAppointmentState, updateAppointmentState } from '@/lib/appointment-state';
+import { AppointmentFlowState } from '@/lib/appointment-state';
 import { toast } from '@/hooks/use-toast';
 import api from '@/lib/api';
 
-interface Props { appointment: Appointment; onBack: () => void; }
+interface Props { 
+    appointment: Appointment; 
+    onBack: () => void; 
+    clinicalData: AppointmentFlowState;
+}
 
 const LABELS: Record<string, { label: string, icon: React.ElementType, color: string }> = { 
     consultationFee: { label: 'Consultation Fee', icon: Receipt, color: '#2563EB' }, 
@@ -17,12 +21,11 @@ const LABELS: Record<string, { label: string, icon: React.ElementType, color: st
     otherCharges: { label: 'Other Charges', icon: Plus, color: '#64748B' }
 };
 
-export default function BillingPage({ appointment, onBack }: Props) {
+export default function BillingPage({ appointment, onBack, clinicalData }: Props) {
     const { role } = useAuth();
-    const state = getAppointmentState(appointment.id);
-    const [billItems, setBillItems] = useState(state.billItems || { consultationFee: 500, treatmentCost: 0, labCharges: 0, medicineCost: 0, otherCharges: 0 });
-    const [discount, setDiscount] = useState(state.discount || 0);
-    const [gstPercentage, setGstPercentage] = useState(state.gst ?? 18);
+    const [billItems, setBillItems] = useState(clinicalData.billItems || { consultationFee: 500, treatmentCost: 0, labCharges: 0, medicineCost: 0, otherCharges: 0 });
+    const [discount, setDiscount] = useState(clinicalData.discount || 0);
+    const [gstPercentage, setGstPercentage] = useState(clinicalData.gst ?? 18);
     const [isSubmitting, setIsSubmitting] = useState(false);
     
     const subtotal = Object.values(billItems).reduce((s, v) => s + (Number(v) || 0), 0);
@@ -32,27 +35,20 @@ export default function BillingPage({ appointment, onBack }: Props) {
 
     const handleSubmit = async () => {
         setIsSubmitting(true);
+        const id = (appointment as any)._id || appointment.id;
         try {
-            await api.post('/bills', {
-                patientName: appointment.patientName,
-                doctorName: appointment.doctorName,
-                date: appointment.date,
-                ...billItems,
-                discount,
-                gst: gstPercentage,
-                total: finalTotal,
-                status: 'Pending',
+            await api.patch(`/appointments/${id}/clinical-data`, { 
+                billItems, 
+                discount, 
+                gst: gstPercentage, 
+                currentStep: Math.max(clinicalData.currentStep, 4) 
             });
             
-            updateAppointmentState(appointment.id, { 
-                billItems, discount, gst: gstPercentage, 
-                currentStep: Math.max(state.currentStep, 4) 
-            });
             toast({ title: `✅ Invoice generated for ₹${finalTotal.toFixed(2)}` });
             onBack();
         } catch (error) {
             console.error('Failed to submit bill:', error);
-            toast({ title: 'Failed to generate invoice', variant: 'destructive' });
+            toast({ title: '❌ Error', description: 'Failed to generate invoice', variant: 'destructive' });
         } finally {
             setIsSubmitting(false);
         }

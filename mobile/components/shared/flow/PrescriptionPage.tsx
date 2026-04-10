@@ -3,20 +3,26 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView, Switch } from 'rea
 import { ArrowLeft, Pill, Plus, Trash2, ShieldAlert, Utensils } from 'lucide-react-native';
 import { Appointment } from '@/lib/mock-data';
 import { useAuth } from '@/contexts/AuthContext';
-import { getAppointmentState, updateAppointmentState, Medicine } from '@/lib/appointment-state';
+import { AppointmentFlowState, Medicine } from '@/lib/appointment-state';
 import { toast } from '@/hooks/use-toast';
 import api from '@/lib/api';
 
-interface Props { appointment: Appointment; onBack: () => void; }
+import { AppointmentFlowState, Medicine } from '@/lib/appointment-state';
+
+interface Props { 
+    appointment: Appointment; 
+    onBack: () => void; 
+    clinicalData: AppointmentFlowState;
+}
 
 const SUGGESTIONS = ['Paracetamol', 'Amoxicillin', 'Azithromycin', 'Cetirizine', 'Pantoprazole'];
 
-export default function PrescriptionPage({ appointment, onBack }: Props) {
+export default function PrescriptionPage({ appointment, onBack, clinicalData }: Props) {
     const { role } = useAuth();
-    const state = getAppointmentState(appointment.id);
-    const [medicines, setMedicines] = useState<Medicine[]>(state.medicines[0]?.name ? state.medicines : [{ name: '', dosage: '', frequency: 'Once daily', duration: '7 days', beforeFood: false, notes: '' }]);
-    const [notes, setNotes] = useState(state.prescriptionNotes);
+    const [medicines, setMedicines] = useState<Medicine[]>(clinicalData.medicines && clinicalData.medicines.length > 0 ? clinicalData.medicines : [{ name: '', dosage: '', frequency: 'Once daily', duration: '7 days', beforeFood: false, notes: '' }]);
+    const [notes, setNotes] = useState(clinicalData.prescriptionNotes || '');
     const [showSuggestions, setShowSuggestions] = useState<number | null>(null);
+    const [isSaving, setIsSaving] = useState(false);
 
     const addMedicine = () => setMedicines([...medicines, { name: '', dosage: '', frequency: 'Once daily', duration: '7 days', beforeFood: false, notes: '' }]);
     const removeMedicine = (index: number) => setMedicines(medicines.filter((_, i) => i !== index));
@@ -25,22 +31,22 @@ export default function PrescriptionPage({ appointment, onBack }: Props) {
     const handleSubmit = async () => {
         if (!medicines.some(m => m.name.trim())) { toast({ title: 'Please add at least one medicine' }); return; }
         
+        setIsSaving(true);
+        const id = (appointment as any)._id || appointment.id;
+        
         try {
-            await api.post('/prescriptions', {
-                doctorId: (appointment as any).doctorId || appointment.id,
-                doctorName: appointment.doctorName,
-                patientId: (appointment as any).patientId || appointment.id,
-                patientName: appointment.patientName,
-                date: appointment.date,
-                medicines: medicines.filter(m => m.name.trim()),
-                notes
+            await api.patch(`/appointments/${id}/clinical-data`, { 
+                medicines: medicines.filter(m => m.name.trim()), 
+                prescriptionNotes: notes, 
+                currentStep: Math.max(clinicalData.currentStep, 2) 
             });
-            updateAppointmentState(appointment.id, { medicines: medicines.filter(m => m.name.trim()), prescriptionNotes: notes, currentStep: Math.max(state.currentStep, 2) });
             toast({ title: '✅ Prescription generated' });
             onBack();
         } catch (error) {
             console.error('Prescription save failed', error);
-            toast({ title: 'Failed to save', variant: 'destructive' });
+            toast({ title: '❌ Error', description: 'Failed to save data to backend' });
+        } finally {
+            setIsSaving(false);
         }
     };
 

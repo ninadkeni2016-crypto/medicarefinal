@@ -7,7 +7,13 @@ import { getAppointmentState, updateAppointmentState } from '@/lib/appointment-s
 import { toast } from '@/hooks/use-toast';
 import RazorpayCheckout from '../RazorpayCheckout';
 
-interface Props { appointment: Appointment; onBack: () => void; }
+import { AppointmentFlowState } from '@/lib/appointment-state';
+
+interface Props { 
+    appointment: Appointment; 
+    onBack: () => void; 
+    clinicalData: AppointmentFlowState;
+}
 
 const PAYMENT_METHODS = [
     { id: 'upi', label: 'UPI / QR Code', icon: Smartphone, color: '#16A34A' },
@@ -16,30 +22,35 @@ const PAYMENT_METHODS = [
     { id: 'cash', label: 'Pay at Clinic', icon: Banknote, color: '#F59E0B' },
 ];
 
-export default function PaymentPage({ appointment, onBack }: Props) {
+export default function PaymentPage({ appointment, onBack, clinicalData }: Props) {
     const { role } = useAuth();
-    const state = getAppointmentState(appointment.id);
     const [showRazorpay, setShowRazorpay] = useState(false);
     const [loadingOrder, setLoadingOrder] = useState(false);
     const [selectedMethod, setSelectedMethod] = useState('upi');
 
     // Calculate total from bill items and adjustments
-    const subtotal = Object.values(state.billItems).reduce((s, v) => s + (Number(v) || 0), 0);
-    const totalAfterDiscount = Math.max(0, subtotal - (Number(state.discount) || 0));
-    const gstAmount = (totalAfterDiscount * (Number(state.gst) || 0)) / 100;
+    const subtotal = Object.values(clinicalData.billItems || {}).reduce((s, v) => s + (Number(v) || 0), 0);
+    const totalAfterDiscount = Math.max(0, subtotal - (Number(clinicalData.discount) || 0));
+    const gstAmount = (totalAfterDiscount * (Number(clinicalData.gst) || 0)) / 100;
     const finalTotal = totalAfterDiscount + gstAmount;
 
     const invoiceId = `INV-${String(appointment.id).padStart(5, '0')}`;
 
     const handleSuccess = async () => {
-        updateAppointmentState(appointment.id, { 
-            paymentDone: true, 
-            paymentMethod: selectedMethod,
-            currentStep: Math.max(state.currentStep, 5) 
-        });
-        setShowRazorpay(false);
-        toast({ title: 'Payment Successful! ✅', description: `₹${finalTotal.toFixed(2)} paid successfully` });
-        onBack();
+        const id = (appointment as any)._id || appointment.id;
+        try {
+            await api.patch(`/appointments/${id}/clinical-data`, { 
+                paymentDone: true, 
+                paymentMethod: selectedMethod,
+                currentStep: Math.max(clinicalData.currentStep, 5) 
+            });
+            setShowRazorpay(false);
+            toast({ title: 'Payment Successful! ✅', description: `₹${finalTotal.toFixed(2)} paid successfully` });
+            onBack();
+        } catch (error) {
+            console.error('Payment save failed', error);
+            toast({ title: '❌ Error', description: 'Failed to update payment status' });
+        }
     };
 
     const initiatePayment = async () => {

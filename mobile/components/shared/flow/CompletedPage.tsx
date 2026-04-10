@@ -2,26 +2,30 @@ import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { ArrowLeft, Download, CheckCircle2, Pill, FileText, Receipt, Share2, Eye, Calendar } from 'lucide-react-native';
 import { Appointment } from '@/lib/mock-data';
-import { getAppointmentState } from '@/lib/appointment-state';
-import { toast } from '@/hooks/use-toast';
+import { AppointmentFlowState } from '@/lib/appointment-state';
 
-interface Props { appointment: Appointment; onBack: () => void; }
+interface Props { 
+    appointment: Appointment; 
+    onBack: () => void; 
+    clinicalData: AppointmentFlowState;
+}
 
-export default function CompletedPage({ appointment, onBack }: Props) {
-    const state = getAppointmentState(appointment.id);
-
+export default function CompletedPage({ appointment, onBack, clinicalData }: Props) {
     const handleAction = (type: string, action: string) => {
         toast({ title: `${action} ${type}`, description: `${type} is being processed...` });
     };
 
-    const docDate = state.reportDate || appointment.date;
-    const finalTotal = Object.values(state.billItems).reduce((s, v) => s + (Number(v) || 0), 0) - (Number(state.discount) || 0) + (((Object.values(state.billItems).reduce((s, v) => s + (Number(v) || 0), 0) - (Number(state.discount) || 0)) * (Number(state.gst) || 0)) / 100);
+    const docDate = clinicalData.reportDate || appointment.date;
+    const itemsTotal = Object.values(clinicalData.billItems || {}).reduce((s, v) => s + (Number(v) || 0), 0);
+    const subtotal = Math.max(0, itemsTotal - (Number(clinicalData.discount) || 0));
+    const gstAmount = (subtotal * (Number(clinicalData.gst) || 0)) / 100;
+    const finalTotal = subtotal + gstAmount;
 
     const DOCUMENTS = [
         { 
             id: 'prescription',
             title: 'Digital Prescription', 
-            desc: `${state.medicines.filter(m => m.name).length} Medication(s)`, 
+            desc: `${(clinicalData.medicines || []).filter(m => m.name).length} Medication(s)`, 
             date: docDate,
             doctor: appointment.doctorName,
             icon: Pill, 
@@ -30,10 +34,10 @@ export default function CompletedPage({ appointment, onBack }: Props) {
         },
         { 
             id: 'report',
-            title: state.reportName || 'Medical Report', 
-            desc: state.reportType || 'Clinical Document', 
+            title: clinicalData.reportName || 'Medical Report', 
+            desc: clinicalData.reportType || 'Clinical Document', 
             date: docDate,
-            doctor: state.labName || appointment.doctorName,
+            doctor: clinicalData.labName || appointment.doctorName,
             icon: FileText, 
             color: '#2563EB', 
             bg: '#EFF6FF' 
