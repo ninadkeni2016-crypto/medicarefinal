@@ -80,7 +80,7 @@ export default function BillingPage({ appointment, onBack, clinicalData }: Props
                     {/* Itemized List */}
                     <Text style={{ fontSize: 12, fontWeight: '700', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 12, letterSpacing: 0.5 }}>Itemized Charges</Text>
                     
-                    {Object.entries(state.billItems).filter(([_, val]) => Number(val) > 0).map(([key, val]) => (
+                    {Object.entries(clinicalData.billItems || {}).filter(([_, val]) => Number(val) > 0).map(([key, val]) => (
                         <View key={key} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                             <Text style={{ fontSize: 14, color: '#334155', fontWeight: '500' }}>{LABELS[key]?.label || key}</Text>
                             <Text style={{ fontSize: 15, fontWeight: '600', color: '#0F172A' }}>₹{Number(val).toFixed(2)}</Text>
@@ -95,14 +95,14 @@ export default function BillingPage({ appointment, onBack, clinicalData }: Props
                             <Text style={{ fontSize: 13, color: '#64748B' }}>Subtotal</Text>
                             <Text style={{ fontSize: 13, fontWeight: '600', color: '#334155' }}>₹{subtotal.toFixed(2)}</Text>
                         </View>
-                        {Number(state.discount) > 0 && (
+                        {Number(clinicalData.discount) > 0 && (
                             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                                 <Text style={{ fontSize: 13, color: '#16A34A' }}>Discount</Text>
-                                <Text style={{ fontSize: 13, fontWeight: '600', color: '#16A34A' }}>- ₹{Number(state.discount).toFixed(2)}</Text>
+                                <Text style={{ fontSize: 13, fontWeight: '600', color: '#16A34A' }}>- ₹{Number(clinicalData.discount).toFixed(2)}</Text>
                             </View>
                         )}
                         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                            <Text style={{ fontSize: 13, color: '#64748B' }}>Taxes (GST {state.gst}%)</Text>
+                            <Text style={{ fontSize: 13, color: '#64748B' }}>Taxes (GST {clinicalData.gst}%)</Text>
                             <Text style={{ fontSize: 13, fontWeight: '600', color: '#334155' }}>+ ₹{gstAmount.toFixed(2)}</Text>
                         </View>
                     </View>

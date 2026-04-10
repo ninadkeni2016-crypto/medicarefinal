@@ -3,7 +3,6 @@ import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'rea
 import { ArrowLeft, CreditCard, Clock, CheckCircle2, ShieldCheck, Wallet, Smartphone, Banknote, Receipt } from 'lucide-react-native';
 import { Appointment } from '@/lib/mock-data';
 import { useAuth } from '@/contexts/AuthContext';
-import { getAppointmentState, updateAppointmentState } from '@/lib/appointment-state';
 import { toast } from '@/hooks/use-toast';
 import RazorpayCheckout from '../RazorpayCheckout';
 
@@ -95,7 +94,7 @@ export default function PaymentPage({ appointment, onBack, clinicalData }: Props
                     <View><Text style={{ fontSize: 20, fontWeight: '700', color: '#0F172A' }}>Payment Status</Text><Text style={{ fontSize: 13, color: '#64748B', fontWeight: '500' }}>Patient: {appointment.patientName}</Text></View>
                 </View>
 
-                {state.paymentDone ? (
+                {clinicalData.paymentDone ? (
                     <View style={{ backgroundColor: '#FFFFFF', borderRadius: 16, padding: 32, borderWidth: 1, borderColor: '#F1F5F9', alignItems: 'center', shadowColor: '#64748B', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10 }}>
                         <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: '#DCFCE7', alignItems: 'center', justifyContent: 'center', marginBottom: 20, borderWidth: 4, borderColor: '#F0FDF4' }}>
                             <CheckCircle2 size={40} color="#16A34A" />
@@ -108,7 +107,7 @@ export default function PaymentPage({ appointment, onBack, clinicalData }: Props
                         <View style={{ width: '100%', gap: 12 }}>
                             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}><Text style={{ color: '#64748B', fontSize: 13 }}>Invoice ID</Text><Text style={{ color: '#0F172A', fontWeight: '600', fontSize: 13 }}>{invoiceId}</Text></View>
                             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}><Text style={{ color: '#64748B', fontSize: 13 }}>Date</Text><Text style={{ color: '#0F172A', fontWeight: '600', fontSize: 13 }}>{appointment.date}</Text></View>
-                            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}><Text style={{ color: '#64748B', fontSize: 13 }}>Method</Text><Text style={{ color: '#0F172A', fontWeight: '600', fontSize: 13, textTransform: 'capitalize' }}>{state.paymentMethod || 'Online'}</Text></View>
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}><Text style={{ color: '#64748B', fontSize: 13 }}>Method</Text><Text style={{ color: '#0F172A', fontWeight: '600', fontSize: 13, textTransform: 'capitalize' }}>{clinicalData.paymentMethod || 'Online'}</Text></View>
                         </View>
                     </View>
                 ) : (
@@ -138,7 +137,7 @@ export default function PaymentPage({ appointment, onBack, clinicalData }: Props
     }
 
     // Patient View
-    if (state.paymentDone) {
+    if (clinicalData.paymentDone) {
         return (
             <ScrollView style={{ flex: 1, backgroundColor: '#F8FAFC' }} contentContainerStyle={{ padding: 20, paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 24 }}>
@@ -158,7 +157,7 @@ export default function PaymentPage({ appointment, onBack, clinicalData }: Props
                     <View style={{ width: '100%', gap: 16, paddingHorizontal: 8 }}>
                         <PaymentTimelineItem title="Invoice Generated" desc={`Bill ${invoiceId} created`} done={true} time="10:05 AM" />
                         <PaymentTimelineItem title="Payment Initiated" desc="Secure gateway opened" done={true} time="10:07 AM" />
-                        <PaymentTimelineItem title="Transaction Complete" desc={`Paid via ${state.paymentMethod || 'Online'}`} done={true} isLast={true} time="10:08 AM" />
+                        <PaymentTimelineItem title="Transaction Complete" desc={`Paid via ${clinicalData.paymentMethod || 'Online'}`} done={true} isLast={true} time="10:08 AM" />
                     </View>
                 </View>
             </ScrollView>

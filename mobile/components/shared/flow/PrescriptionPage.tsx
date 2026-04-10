@@ -7,8 +7,6 @@ import { AppointmentFlowState, Medicine } from '@/lib/appointment-state';
 import { toast } from '@/hooks/use-toast';
 import api from '@/lib/api';
 
-import { AppointmentFlowState, Medicine } from '@/lib/appointment-state';
-
 interface Props { 
     appointment: Appointment; 
     onBack: () => void; 
@@ -51,7 +49,7 @@ export default function PrescriptionPage({ appointment, onBack, clinicalData }: 
     };
 
     if (role === 'patient') {
-        const validMedicines = state.medicines.filter(m => m.name);
+        const validMedicines = (clinicalData.medicines || []).filter(m => m.name);
         return (
             <ScrollView style={{ flex: 1, backgroundColor: '#F8FAFC' }} contentContainerStyle={{ padding: 20, paddingBottom: 100 }}>
                 {/* Header */}
@@ -100,10 +98,10 @@ export default function PrescriptionPage({ appointment, onBack, clinicalData }: 
                     ))}
                 </View>
 
-                {state.prescriptionNotes ? (
+                {clinicalData.prescriptionNotes ? (
                      <View style={{ backgroundColor: '#FFFBEB', borderRadius: 16, padding: 20, borderWidth: 1, borderColor: '#FEF3C7' }}>
                          <Text style={{ fontSize: 12, fontWeight: '700', color: '#D97706', textTransform: 'uppercase', marginBottom: 8 }}>Doctor's Advice</Text>
-                         <Text style={{ fontSize: 15, color: '#92400E', lineHeight: 22 }}>{state.prescriptionNotes}</Text>
+                         <Text style={{ fontSize: 15, color: '#92400E', lineHeight: 22 }}>{clinicalData.prescriptionNotes}</Text>
                      </View>
                 ) : null}
             </ScrollView>

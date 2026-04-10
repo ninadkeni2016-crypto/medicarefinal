@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { ArrowLeft, Download, CheckCircle2, Pill, FileText, Receipt, Share2, Eye, Calendar } from 'lucide-react-native';
 import { Appointment } from '@/lib/mock-data';
 import { AppointmentFlowState } from '@/lib/appointment-state';
+import { toast } from '@/hooks/use-toast';
 
 interface Props { 
     appointment: Appointment; 

@@ -73,14 +73,14 @@ export default function ReportsPage({ appointment, onBack, clinicalData }: Props
                     <View style={{ flex: 1 }}><Text style={{ fontSize: 20, fontWeight: '700', color: '#0F172A' }}>Clinical Reports</Text><Text style={{ fontSize: 13, color: '#64748B', fontWeight: '500' }}>Prescribed by {appointment.doctorName}</Text></View>
                 </View>
 
-                {state.reportName ? (
+                {clinicalData.reportName ? (
                     <View style={{ backgroundColor: '#FFFFFF', borderRadius: 16, padding: 20, borderWidth: 1, borderColor: '#F1F5F9', shadowColor: '#64748B', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 5 }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 20 }}>
                             <View style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: '#EFF6FF', alignItems: 'center', justifyContent: 'center' }}>
                                 <FileText size={24} color="#2563EB" />
                             </View>
                             <View style={{ flex: 1 }}>
-                                <Text style={{ fontSize: 16, fontWeight: '700', color: '#0F172A' }}>{state.reportName}</Text>
+                                <Text style={{ fontSize: 16, fontWeight: '700', color: '#0F172A' }}>{clinicalData.reportName}</Text>
                                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
                                     <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#16A34A' }} />
                                     <Text style={{ fontSize: 12, color: '#16A34A', fontWeight: '600' }}>Ready for Review</Text>
@@ -91,24 +91,24 @@ export default function ReportsPage({ appointment, onBack, clinicalData }: Props
                         <View style={{ backgroundColor: '#F8FAFC', borderRadius: 12, padding: 16, gap: 12 }}>
                             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                                 <Text style={{ fontSize: 13, color: '#64748B', fontWeight: '500' }}>Test Category</Text>
-                                <Text style={{ fontSize: 14, color: '#0F172A', fontWeight: '600' }}>{state.reportType}</Text>
+                                <Text style={{ fontSize: 14, color: '#0F172A', fontWeight: '600' }}>{clinicalData.reportType}</Text>
                             </View>
                             <View style={{ height: 1, backgroundColor: '#F1F5F9' }} />
                             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                                 <Text style={{ fontSize: 13, color: '#64748B', marginTop: 4 }}>INV-{String(appointment.id).padStart(5, '0')}</Text>
-                                <Text style={{ fontSize: 14, color: '#0F172A', fontWeight: '600' }}>{state.reportDate}</Text>
+                                <Text style={{ fontSize: 14, color: '#0F172A', fontWeight: '600' }}>{clinicalData.reportDate}</Text>
                             </View>
                             <View style={{ height: 1, backgroundColor: '#F1F5F9' }} />
                             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                                 <Text style={{ fontSize: 13, color: '#64748B', fontWeight: '500' }}>Laboratory</Text>
-                                <Text style={{ fontSize: 14, color: '#0F172A', fontWeight: '600' }}>{state.labName || 'Not specified'}</Text>
+                                <Text style={{ fontSize: 14, color: '#0F172A', fontWeight: '600' }}>{clinicalData.labName || 'Not specified'}</Text>
                             </View>
                         </View>
 
-                        {state.reportRemarks ? (
+                        {clinicalData.reportRemarks ? (
                             <View style={{ marginTop: 16 }}>
                                 <Text style={{ fontSize: 12, fontWeight: '600', color: '#64748B', textTransform: 'uppercase', marginBottom: 6 }}>Clinical Remarks</Text>
-                                <Text style={{ fontSize: 14, color: '#334155', lineHeight: 20 }}>{state.reportRemarks}</Text>
+                                <Text style={{ fontSize: 14, color: '#334155', lineHeight: 20 }}>{clinicalData.reportRemarks}</Text>
                             </View>
                         ) : null}
 
