@@ -1,17 +1,21 @@
 import axios from 'axios';
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 import storage from './storage';
 
-// Use local network IP address for physical devices.
-// For Android emulator it usually routes localhost to 10.0.2.2.
-// Replace this with your computer's local WiFi IPv4 address if testing on a physical device on the same network.
+// Dynamically detect the machine's local IP address during development.
+// This ensures that the app always connects to the correct backend IP even if it changes.
 const getBaseUrl = () => {
     if (__DEV__) {
-        // Change to your machine's local IP address if testing on a physical device, like 'http://192.168.1.5:5000/api'
-        if (Platform.OS === 'android') {
+        const debuggerHost = Constants.expoConfig?.hostUri;
+        const localhost = debuggerHost ? debuggerHost.split(':')[0] : 'localhost';
+        
+        // For Android emulators specifically, 10.0.2.2 is usually required
+        if (Platform.OS === 'android' && localhost === 'localhost') {
             return 'http://10.0.2.2:5000/api';
         }
-        return 'http://192.168.1.102:5000/api';
+        
+        return `http://${localhost}:5000/api`;
     }
     // Production URL
     return 'https://medicarefinal-7yor.onrender.com/api';
