@@ -10,6 +10,7 @@ import { MedCard } from '@/components/ui/MedCard';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { SkeletonBox } from '@/components/ui/SkeletonBox';
 import { InitialsAvatar } from '@/components/ui/InitialsAvatar';
+import { ScreenTransition, AnimatedListItem, ScalePress } from '@/components/ui/Animations';
 
 interface DoctorHomeProps { onNavigate: (tab: string) => void; }
 
@@ -162,14 +163,15 @@ export default function DoctorHome({ onNavigate }: DoctorHomeProps) {
     ];
 
     return (
-        <ScrollView
-            style={{ flex: 1, backgroundColor: colors.background }}
-            contentContainerStyle={{ padding: spacing.lg, paddingBottom: 100 }}
-            showsVerticalScrollIndicator={false}
-            refreshControl={
-                <RefreshControl refreshing={loading} onRefresh={loadDashboard} colors={[colors.primary]} />
-            }
-        >
+        <ScreenTransition>
+            <ScrollView
+                style={{ flex: 1, backgroundColor: colors.background }}
+                contentContainerStyle={{ padding: spacing.lg, paddingBottom: 100 }}
+                showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl refreshing={loading} onRefresh={loadDashboard} colors={[colors.primary]} />
+                }
+            >
             {demoData && (
                 <View style={{
                     backgroundColor: '#EBF5FF',
@@ -405,5 +407,6 @@ export default function DoctorHome({ onNavigate }: DoctorHomeProps) {
             )}
 
         </ScrollView>
+        </ScreenTransition>
     );
 }

@@ -10,6 +10,7 @@ import { isDemoMode } from '../config/demoMode';
 import { demoAppointments } from '../data/demoData';
 import ScheduleException from '../models/ScheduleException';
 import Waitlist from '../models/Waitlist';
+import PatientProfile from '../models/PatientProfile';
 
 interface AuthRequest extends Request {
   user?: any;
@@ -668,6 +669,31 @@ export const updateClinicalData = async (req: AuthRequest, res: Response): Promi
         appointment.markModified('clinicalData');
         
         const updatedAppointment = await appointment.save();
+
+        // If vitals are updated, also sync to PatientProfile
+        if (newData.vitals) {
+            try {
+                const patientUserId = appointment.user || appointment.patientId;
+                if (patientUserId) {
+                    const profile = await PatientProfile.findOne({ user: patientUserId });
+                    if (profile) {
+                        // Soft merge vitals into profile
+                        const newVitals = {
+                            heartRate: newData.vitals.hr || profile.vitals?.heartRate,
+                            bloodPressure: newData.vitals.bp || profile.vitals?.bloodPressure,
+                            bloodSugar: profile.vitals?.bloodSugar, // Sugars aren't in waitlist usually
+                            weight: newData.vitals.weight || profile.vitals?.weight
+                        };
+                        profile.vitals = newVitals;
+                        await profile.save();
+                        console.log(`Synced appointment vitals to PatientProfile for user ${patientUserId}`);
+                    }
+                }
+            } catch (syncError) {
+                console.error('Failed to sync vitals to profile:', syncError);
+            }
+        }
+
         res.json(updatedAppointment);
 
     } catch (error: any) {

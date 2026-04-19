@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import { colors, spacing, radius, typography, Shadows } from '@/lib/theme';
 import { MedCard } from '@/components/ui/MedCard';
-import { AnimatedListItem } from '@/components/ui/Animations';
+import { ScreenTransition, AnimatedListItem } from '@/components/ui/Animations';
 import { InitialsAvatar } from '@/components/ui/InitialsAvatar';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { SkeletonBox } from '@/components/ui/SkeletonBox';
@@ -139,8 +139,9 @@ export default function AppointmentsList({ onSelectAppointment }: Props) {
     }
 
     return (
-        <ScrollView
-            style={{ flex: 1, backgroundColor: colors.background }}
+        <ScreenTransition>
+            <ScrollView
+                style={{ flex: 1, backgroundColor: colors.background }}
             contentContainerStyle={{ padding: spacing.lg, paddingBottom: 100 }}
             showsVerticalScrollIndicator={false}
         >
@@ -384,5 +385,6 @@ export default function AppointmentsList({ onSelectAppointment }: Props) {
                 </View>
             </Modal>
         </ScrollView>
+        </ScreenTransition>
     );
 }

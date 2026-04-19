@@ -4,7 +4,7 @@ import { Search, Star, MapPin, CheckCircle2, SlidersHorizontal } from 'lucide-re
 import { Doctor } from '@/lib/mock-data';
 import api from '@/lib/api';
 import { MedCard } from '../ui/MedCard';
-import { AnimatedListItem } from '../ui/Animations';
+import { ScreenTransition, AnimatedListItem } from '../ui/Animations';
 import { InitialsAvatar } from '../ui/InitialsAvatar';
 import { colors, spacing, radius, typography, cardShadow, fonts } from '@/lib/theme';
 
@@ -42,7 +42,8 @@ export default function FindDoctor({ onSelectDoctor }: { onSelectDoctor: (d: Doc
     });
 
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+        <ScreenTransition style={{ backgroundColor: colors.background }}>
+            <SafeAreaView style={{ flex: 1 }}>
             <ScrollView
                 style={{ flex: 1 }}
                 contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
@@ -231,6 +232,7 @@ export default function FindDoctor({ onSelectDoctor }: { onSelectDoctor: (d: Doc
                     ))
                 )}
             </ScrollView>
-        </SafeAreaView>
+            </SafeAreaView>
+        </ScreenTransition>
     );
 }

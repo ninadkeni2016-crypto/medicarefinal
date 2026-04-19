@@ -15,8 +15,12 @@ import { SectionHeader } from '../ui/SectionHeader';
 const { width } = Dimensions.get('window');
 
 export default function PatientProfile({ onNavigate }: { onNavigate?: (tab: string) => void }) {
-    const { logout, patientProfile, isProfileComplete } = useAuth();
+    const { logout, patientProfile, isProfileComplete, refreshProfile } = useAuth();
     const [showEdit, setShowEdit] = useState(false);
+
+    React.useEffect(() => {
+        refreshProfile().catch(() => {});
+    }, []);
 
     if (showEdit) {
         return <EditProfileForm onBack={() => setShowEdit(false)} />;

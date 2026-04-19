@@ -76,3 +76,29 @@ export function ScreenTransition({ children, style }: { children: React.ReactNod
         </Animated.View>
     );
 }
+
+import { TouchableWithoutFeedback } from 'react-native';
+
+/**
+ * Wraps children with a scale-up/down animation on press.
+ * Use for buttons, cards, or any interactive element.
+ */
+export function ScalePress({ children, onPress, style }: { children: React.ReactNode; onPress?: () => void; style?: ViewStyle }) {
+    const scale = useSharedValue(1);
+
+    const animStyle = useAnimatedStyle(() => ({
+        transform: [{ scale: scale.value }],
+    }));
+
+    return (
+        <TouchableWithoutFeedback
+            onPressIn={() => (scale.value = withTiming(0.96, { duration: 100 }))}
+            onPressOut={() => (scale.value = withTiming(1, { duration: 100 }))}
+            onPress={onPress}
+        >
+            <Animated.View style={[animStyle, style]}>
+                {children}
+            </Animated.View>
+        </TouchableWithoutFeedback>
+    );
+}

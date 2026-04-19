@@ -12,11 +12,12 @@ import { StatusBadge } from '@/components/ui/StatusBadge';
 import { SkeletonBox } from '@/components/ui/SkeletonBox';
 import { InitialsAvatar } from '@/components/ui/InitialsAvatar';
 import { QueueStatusCard } from './QueueStatusCard';
+import { ScreenTransition, AnimatedListItem, ScalePress } from '@/components/ui/Animations';
 
 interface PatientHomeProps { onNavigate: (tab: string) => void; }
 
 export default function PatientHome({ onNavigate }: PatientHomeProps) {
-    const { userName, patientProfile } = useAuth();
+    const { userName, patientProfile, refreshProfile } = useAuth();
     const [appointments, setAppointments] = useState<any[]>([]);
     const [notifications, setNotifications] = useState<any[]>([]);
     const [topDoctors, setTopDoctors] = useState<any[]>([]);
@@ -28,6 +29,9 @@ export default function PatientHome({ onNavigate }: PatientHomeProps) {
     useEffect(() => {
         const fetchDashboard = async () => {
             try {
+                // Refresh profile first to get latest vitals
+                await refreshProfile().catch(() => {});
+
                 const [apptsRes, notifsRes, docsRes, billsRes] = await Promise.all([
                     api.get('/appointments'),
                     api.get('/notifications').catch(() => ({ data: [] })),
@@ -91,11 +95,12 @@ export default function PatientHome({ onNavigate }: PatientHomeProps) {
     };
 
     return (
-        <ScrollView
-            style={{ flex: 1, backgroundColor: colors.background }}
-            contentContainerStyle={{ padding: spacing.lg, paddingBottom: 100 }}
-            showsVerticalScrollIndicator={false}
-        >
+        <ScreenTransition>
+            <ScrollView
+                style={{ flex: 1, backgroundColor: colors.background }}
+                contentContainerStyle={{ padding: spacing.lg, paddingBottom: 100 }}
+                showsVerticalScrollIndicator={false}
+            >
             {/* Header */}
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.xl }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
@@ -197,33 +202,33 @@ export default function PatientHome({ onNavigate }: PatientHomeProps) {
 
             {/* Quick actions */}
             <View style={{ flexDirection: 'row', gap: 12, marginBottom: spacing.xl }}>
-                {quickActions.map(({ icon: Icon, label, tab }) => (
-                    <TouchableOpacity
-                        key={label}
-                        onPress={() => onNavigate(tab)}
-                        activeOpacity={0.75}
-                        style={{
-                            flex: 1,
-                            alignItems: 'center',
-                            gap: 8,
-                            paddingVertical: 16,
-                            backgroundColor: colors.card,
-                            borderRadius: radius.lg,   // 20px — soft, premium
-                            borderWidth: 1,
-                            borderColor: colors.border,
-                            ...cardShadow as object,
-                        }}
-                    >
-                        <View style={{
-                            width: 44, height: 44,
-                            borderRadius: radius.md,
-                            backgroundColor: 'rgba(29, 143, 212, 0.10)',
-                            alignItems: 'center', justifyContent: 'center',
-                        }}>
-                            <Icon size={22} color={colors.primary} strokeWidth={2} />
-                        </View>
-                        <Text style={{ fontSize: 12, fontWeight: '600', color: colors.text }}>{label}</Text>
-                    </TouchableOpacity>
+                {quickActions.map(({ icon: Icon, label, tab }, i) => (
+                    <AnimatedListItem key={label} index={i} style={{ flex: 1 }}>
+                        <TouchableOpacity
+                            onPress={() => onNavigate(tab)}
+                            activeOpacity={0.75}
+                            style={{
+                                alignItems: 'center',
+                                gap: 8,
+                                paddingVertical: 16,
+                                backgroundColor: colors.card,
+                                borderRadius: radius.lg,
+                                borderWidth: 1,
+                                borderColor: colors.border,
+                                ...cardShadow as object,
+                            }}
+                        >
+                            <View style={{
+                                width: 44, height: 44,
+                                borderRadius: radius.md,
+                                backgroundColor: 'rgba(29, 143, 212, 0.10)',
+                                alignItems: 'center', justifyContent: 'center',
+                            }}>
+                                <Icon size={22} color={colors.primary} strokeWidth={2} />
+                            </View>
+                            <Text style={{ fontSize: 12, fontWeight: '600', color: colors.text }}>{label}</Text>
+                        </TouchableOpacity>
+                    </AnimatedListItem>
                 ))}
             </View>
 
@@ -339,5 +344,6 @@ export default function PatientHome({ onNavigate }: PatientHomeProps) {
                 onSuccess={handleSuccess} 
             />
         </ScrollView>
+        </ScreenTransition>
     );
 }

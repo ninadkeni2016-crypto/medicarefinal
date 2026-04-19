@@ -70,6 +70,7 @@ interface AuthContextType {
   verifyOTP: (email: string, otp: string) => Promise<boolean>;
   login: (role: UserRole, emailStr: string, passwordStr: string) => Promise<{ success: boolean; message: string; needsVerification?: boolean; email?: string; code?: string }>;
   logout: () => void;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -184,12 +185,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setPatientProfile(emptyProfile);
   };
 
+  const refreshProfile = async () => {
+    try {
+      const token = await storage.getItem('userToken');
+      if (token) {
+        const profileRes = await api.get('/auth/profile');
+        if (profileRes.data && profileRes.data.profile) {
+          setPatientProfile(profileRes.data.profile);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to refresh profile', err);
+    }
+  };
+
   if (isInitializing) {
     return null; // OR return a Splash/Loading screen if you prefer
   }
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, role, userName, patientProfile, isProfileComplete, updatePatientProfile, register, verifyOTP, login, logout }}>
+    <AuthContext.Provider value={{
+      isLoggedIn, role, userName, patientProfile, isProfileComplete,
+      updatePatientProfile, register, verifyOTP, login, logout, refreshProfile
+    }}>
       {children}
     </AuthContext.Provider>
   );
