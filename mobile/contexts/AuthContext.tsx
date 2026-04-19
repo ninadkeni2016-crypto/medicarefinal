@@ -93,7 +93,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setIsLoggedIn(true);
 
             if (profileRes.data.profile) {
-              setPatientProfile(profileRes.data.profile);
+              setPatientProfile({ ...profileRes.data.profile, fullName: profileRes.data.name || profileRes.data.profile.name });
             } else {
               setPatientProfile({ ...emptyProfile, fullName: profileRes.data.name, email: profileRes.data.email });
             }
@@ -109,8 +109,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     initAuth();
   }, []);
 
-  const isProfileComplete = patientProfile.fullName.trim() !== '';
-  const userName = patientProfile.fullName || 'New Patient';
+  const isProfileComplete = (patientProfile?.fullName || patientProfile?.name || '').trim() !== '';
+  const userName = patientProfile?.fullName || patientProfile?.name || 'User';
 
   const updatePatientProfile = (profile: PatientProfile) => {
     setPatientProfile(profile);
@@ -154,7 +154,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setRole(response.data.role || selectedRole);
         setIsLoggedIn(true);
         if (response.data.profile) {
-          setPatientProfile(response.data.profile);
+          setPatientProfile({ ...response.data.profile, fullName: response.data.name || response.data.profile.name });
         } else {
           setPatientProfile({ ...emptyProfile, fullName: response.data.name, email: response.data.email });
         }
