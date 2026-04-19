@@ -97,19 +97,16 @@ app.get('/api/health', (req: Request, res: Response) => {
 app.use(notFound);
 app.use(errorHandler);
 
-// Start server
-const PORT = process.env.PORT || 5000;
+// Connect to the DB independently. Vercel will boot function instances on the fly.
+connectDB().catch(console.error);
 
-const start = async () => {
-    try {
-        await connectDB();
-        app.listen(Number(PORT), '0.0.0.0', () => {
-            console.log(`Server running on http://0.0.0.0:${PORT} (${process.env.NODE_ENV} mode)`);
-        });
-    } catch (err) {
-        console.error('Failed to start server:', err);
-        process.exit(1);
-    }
-};
+// Only listen locally, Vercel will import the app directly
+if (process.env.NODE_ENV !== 'production') {
+    const PORT = process.env.PORT || 5000;
+    app.listen(Number(PORT), '0.0.0.0', () => {
+        console.log(`Server running on http://0.0.0.0:${PORT} (Development mode)`);
+    });
+}
 
-start();
+// Crucial: Vercel requires you to export the Express app
+export default app;
