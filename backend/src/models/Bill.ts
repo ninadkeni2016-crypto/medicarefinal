@@ -50,6 +50,9 @@ const billSchema = new mongoose.Schema(
     }
 );
 
+billSchema.index({ user: 1 });
+billSchema.index({ status: 1 });
+
 const Bill = mongoose.model('Bill', billSchema);
 
 export default Bill;

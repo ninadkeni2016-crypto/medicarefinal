@@ -118,6 +118,13 @@ const appointmentSchema = new mongoose.Schema(
     }
 );
 
+appointmentSchema.index({ user: 1 });
+appointmentSchema.index({ patientId: 1 });
+appointmentSchema.index({ doctorId: 1 });
+appointmentSchema.index({ doctorEmail: 1 });
+appointmentSchema.index({ date: 1 });
+appointmentSchema.index({ status: 1 });
+
 const Appointment = mongoose.model('Appointment', appointmentSchema);
 
 export default Appointment;

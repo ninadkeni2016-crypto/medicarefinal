@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import crypto from 'crypto';
 import User from '../models/User';
 import Doctor from '../models/Doctor';
+import PatientProfile from '../models/PatientProfile';
 import AuditLog from '../models/AuditLog';
 import generateToken from '../utils/generateToken';
 import { sendVerificationEmail } from '../utils/sendEmail';
@@ -170,11 +171,19 @@ export const verifyOTP = async (req: Request, res: Response): Promise<void> => {
             }
         }
 
+        let extraProfile = null;
+        if (user.role === 'patient') {
+            extraProfile = await PatientProfile.findOne({ user: user._id });
+        } else if (user.role === 'doctor') {
+            extraProfile = await Doctor.findOne({ user: user._id });
+        }
+
         res.json({
             _id: user._id,
             name: user.name,
             email: user.email,
             role: user.role,
+            profile: extraProfile,
             token: generateToken(user._id.toString()),
         });
     } catch (error: any) {
@@ -223,11 +232,19 @@ export const authUser = async (req: Request, res: Response): Promise<void> => {
                 userAgent: req.headers['user-agent'],
             }).catch(() => {});
 
+            let extraProfile = null;
+            if (user.role === 'patient') {
+                extraProfile = await PatientProfile.findOne({ user: user._id });
+            } else if (user.role === 'doctor') {
+                extraProfile = await Doctor.findOne({ user: user._id });
+            }
+
             res.json({
                 _id: user._id,
                 name: user.name,
                 email: user.email,
                 role: user.role,
+                profile: extraProfile,
                 token,
             });
         } else {
@@ -255,11 +272,19 @@ export const getUserProfile = async (req: Request, res: Response): Promise<void>
         const user = await User.findById(req.user._id);
 
         if (user) {
+            let extraProfile = null;
+            if (user.role === 'patient') {
+                extraProfile = await PatientProfile.findOne({ user: user._id });
+            } else if (user.role === 'doctor') {
+                extraProfile = await Doctor.findOne({ user: user._id });
+            }
+
             res.json({
                 _id: user._id,
                 name: user.name,
                 email: user.email,
                 role: user.role,
+                profile: extraProfile
             });
         } else {
             res.status(404).json({ message: 'User not found' });

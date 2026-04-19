@@ -37,5 +37,7 @@ const patientProfileSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
+patientProfileSchema.index({ user: 1 });
+
 const PatientProfile = mongoose.model('PatientProfile', patientProfileSchema);
 export default PatientProfile;

@@ -107,7 +107,7 @@ export const getDashboardData = async (req: AuthRequest, res: Response): Promise
       PatientProfile.find({ user: { $in: patientUserIds } }).sort({ updatedAt: -1 }).limit(5).lean(),
       Appointment.find({ $or: [{ doctorId }, { doctorEmail: req.user?.email }], status: 'upcoming' }).sort({ date: 1, time: 1 }).limit(5).lean(),
       Notification.find({ user: doctorId }).sort({ createdAt: -1 }).limit(10).lean(),
-      Report.find({}).sort({ createdAt: -1 }).limit(4).lean(),
+      Report.find({ user: { $in: patientUserIds } }).sort({ createdAt: -1 }).limit(4).lean(),
       Conversation.find({ participants: doctorId }).sort({ lastMessageTime: -1, updatedAt: -1 }).limit(3).lean(),
     ]);
 

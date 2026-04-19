@@ -91,13 +91,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setRole(userRole);
             setIsLoggedIn(true);
 
-            if (userRole === 'patient') {
-              const patientRes = await api.get('/patients/profile').catch(() => null);
-              if (patientRes && patientRes.data) {
-                setPatientProfile(patientRes.data);
-              } else {
-                setPatientProfile({ ...emptyProfile, fullName: profileRes.data.name, email: profileRes.data.email });
-              }
+            if (profileRes.data.profile) {
+              setPatientProfile(profileRes.data.profile);
             } else {
               setPatientProfile({ ...emptyProfile, fullName: profileRes.data.name, email: profileRes.data.email });
             }
@@ -136,13 +131,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         await storage.setItem('userToken', response.data.token);
         setRole(response.data.role);
         setIsLoggedIn(true);
-        if (response.data.role === 'patient') {
-          const patientRes = await api.get('/patients/profile').catch(() => null);
-          if (patientRes && patientRes.data) {
-            setPatientProfile(patientRes.data);
-          } else {
-            setPatientProfile({ ...emptyProfile, fullName: response.data.name, email: response.data.email });
-          }
+        if (response.data.profile) {
+          setPatientProfile(response.data.profile);
         } else {
           setPatientProfile({ ...emptyProfile, fullName: response.data.name, email: response.data.email });
         }
@@ -162,14 +152,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         await storage.setItem('userToken', response.data.token);
         setRole(response.data.role || selectedRole);
         setIsLoggedIn(true);
-        const resolvedRole = response.data.role || selectedRole;
-        if (resolvedRole === 'patient') {
-          const patientRes = await api.get('/patients/profile').catch(() => null);
-          if (patientRes && patientRes.data) {
-            setPatientProfile(patientRes.data);
-          } else {
-            setPatientProfile({ ...emptyProfile, fullName: response.data.name, email: response.data.email });
-          }
+        if (response.data.profile) {
+          setPatientProfile(response.data.profile);
         } else {
           setPatientProfile({ ...emptyProfile, fullName: response.data.name, email: response.data.email });
         }

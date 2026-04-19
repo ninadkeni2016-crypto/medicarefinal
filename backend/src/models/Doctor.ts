@@ -28,5 +28,10 @@ const doctorSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
+doctorSchema.index({ user: 1 });
+doctorSchema.index({ specialization: 1 });
+doctorSchema.index({ isAvailable: 1 });
+doctorSchema.index({ rating: -1 });
+
 const Doctor = mongoose.model('Doctor', doctorSchema);
 export default Doctor;
