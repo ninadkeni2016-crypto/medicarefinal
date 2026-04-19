@@ -328,8 +328,20 @@ export default function AppointmentDetail({ appointment: initialAppointment, onB
                                 </View>
 
                                 {/* Event Item */}
-                                <TouchableOpacity 
-                                    onPress={() => setActiveFlow(step.key)}
+                                <TouchableOpacity
+                                    onPress={() => {
+                                        if (role === 'patient') {
+                                            // Payment = patient can pay
+                                            if (step.step === 5) { setActiveFlow(step.key); return; }
+                                            // Download page = always viewable
+                                            if (step.step === 6) { setActiveFlow(step.key); return; }
+                                            // Other steps: view-only if doctor completed them
+                                            if (isDone) { setActiveFlow(step.key); return; }
+                                            toast({ title: 'Waiting for doctor', description: 'This step is managed by your doctor.' });
+                                            return;
+                                        }
+                                        setActiveFlow(step.key);
+                                    }}
                                     activeOpacity={0.7}
                                     style={{ flex: 1, marginBottom: 24, justifyContent: 'center' }}
                                 >

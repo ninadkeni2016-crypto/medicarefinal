@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Image, RefreshControl } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
 import { Users, Calendar, Receipt, Bell, Clock, FileText, Pill, CreditCard, MessageSquare, ChevronRight, AlertCircle } from 'lucide-react-native';
 import api from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,6 +10,8 @@ import { SectionHeader } from '@/components/ui/SectionHeader';
 import { SkeletonBox } from '@/components/ui/SkeletonBox';
 import { InitialsAvatar } from '@/components/ui/InitialsAvatar';
 import { ScreenTransition, AnimatedListItem, ScalePress } from '@/components/ui/Animations';
+import { Shimmer, CardSkeleton } from '@/components/ui/Shimmer';
+import * as Haptics from 'expo-haptics';
 
 interface DoctorHomeProps { onNavigate: (tab: string) => void; }
 
@@ -122,11 +123,7 @@ export default function DoctorHome({ onNavigate }: DoctorHomeProps) {
         }
     }, [userName]);
 
-    useFocusEffect(
-        useCallback(() => {
-            loadDashboard();
-        }, [loadDashboard])
-    );
+    useEffect(() => { loadDashboard(); }, [loadDashboard]);
 
     const stats = dashboard?.stats ?? {
         totalPatients: fallback.patientsCount,
@@ -203,8 +200,12 @@ export default function DoctorHome({ onNavigate }: DoctorHomeProps) {
 
             {/* Stats */}
             {loading ? (
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.xl }}>
-                    {[1, 2, 3, 4].map(i => <SkeletonBox key={i} width="48%" height={88} />)}
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginBottom: spacing.xl }}>
+                    {[1, 2, 3, 4].map(i => (
+                        <View key={i} style={{ width: '48%', marginBottom: spacing.sm }}>
+                            <Shimmer height={88} borderRadius={radius.lg} />
+                        </View>
+                    ))}
                 </View>
             ) : (
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginBottom: spacing.xl }}>
@@ -214,21 +215,23 @@ export default function DoctorHome({ onNavigate }: DoctorHomeProps) {
                         { icon: FileText, label: 'Pending Reports', value: String(stats.pendingReports) },
                         { icon: Receipt, label: 'Total Revenue', value: `₹${Number(stats.totalRevenue).toLocaleString()}` },
                     ].map(({ icon: Icon, label, value }) => (
-                        <MedCard key={label} style={{ width: '48%', marginBottom: spacing.sm, padding: spacing.md }}>
-                            <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-                                <View style={{ flex: 1 }}>
-                                    <Text style={[typography.cardValue, { color: colors.text }]}>{value}</Text>
-                                    <Text style={[typography.label, { color: colors.textSecondary, marginTop: 4 }]}>{label}</Text>
+                        <ScalePress key={label} style={{ width: '48%', marginBottom: spacing.sm }} haptic="light">
+                            <MedCard style={{ padding: spacing.md, height: '100%' }}>
+                                <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={[typography.cardValue, { color: colors.text }]}>{value}</Text>
+                                        <Text style={[typography.label, { color: colors.textSecondary, marginTop: 4 }]}>{label}</Text>
+                                    </View>
+                                    <View style={{
+                                        width: 38, height: 38, borderRadius: radius.md,
+                                        backgroundColor: 'rgba(29, 143, 212, 0.10)',
+                                        alignItems: 'center', justifyContent: 'center',
+                                    }}>
+                                        <Icon size={18} color={colors.primary} strokeWidth={2} />
+                                    </View>
                                 </View>
-                                <View style={{
-                                    width: 38, height: 38, borderRadius: radius.md,
-                                    backgroundColor: 'rgba(29, 143, 212, 0.10)',
-                                    alignItems: 'center', justifyContent: 'center',
-                                }}>
-                                    <Icon size={18} color={colors.primary} strokeWidth={2} />
-                                </View>
-                            </View>
-                        </MedCard>
+                            </MedCard>
+                        </ScalePress>
                     ))}
                 </View>
             )}
@@ -252,23 +255,25 @@ export default function DoctorHome({ onNavigate }: DoctorHomeProps) {
                 <Text style={[typography.section, { color: colors.text, marginBottom: spacing.md }]}>Quick actions</Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
                     {quickActions.map(({ icon: Icon, label, tab }) => (
-                        <TouchableOpacity key={tab} onPress={() => onNavigate(tab)} activeOpacity={0.75} style={{
-                            width: '31%', backgroundColor: colors.card,
-                            borderRadius: radius.lg,
-                            padding: spacing.md,
-                            borderWidth: 1, borderColor: colors.border,
-                            alignItems: 'center', gap: spacing.sm,
-                            ...cardShadow as object,
-                        }}>
+                        <ScalePress key={tab} style={{ width: '31%' }} onPress={() => { Haptics.selectionAsync(); onNavigate(tab); }} haptic="selection">
                             <View style={{
-                                width: 42, height: 42, borderRadius: radius.md,
-                                backgroundColor: 'rgba(29, 143, 212, 0.10)',
-                                alignItems: 'center', justifyContent: 'center',
+                                backgroundColor: colors.card,
+                                borderRadius: radius.lg,
+                                padding: spacing.md,
+                                borderWidth: 1, borderColor: colors.border,
+                                alignItems: 'center', gap: spacing.sm,
+                                ...cardShadow as object,
                             }}>
-                                <Icon size={20} color={colors.primary} strokeWidth={2} />
+                                <View style={{
+                                    width: 42, height: 42, borderRadius: radius.md,
+                                    backgroundColor: 'rgba(29, 143, 212, 0.10)',
+                                    alignItems: 'center', justifyContent: 'center',
+                                }}>
+                                    <Icon size={20} color={colors.primary} strokeWidth={2} />
+                                </View>
+                                <Text style={[typography.caption, { color: colors.text, fontWeight: '500' }]}>{label}</Text>
                             </View>
-                            <Text style={[typography.caption, { color: colors.text, fontWeight: '500' }]}>{label}</Text>
-                        </TouchableOpacity>
+                        </ScalePress>
                     ))}
                 </View>
             </View>
@@ -290,20 +295,24 @@ export default function DoctorHome({ onNavigate }: DoctorHomeProps) {
             {/* Recent Patients */}
             <View style={{ marginBottom: spacing.xl }}>
                 <SectionHeader title="Recent patients" onViewAll={() => onNavigate('patients')} />
-                {loading ? [1, 2].map(i => <SkeletonBox key={i} height={56} style={{ marginBottom: spacing.sm }} />) : recentPatients.length === 0 ? (
+                {loading ? [1, 2, 3].map(i => <CardSkeleton key={i} />) : recentPatients.length === 0 ? (
                     <MedCard><Text style={[typography.body, { color: colors.textSecondary }]}>No recent patients.</Text></MedCard>
                 ) : (
-                    recentPatients.slice(0, 4).map((p: any) => (
-                        <MedCard key={p._id || p.fullName} onPress={() => onNavigate('patients')} style={{ marginBottom: spacing.sm }}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
-                                <InitialsAvatar name={p.fullName || p.name || ''} size={40} radius={10} />
-                                <View style={{ flex: 1 }}>
-                                    <Text style={[typography.section, { color: colors.text }]}>{p.fullName || p.name}</Text>
-                                    <Text style={[typography.caption, { color: colors.textSecondary }]}>{p.condition || p.gender || p.email}</Text>
-                                </View>
-                                <ChevronRight size={16} color={colors.textMuted} />
-                            </View>
-                        </MedCard>
+                    recentPatients.slice(0, 4).map((p: any, idx: number) => (
+                        <AnimatedListItem key={p._id || p.fullName} index={idx}>
+                            <ScalePress onPress={() => onNavigate('patients')} haptic="light" style={{ marginBottom: spacing.sm }}>
+                                <MedCard>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+                                        <InitialsAvatar name={p.fullName || p.name || ''} size={40} radius={10} />
+                                        <View style={{ flex: 1 }}>
+                                            <Text style={[typography.section, { color: colors.text }]}>{p.fullName || p.name}</Text>
+                                            <Text style={[typography.caption, { color: colors.textSecondary }]}>{p.condition || p.gender || p.email}</Text>
+                                        </View>
+                                        <ChevronRight size={16} color={colors.textMuted} />
+                                    </View>
+                                </MedCard>
+                            </ScalePress>
+                        </AnimatedListItem>
                     ))
                 )}
             </View>

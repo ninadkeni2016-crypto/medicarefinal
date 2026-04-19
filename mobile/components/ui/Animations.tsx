@@ -1,51 +1,51 @@
-import React, { useEffect } from 'react';
-import { ViewStyle } from 'react-native';
-import Animated, {
-    useSharedValue,
-    useAnimatedStyle,
-    withTiming,
-    withDelay,
-    Easing,
-} from 'react-native-reanimated';
+import React, { useEffect, useRef } from 'react';
+import {
+    Animated, TouchableWithoutFeedback, ViewStyle, View,
+} from 'react-native';
+import * as Haptics from 'expo-haptics';
 
 interface AnimatedListItemProps {
     index: number;
     children: React.ReactNode;
     style?: ViewStyle;
-    /** Base delay before stagger starts (ms). Default 0. */
-    baseDelay?: number;
-    /** Extra ms added per index. Default 60. */
-    staggerMs?: number;
+    baseDelay?: number;  // ms before stagger starts. Default 0
+    staggerMs?: number;  // extra ms per index. Default 55
 }
 
 /**
- * Wraps children with a staggered fade-in + slide-up entrance animation.
- * Use this around list items for elegant staggered reveals.
+ * Wraps children in a staggered fade-in + slide-up entrance.
+ * Use around list items for an elegant reveal.
  */
 export function AnimatedListItem({
     index,
     children,
     style,
     baseDelay = 0,
-    staggerMs = 60,
+    staggerMs = 55,
 }: AnimatedListItemProps) {
-    const opacity = useSharedValue(0);
-    const translateY = useSharedValue(18);
+    const opacity = useRef(new Animated.Value(0)).current;
+    const translateY = useRef(new Animated.Value(20)).current;
 
     useEffect(() => {
         const delay = baseDelay + index * staggerMs;
-        const cfg = { duration: 350, easing: Easing.out(Easing.cubic) };
-        opacity.value = withDelay(delay, withTiming(1, cfg));
-        translateY.value = withDelay(delay, withTiming(0, cfg));
+        Animated.parallel([
+            Animated.timing(opacity, {
+                toValue: 1,
+                duration: 320,
+                delay,
+                useNativeDriver: true,
+            }),
+            Animated.timing(translateY, {
+                toValue: 0,
+                duration: 320,
+                delay,
+                useNativeDriver: true,
+            }),
+        ]).start();
     }, []);
 
-    const animStyle = useAnimatedStyle(() => ({
-        opacity: opacity.value,
-        transform: [{ translateY: translateY.value }],
-    }));
-
     return (
-        <Animated.View style={[animStyle, style]}>
+        <Animated.View style={[{ opacity, transform: [{ translateY }] }, style]}>
             {children}
         </Animated.View>
     );
@@ -53,50 +53,59 @@ export function AnimatedListItem({
 
 /**
  * Full-screen fade + subtle slide-up entrance.
- * Wrap any screen's root view with this.
+ * Wrap any screen's root view with this for a consistent entrance.
  */
-export function ScreenTransition({ children, style }: { children: React.ReactNode; style?: ViewStyle }) {
-    const opacity = useSharedValue(0);
-    const translateY = useSharedValue(12);
+export function ScreenTransition({
+    children,
+    style,
+}: { children: React.ReactNode; style?: ViewStyle }) {
+    const opacity = useRef(new Animated.Value(0)).current;
+    const translateY = useRef(new Animated.Value(14)).current;
 
     useEffect(() => {
-        const cfg = { duration: 280, easing: Easing.out(Easing.cubic) };
-        opacity.value = withTiming(1, cfg);
-        translateY.value = withTiming(0, cfg);
+        Animated.parallel([
+            Animated.timing(opacity, { toValue: 1, duration: 260, useNativeDriver: true }),
+            Animated.timing(translateY, { toValue: 0, duration: 260, useNativeDriver: true }),
+        ]).start();
     }, []);
 
-    const animStyle = useAnimatedStyle(() => ({
-        opacity: opacity.value,
-        transform: [{ translateY: translateY.value }],
-    }));
-
     return (
-        <Animated.View style={[{ flex: 1 }, animStyle, style]}>
+        <Animated.View style={[{ flex: 1, opacity, transform: [{ translateY }] }, style]}>
             {children}
         </Animated.View>
     );
 }
 
-import { TouchableWithoutFeedback } from 'react-native';
-
 /**
- * Wraps children with a scale-up/down animation on press.
- * Use for buttons, cards, or any interactive element.
+ * Scale press — wraps children with a spring scale on press.
+ * Use for buttons, cards, or any tappable element.
  */
-export function ScalePress({ children, onPress, style }: { children: React.ReactNode; onPress?: () => void; style?: ViewStyle }) {
-    const scale = useSharedValue(1);
+export function ScalePress({
+    children,
+    onPress,
+    style,
+    disabled,
+    haptic = 'light',
+}: { children: React.ReactNode; onPress?: () => void; style?: ViewStyle; disabled?: boolean; haptic?: 'light' | 'medium' | 'heavy' | 'selection' | 'none' }) {
+    const scale = useRef(new Animated.Value(1)).current;
 
-    const animStyle = useAnimatedStyle(() => ({
-        transform: [{ scale: scale.value }],
-    }));
+    const onPressIn = () => {
+        if (disabled) return;
+        Animated.spring(scale, { toValue: 0.95, useNativeDriver: true, speed: 60, bounciness: 0 }).start();
+        if (haptic === 'light') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        if (haptic === 'medium') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        if (haptic === 'heavy') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+        if (haptic === 'selection') Haptics.selectionAsync();
+    };
+
+    const onPressOut = () => {
+        if (disabled) return;
+        Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 30, bounciness: 6 }).start();
+    };
 
     return (
-        <TouchableWithoutFeedback
-            onPressIn={() => (scale.value = withTiming(0.96, { duration: 100 }))}
-            onPressOut={() => (scale.value = withTiming(1, { duration: 100 }))}
-            onPress={onPress}
-        >
-            <Animated.View style={[animStyle, style]}>
+        <TouchableWithoutFeedback onPressIn={onPressIn} onPressOut={onPressOut} onPress={onPress} disabled={disabled}>
+            <Animated.View style={[{ transform: [{ scale }] }, style]}>
                 {children}
             </Animated.View>
         </TouchableWithoutFeedback>

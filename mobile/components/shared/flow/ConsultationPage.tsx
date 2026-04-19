@@ -40,24 +40,26 @@ export default function ConsultationPage({ appointment, onBack, clinicalData }: 
     };
 
     const handleSubmit = async () => {
-        if (!notes.trim() && !diagnosis.trim()) { toast({ title: 'Please add diagnosis or notes' }); return; }
-        
+        if (!notes.trim() && !diagnosis.trim()) {
+            toast({ title: 'Please add diagnosis or notes before saving.' });
+            return;
+        }
         setIsSaving(true);
         const id = (appointment as any)._id || appointment.id;
-        
         try {
-            await api.patch(`/appointments/${id}/clinical-data`, { 
-                consultationNotes: notes, 
+            await api.patch(`/appointments/${id}/clinical-data`, {
+                consultationNotes: notes,
                 diagnosis,
                 vitals,
                 symptoms,
-                currentStep: Math.max(clinicalData.currentStep, 1) 
+                currentStep: Math.max(clinicalData.currentStep, 1),
             });
-            toast({ title: '✅ Consultation completed' });
+            toast({ title: '✅ Consultation saved successfully' });
             onBack();
-        } catch (error) {
-            console.error('Failed to save consultation:', error);
-            toast({ title: '❌ Error', description: 'Failed to save data to backend' });
+        } catch (error: any) {
+            const msg = error?.response?.data?.message || error?.message || 'Unknown error';
+            console.error('Consultation save failed:', msg, error?.response?.status);
+            toast({ title: '❌ Save failed', description: msg });
         } finally {
             setIsSaving(false);
         }
@@ -244,8 +246,9 @@ export default function ConsultationPage({ appointment, onBack, clinicalData }: 
                 <TouchableOpacity onPress={onBack} style={{ flex: 1, height: 52, borderRadius: 12, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#E2E8F0' }}>
                     <Text style={{ fontSize: 15, fontWeight: '700', color: '#475569' }}>Cancel</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={handleSubmit} style={{ flex: 1.5, height: 52, borderRadius: 12, backgroundColor: '#2563EB', alignItems: 'center', justifyContent: 'center', shadowColor: '#2563EB', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 }}>
-                    <Text style={{ fontSize: 15, fontWeight: '700', color: '#FFFFFF' }}>Save Consultation</Text>
+                <TouchableOpacity onPress={handleSubmit} disabled={isSaving} style={{ flex: 1.5, height: 52, borderRadius: 12, backgroundColor: isSaving ? '#93C5FD' : '#2563EB', alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, shadowColor: '#2563EB', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 }}>
+                    {isSaving ? <ActivityIndicator size="small" color="#FFFFFF" /> : null}
+                    <Text style={{ fontSize: 15, fontWeight: '700', color: '#FFFFFF' }}>{isSaving ? 'Saving...' : 'Save Consultation'}</Text>
                 </TouchableOpacity>
             </View>
         </ScrollView>

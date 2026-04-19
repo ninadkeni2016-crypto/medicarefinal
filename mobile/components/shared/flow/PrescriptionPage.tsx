@@ -198,7 +198,10 @@ export default function PrescriptionPage({ appointment, onBack, clinicalData }: 
             {/* Actions */}
             <View style={{ flexDirection: 'row', gap: 12 }}>
                 <TouchableOpacity onPress={onBack} style={{ flex: 1, height: 56, borderRadius: 16, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#E2E8F0' }}><Text style={{ fontSize: 16, fontWeight: '700', color: '#475569' }}>Cancel</Text></TouchableOpacity>
-                <TouchableOpacity onPress={handleSubmit} style={{ flex: 1.5, height: 56, borderRadius: 16, backgroundColor: '#2563EB', alignItems: 'center', justifyContent: 'center', shadowColor: '#2563EB', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 }}><Text style={{ fontSize: 16, fontWeight: '700', color: '#FFFFFF' }}>Issue Prescription</Text></TouchableOpacity>
+                <TouchableOpacity onPress={handleSubmit} disabled={isSaving} style={{ flex: 1.5, height: 56, borderRadius: 16, backgroundColor: isSaving ? '#93C5FD' : '#2563EB', alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, shadowColor: '#2563EB', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 }}>
+                    {isSaving ? <ActivityIndicator size="small" color="#FFFFFF" /> : null}
+                    <Text style={{ fontSize: 16, fontWeight: '700', color: '#FFFFFF' }}>{isSaving ? 'Saving...' : 'Issue Prescription'}</Text>
+                </TouchableOpacity>
             </View>
         </ScrollView>
     );

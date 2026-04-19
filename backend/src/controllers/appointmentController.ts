@@ -679,10 +679,10 @@ export const updateClinicalData = async (req: AuthRequest, res: Response): Promi
                     if (profile) {
                         // Soft merge vitals into profile
                         const newVitals = {
-                            heartRate: newData.vitals.hr || profile.vitals?.heartRate,
-                            bloodPressure: newData.vitals.bp || profile.vitals?.bloodPressure,
-                            bloodSugar: profile.vitals?.bloodSugar, // Sugars aren't in waitlist usually
-                            weight: newData.vitals.weight || profile.vitals?.weight
+                            heartRate: String(newData.vitals.hr || profile.vitals?.heartRate || ''),
+                            bloodPressure: String(newData.vitals.bp || profile.vitals?.bloodPressure || ''),
+                            bloodSugar: String(profile.vitals?.bloodSugar || ''),
+                            weight: String(newData.vitals.weight || profile.vitals?.weight || '')
                         };
                         profile.vitals = newVitals;
                         await profile.save();

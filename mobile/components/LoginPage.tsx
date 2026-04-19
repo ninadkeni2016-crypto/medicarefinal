@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
     View, Text, TextInput, TouchableOpacity, ScrollView, Image,
     Animated, KeyboardAvoidingView, Platform, ActivityIndicator,
@@ -13,6 +13,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { UserRole } from '@/lib/mock-data';
 import ForgotPasswordForm from './shared/ForgotPasswordForm';
 import { colors, spacing, radius, typography, cardShadow, fonts } from '@/lib/theme';
+import { ScalePress } from '@/components/ui/Animations';
+import * as Haptics from 'expo-haptics';
 
 const { width, height } = Dimensions.get('window');
 
@@ -130,6 +132,7 @@ export default function LoginPage() {
 
     // Floating pulse on logo
     const pulse = useRef(new Animated.Value(1)).current;
+    const driftAnim = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
         // Logo entrance
@@ -145,11 +148,20 @@ export default function LoginPage() {
         // Infinite pulse on logo
         const loop = Animated.loop(
             Animated.sequence([
-                Animated.timing(pulse, { toValue: 1.06, duration: 1800, useNativeDriver: true }),
-                Animated.timing(pulse, { toValue: 1, duration: 1800, useNativeDriver: true }),
+                Animated.timing(pulse, { toValue: 1.05, duration: 2500, useNativeDriver: true }),
+                Animated.timing(pulse, { toValue: 1, duration: 2500, useNativeDriver: true }),
             ])
         );
         loop.start();
+
+        // Slow drift for background circles
+        Animated.loop(
+            Animated.sequence([
+                Animated.timing(driftAnim, { toValue: 10, duration: 4000, useNativeDriver: true }),
+                Animated.timing(driftAnim, { toValue: -10, duration: 4000, useNativeDriver: true }),
+            ])
+        ).start();
+
         return () => loop.stop();
     }, []);
 
@@ -266,8 +278,16 @@ export default function LoginPage() {
                     style={{ paddingTop: Platform.OS === 'ios' ? 64 : 48, paddingBottom: 48, alignItems: 'center', paddingHorizontal: 24 }}
                 >
                     {/* Decorative circles */}
-                    <View style={{ position: 'absolute', top: 0, right: -40, width: 200, height: 200, borderRadius: 100, backgroundColor: 'rgba(29,143,212,0.08)' }} />
-                    <View style={{ position: 'absolute', top: 40, left: -60, width: 160, height: 160, borderRadius: 80, backgroundColor: 'rgba(29,143,212,0.05)' }} />
+                    <Animated.View style={{ 
+                        position: 'absolute', top: -20, right: -40, width: 220, height: 220, borderRadius: 110, 
+                        backgroundColor: 'rgba(29,143,212,0.08)',
+                        transform: [{ translateY: driftAnim }] 
+                    }} />
+                    <Animated.View style={{ 
+                        position: 'absolute', top: 60, left: -60, width: 180, height: 180, borderRadius: 90, 
+                        backgroundColor: 'rgba(29,143,212,0.05)',
+                        transform: [{ translateY: Animated.multiply(driftAnim, -0.8) }] 
+                    }} />
 
                     {/* Logo */}
                     <Animated.View style={{
@@ -328,28 +348,32 @@ export default function LoginPage() {
                                 borderRadius: 14, padding: 4, marginBottom: 24,
                             }}>
                                 {([false, true] as const).map((isSign) => (
-                                    <TouchableOpacity
-                                        key={String(isSign)}
-                                        onPress={() => handleSwitch(isSign)}
-                                        activeOpacity={0.8}
-                                        style={{
-                                            flex: 1, paddingVertical: 12, borderRadius: 11,
-                                            backgroundColor: isSignUp === isSign ? '#FFFFFF' : 'transparent',
-                                            alignItems: 'center',
-                                            ...(isSignUp === isSign ? {
-                                                shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-                                                shadowOpacity: 0.08, shadowRadius: 6, elevation: 2,
-                                            } : {}),
-                                        }}
+                                    <ScalePress 
+                                        key={String(isSign)} 
+                                        onPress={() => { Haptics.selectionAsync(); handleSwitch(isSign); }} 
+                                        style={{ flex: 1 }}
+                                        haptic="selection"
                                     >
-                                        <Text style={{
-                                            fontFamily: isSignUp === isSign ? fonts.semiBold : fonts.regular,
-                                            fontSize: 14,
-                                            color: isSignUp === isSign ? colors.primary : colors.textMuted,
-                                        }}>
-                                            {isSign ? 'Sign Up' : 'Log In'}
-                                        </Text>
-                                    </TouchableOpacity>
+                                        <View
+                                            style={{
+                                                paddingVertical: 12, borderRadius: 11,
+                                                backgroundColor: isSignUp === isSign ? '#FFFFFF' : 'transparent',
+                                                alignItems: 'center',
+                                                ...(isSignUp === isSign ? {
+                                                    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+                                                    shadowOpacity: 0.08, shadowRadius: 6, elevation: 2,
+                                                } : {}),
+                                            }}
+                                        >
+                                            <Text style={{
+                                                fontFamily: isSignUp === isSign ? fonts.semiBold : fonts.regular,
+                                                fontSize: 14,
+                                                color: isSignUp === isSign ? colors.primary : colors.textMuted,
+                                            }}>
+                                                {isSign ? 'Sign Up' : 'Log In'}
+                                            </Text>
+                                        </View>
+                                    </ScalePress>
                                 ))}
                             </View>
                         </AnimatedField>
@@ -488,15 +512,8 @@ export default function LoginPage() {
 
                             {/* Primary Button */}
                             <AnimatedField delay={isSignUp ? 240 : 200}>
-                                <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
-                                    <TouchableOpacity
-                                        onPress={handlePrimaryAction}
-                                        onPressIn={onPressInBtn}
-                                        onPressOut={onPressOutBtn}
-                                        activeOpacity={1}
-                                        disabled={isLoading}
-                                        style={{ borderRadius: 18, overflow: 'hidden', marginBottom: 16 }}
-                                    >
+                                <ScalePress onPress={handlePrimaryAction} disabled={isLoading} haptic="medium">
+                                    <View style={{ borderRadius: 18, overflow: 'hidden', marginBottom: 16 }}>
                                         <LinearGradient
                                             colors={[colors.primary, '#1565a8']}
                                             start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
@@ -515,8 +532,8 @@ export default function LoginPage() {
                                                 </>
                                             }
                                         </LinearGradient>
-                                    </TouchableOpacity>
-                                </Animated.View>
+                                    </View>
+                                </ScalePress>
                             </AnimatedField>
 
                             {/* Divider */}
@@ -536,21 +553,25 @@ export default function LoginPage() {
                                         { label: 'Apple', icon: Smartphone },
                                         { label: 'OTP', icon: Shield },
                                     ].map(({ label, icon: Icon }) => (
-                                        <TouchableOpacity
-                                            key={label}
+                                        <ScalePress 
+                                            key={label} 
                                             onPress={() => label === 'OTP' ? setShowOTP(true) : Alert.alert('Sign in', `${label} sign-in is not yet configured.`)}
-                                            activeOpacity={0.75}
-                                            style={{
-                                                flex: 1, flexDirection: 'row', alignItems: 'center',
-                                                justifyContent: 'center', gap: 6,
-                                                paddingVertical: 14, borderRadius: 14,
-                                                borderWidth: 1.5, borderColor: colors.border,
-                                                backgroundColor: '#F8FAFC',
-                                            }}
+                                            style={{ flex: 1 }}
+                                            haptic="light"
                                         >
-                                            <Icon size={17} color={colors.textSecondary} strokeWidth={2} />
-                                            <Text style={{ fontFamily: fonts.medium, fontSize: 12, color: colors.text }}>{label}</Text>
-                                        </TouchableOpacity>
+                                            <View
+                                                style={{
+                                                    flexDirection: 'row', alignItems: 'center',
+                                                    justifyContent: 'center', gap: 6,
+                                                    paddingVertical: 14, borderRadius: 14,
+                                                    borderWidth: 1.5, borderColor: colors.border,
+                                                    backgroundColor: '#F8FAFC',
+                                                }}
+                                            >
+                                                <Icon size={17} color={colors.textSecondary} strokeWidth={2} />
+                                                <Text style={{ fontFamily: fonts.medium, fontSize: 12, color: colors.text }}>{label}</Text>
+                                            </View>
+                                        </ScalePress>
                                     ))}
                                 </View>
                             </AnimatedField>
