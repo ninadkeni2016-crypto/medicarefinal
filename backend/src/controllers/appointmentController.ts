@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import Appointment from '../models/Appointment';
 import User from '../models/User';
 import Doctor from '../models/Doctor';
-import { sendAppointmentConfirmationEmail, sendCancellationEmail } from '../utils/sendEmail';
+import { sendAppointmentConfirmationEmail, sendCancellationEmail, sendAppointmentCompletionEmail } from '../utils/sendEmail';
 import Notification from '../models/Notification';
 import Conversation from '../models/Conversation';
 import Message from '../models/Message';
@@ -228,8 +228,61 @@ export const updateAppointmentStatus = async (req: AuthRequest, res: Response): 
                 const cancelledBy = req.user?.role === 'patient' ? 'Patient' : 'Doctor';
                 appointment.cancelledBy = cancelledBy;
             }
-            appointment.status = req.body.status || appointment.status;
+
+            const oldStatus = appointment.status;
+            const newStatus = req.body.status || appointment.status;
+            appointment.status = newStatus;
+
             const updatedAppointment = await appointment.save();
+
+            // Send notification and message if marked as completed
+            if (newStatus === 'completed' && oldStatus !== 'completed') {
+                // Determine patient ID correctly
+                const patientUserId = appointment.user || appointment.patientId;
+                
+                if (patientUserId) {
+                    Notification.create({
+                        user: patientUserId,
+                        title: 'Appointment Completed',
+                        body: `Your appointment with ${appointment.doctorName} on ${appointment.date} has been completed.`,
+                        type: 'appointment'
+                    }).catch(err => console.error('Completion notification failed:', err));
+
+                    if (appointment.doctorId) {
+                        try {
+                            const conversation = await Conversation.findOne({
+                                participants: { $all: [patientUserId, appointment.doctorId] }
+                            });
+                            if (conversation) {
+                                await Message.create({
+                                    conversationId: conversation._id.toString(),
+                                    sender: appointment.doctorId,
+                                    senderName: appointment.doctorName,
+                                    content: `Your appointment for ${appointment.date} has been successfully completed. Thank you, and take care!`,
+                                    type: 'text'
+                                });
+                                conversation.lastMessage = 'Your appointment has been successfully completed.';
+                                conversation.lastMessageTime = new Date();
+                                conversation.unreadCount = (conversation.unreadCount || 0) + 1;
+                                await conversation.save();
+                            }
+                        } catch (chatError) {
+                            console.error('Completion chat message failed:', chatError);
+                        }
+                    }
+
+                    // Send email on completion
+                    const patientUserObj = await User.findById(patientUserId).select('email');
+                    if (patientUserObj?.email) {
+                        sendAppointmentCompletionEmail(patientUserObj.email, {
+                            patientName: appointment.patientName,
+                            doctorName: appointment.doctorName,
+                            date: appointment.date,
+                            time: appointment.time
+                        }).catch(err => console.error('Completion email failed:', err));
+                    }
+                }
+            }
 
             res.json(updatedAppointment);
 

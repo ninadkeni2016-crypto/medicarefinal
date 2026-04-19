@@ -187,24 +187,7 @@ export default function ChatConversation({ conversation, onBack, onViewProfile }
                     )}
                 />
 
-                {/* Disclaimer Box */}
-                <View style={{
-                    position: 'absolute',
-                    bottom: 110,
-                    right: 20,
-                    backgroundColor: 'rgba(231, 111, 81, 0.1)',
-                    padding: 8,
-                    borderRadius: 10,
-                    borderWidth: 1,
-                    borderColor: 'rgba(231, 111, 81, 0.15)',
-                    maxWidth: width * 0.5,
-                    zIndex: 50,
-                    pointerEvents: 'none'
-                }}>
-                    <Text style={{ fontSize: 9, color: colors.danger, fontFamily: fonts.semiBold, textAlign: 'right', lineHeight: 12 }}>
-                        ⚠️ These features are currently unavailable and will be added in future updates.
-                    </Text>
-                </View>
+
 
                 {/* Input Area */}
                 <View style={{

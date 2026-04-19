@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import storage from '../lib/storage';
 import api from '../lib/api';
 import { UserRole } from '@/lib/mock-data';
@@ -8,6 +8,7 @@ export interface PatientProfile {
   email: string;
   phone: string;
   dateOfBirth: string;
+  age: string;
   gender: string;
   bloodGroup: string;
   height: string;
@@ -35,6 +36,7 @@ export const emptyProfile: PatientProfile = {
   email: '',
   phone: '',
   dateOfBirth: '',
+  age: '',
   gender: '',
   bloodGroup: '',
   height: '',
@@ -76,6 +78,40 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [role, setRole] = useState<UserRole | null>(null);
   const [patientProfile, setPatientProfile] = useState<PatientProfile>(emptyProfile);
+  const [isInitializing, setIsInitializing] = useState(true);
+
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        const token = await storage.getItem('userToken');
+        if (token) {
+          const profileRes = await api.get('/auth/profile');
+          if (profileRes.data) {
+            const userRole = profileRes.data.role;
+            setRole(userRole);
+            setIsLoggedIn(true);
+
+            if (userRole === 'patient') {
+              const patientRes = await api.get('/patients/profile').catch(() => null);
+              if (patientRes && patientRes.data) {
+                setPatientProfile(patientRes.data);
+              } else {
+                setPatientProfile({ ...emptyProfile, fullName: profileRes.data.name, email: profileRes.data.email });
+              }
+            } else {
+              setPatientProfile({ ...emptyProfile, fullName: profileRes.data.name, email: profileRes.data.email });
+            }
+          }
+        }
+      } catch (err) {
+        console.log('No valid session', err);
+        await storage.removeItem('userToken');
+      } finally {
+        setIsInitializing(false);
+      }
+    };
+    initAuth();
+  }, []);
 
   const isProfileComplete = patientProfile.fullName.trim() !== '';
   const userName = patientProfile.fullName || 'New Patient';
@@ -100,7 +136,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         await storage.setItem('userToken', response.data.token);
         setRole(response.data.role);
         setIsLoggedIn(true);
-        setPatientProfile({ ...emptyProfile, fullName: response.data.name, email: response.data.email });
+        if (response.data.role === 'patient') {
+          const patientRes = await api.get('/patients/profile').catch(() => null);
+          if (patientRes && patientRes.data) {
+            setPatientProfile(patientRes.data);
+          } else {
+            setPatientProfile({ ...emptyProfile, fullName: response.data.name, email: response.data.email });
+          }
+        } else {
+          setPatientProfile({ ...emptyProfile, fullName: response.data.name, email: response.data.email });
+        }
         return true;
       }
       return false;
@@ -112,12 +157,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (selectedRole: UserRole, emailStr: string, passwordStr: string): Promise<{ success: boolean; message: string; needsVerification?: boolean; email?: string; code?: string }> => {
     try {
-      const response = await api.post('/auth/login', { email: emailStr, password: passwordStr });
+      const response = await api.post('/auth/login', { email: emailStr, password: passwordStr, role: selectedRole });
       if (response.data && response.data.token) {
         await storage.setItem('userToken', response.data.token);
         setRole(response.data.role || selectedRole);
         setIsLoggedIn(true);
-        setPatientProfile({ ...emptyProfile, fullName: response.data.name, email: response.data.email });
+        const resolvedRole = response.data.role || selectedRole;
+        if (resolvedRole === 'patient') {
+          const patientRes = await api.get('/patients/profile').catch(() => null);
+          if (patientRes && patientRes.data) {
+            setPatientProfile(patientRes.data);
+          } else {
+            setPatientProfile({ ...emptyProfile, fullName: response.data.name, email: response.data.email });
+          }
+        } else {
+          setPatientProfile({ ...emptyProfile, fullName: response.data.name, email: response.data.email });
+        }
         return { success: true, message: 'Login successful' };
       }
       return { success: false, message: 'Login failed' };
@@ -144,6 +199,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setRole(null);
     setPatientProfile(emptyProfile);
   };
+
+  if (isInitializing) {
+    return null; // OR return a Splash/Loading screen if you prefer
+  }
 
   return (
     <AuthContext.Provider value={{ isLoggedIn, role, userName, patientProfile, isProfileComplete, updatePatientProfile, register, verifyOTP, login, logout }}>

@@ -194,7 +194,7 @@ export default function DoctorHome({ onNavigate }: DoctorHomeProps) {
                         <Text style={[typography.screenTitle, { marginTop: 2 }]}>{userName || 'Doctor'}</Text>
                     </View>
                 </View>
-                <TouchableOpacity onPress={() => onNavigate('profile')} activeOpacity={0.7} style={{ width: 40, height: 40, borderRadius: radius.md, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center', ...cardShadow }}>
+                <TouchableOpacity onPress={() => onNavigate('notifications')} activeOpacity={0.7} style={{ width: 40, height: 40, borderRadius: radius.md, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center', ...cardShadow }}>
                     <Bell size={20} color={colors.secondary} />
                 </TouchableOpacity>
             </View>

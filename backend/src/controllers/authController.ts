@@ -99,12 +99,16 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
             return;
         }
 
+        const requestedRole = role || 'patient';
+        // SECURITY FIX: Never allow generic 'admin' creation from public endpoints
+        const assignedRole = (requestedRole === 'doctor') ? 'doctor' : 'patient';
+
         // Create new unverified user
         const user = await User.create({
             name,
             email,
             password,
-            role: role || 'patient',
+            role: assignedRole,
             isVerified: false,
             verificationOTP: hashedOTP,
             verificationOTPExpire: otpExpire,
@@ -182,11 +186,11 @@ export const verifyOTP = async (req: Request, res: Response): Promise<void> => {
 // @route   POST /api/auth/login
 // @access  Public
 export const authUser = async (req: Request, res: Response): Promise<void> => {
-    const { email, password } = req.body;
+    const { email, password, role } = req.body;
 
     try {
-        if (!email || !password) {
-            res.status(400).json({ message: 'Email and password are required.' });
+        if (!email || !password || !role) {
+            res.status(400).json({ message: 'Email, password, and role are required.' });
             return;
         }
 
@@ -194,6 +198,11 @@ export const authUser = async (req: Request, res: Response): Promise<void> => {
 
         if (!user) {
             res.status(404).json({ message: 'User not found. Please create an account first.', code: 'USER_NOT_FOUND' });
+            return;
+        }
+
+        if (user.role !== role) {
+            res.status(401).json({ message: `Invalid login role. This account is registered as a ${user.role}.` });
             return;
         }
 

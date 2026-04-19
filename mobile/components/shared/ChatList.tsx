@@ -72,7 +72,7 @@ export default function ChatList({ onSelectConversation, onOpenAI }: Props) {
 
     const filtered = search
         ? conversations.filter(c => c.participantName.toLowerCase().includes(search.toLowerCase()))
-        : conversations;
+        : (role === 'patient' ? conversations.slice(0, 1) : conversations);
 
     if (loading) return (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
@@ -202,24 +202,7 @@ export default function ChatList({ onSelectConversation, onOpenAI }: Props) {
                 )}
             />
 
-            {/* Disclaimer Box */}
-            <View style={{
-                position: 'absolute',
-                bottom: 120,
-                right: 20,
-                backgroundColor: 'rgba(231, 111, 81, 0.1)',
-                padding: 10,
-                borderRadius: 12,
-                borderWidth: 1,
-                borderColor: 'rgba(231, 111, 81, 0.2)',
-                maxWidth: width * 0.6,
-                zIndex: 100,
-                pointerEvents: 'none'
-            }}>
-                <Text style={{ fontSize: 10, color: colors.danger, fontFamily: fonts.semiBold, textAlign: 'right', lineHeight: 14 }}>
-                    ⚠️ These features are currently unavailable and will be added in future updates.
-                </Text>
-            </View>
+
         </View>
     );
 }

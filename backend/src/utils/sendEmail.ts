@@ -84,34 +84,54 @@ export const sendAppointmentConfirmationEmail = async (
       to,
       subject: '✅ Appointment Confirmed - Medicare',
       html: `
-        <div style="font-family: 'Helvetica Neue', sans-serif; max-width: 480px; margin: 0 auto; background: #fff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0;">
+        <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 8px; border: 1px solid #f1f5f9; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); margin-top: 20px;">
           <div style="background: #0f172a; padding: 28px; text-align: center;">
             <h1 style="color: white; margin: 0; font-size: 22px;">Medicare</h1>
             <p style="color: #94a3b8; margin: 6px 0 0; font-size: 13px;">Appointment Confirmation</p>
           </div>
-          <div style="padding: 28px;">
-            <div style="background: #f0fdf4; border-radius: 12px; padding: 16px; border-left: 4px solid #22c55e; margin-bottom: 20px;">
+          <div style="padding: 30px; color: #1e293b; line-height: 1.6;">
+            <div style="background: #f0fdf4; border-radius: 12px; padding: 16px; border-left: 4px solid #22c55e; margin-bottom: 24px;">
               <p style="color: #15803d; font-weight: 700; margin: 0; font-size: 15px;">✅ Your appointment is confirmed!</p>
             </div>
-            <p style="color: #64748b; margin: 0 0 20px; line-height: 1.6;">Hi <strong>${details.patientName}</strong>, your appointment has been successfully booked. Here are the details:</p>
-            <table style="width: 100%; border-collapse: collapse;">
-              ${[
-                ['👨‍⚕️ Doctor', details.doctorName],
-                ['🏥 Specialization', details.specialization],
-                ['📅 Date', details.date],
-                ['⏰ Time', details.time],
-                ['💬 Type', details.type],
-              ].map(([label, value]) => `
-                <tr>
-                  <td style="padding: 10px 0; border-bottom: 1px solid #f1f5f9; color: #64748b; font-size: 13px; width: 40%">${label}</td>
-                  <td style="padding: 10px 0; border-bottom: 1px solid #f1f5f9; color: #0f172a; font-weight: 600; font-size: 13px;">${value}</td>
-                </tr>
-              `).join('')}
-            </table>
-            <p style="color: #94a3b8; font-size: 12px; margin-top: 20px;">Please arrive 10 minutes early for in-person appointments.</p>
-          </div>
-          <div style="background: #f8fafc; padding: 14px; text-align: center;">
-            <p style="color: #94a3b8; font-size: 12px; margin: 0;">© 2026 Medicare. All rights reserved.</p>
+            
+            <p style="font-size: 16px;">Dear <strong>${details.patientName}</strong>,</p>
+            
+            <p style="font-size: 16px;">We are pleased to inform you that your appointment has been successfully confirmed.</p>
+            
+            <h3 style="color: #0f172a; margin-top: 28px; margin-bottom: 16px; font-size: 18px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">Appointment Details:</h3>
+            <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 24px;">
+              <table style="width: 100%; border-collapse: collapse;">
+                ${[
+                  ['👨‍⚕️ Doctor', details.doctorName],
+                  ['🏥 Specialization', details.specialization],
+                  ['📅 Date', details.date],
+                  ['⏰ Time', details.time],
+                  ['💬 Type', details.type],
+                ].map(([label, value]) => `
+                  <tr>
+                    <td style="padding: 10px 0; border-bottom: 1px solid #e2e8f0; color: #64748b; font-size: 14px; width: 40%">${label}</td>
+                    <td style="padding: 10px 0; border-bottom: 1px solid #e2e8f0; color: #0f172a; font-weight: 600; font-size: 14px;">${value}</td>
+                  </tr>
+                `).join('')}
+              </table>
+            </div>
+
+            <p style="font-size: 15px; color: #b45309; background-color: #fffbeb; padding: 12px 16px; border-radius: 6px; border-left: 4px solid #f59e0b;">
+              Kindly ensure that you arrive at least 10 minutes prior to your scheduled appointment time.
+            </p>
+            
+            <p style="font-size: 15px; margin-top: 24px;">
+              Thank you for choosing MediCare for your healthcare needs. We truly appreciate your trust in our services and look forward to assisting you again in the future.
+            </p>
+            
+            <p style="font-size: 15px;">
+              If you have any questions or need to reschedule, please feel free to contact us.
+            </p>
+            
+            <p style="margin-top: 36px; font-size: 15px;">
+              Warm regards,<br>
+              <strong style="color: #0f172a; font-size: 16px;">MediCare Team</strong>
+            </p>
           </div>
         </div>
       `,
@@ -120,6 +140,63 @@ export const sendAppointmentConfirmationEmail = async (
     console.log(`✅ [EMAIL] Appointment confirmation email sent to: ${to}`);
   } catch (error) {
     console.error('❌ [EMAIL] Error sending appointment email:', error);
+  }
+};
+
+export const sendAppointmentCompletionEmail = async (
+  to: string,
+  details: { patientName: string; doctorName: string; date: string; time: string }
+) => {
+  try {
+    const transporter = getTransporter();
+    if (!transporter) {
+      console.log('[DEV] Skipping appointment completion email for', to, 'details:', details);
+      return;
+    }
+
+    const mailOptions = {
+      from: `"Medicare" <${process.env.EMAIL_USER}>`,
+      to,
+      subject: '🌟 Appointment Completed - Medicare',
+      html: `
+        <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 8px; border: 1px solid #f1f5f9; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); margin-top: 20px;">
+          <div style="background: #0f172a; padding: 28px; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 22px;">Medicare</h1>
+            <p style="color: #94a3b8; margin: 6px 0 0; font-size: 13px;">Appointment Completed</p>
+          </div>
+          <div style="padding: 30px; color: #1e293b; line-height: 1.6;">
+            <div style="background: #f0fdf4; border-radius: 12px; padding: 16px; border-left: 4px solid #22c55e; margin-bottom: 24px;">
+              <p style="color: #15803d; font-weight: 700; margin: 0; font-size: 15px;">✅ Appointment successfully completed!</p>
+            </div>
+            
+            <p style="font-size: 16px;">Dear <strong>${details.patientName}</strong>,</p>
+            
+            <p style="font-size: 16px;">We hope your recent appointment at MediCare with Dr. ${details.doctorName} was satisfactory and met your healthcare needs.</p>
+            
+            <div style="background-color: #eff6ff; padding: 16px 20px; border-radius: 6px; border-left: 4px solid #3b82f6; margin-top: 24px; margin-bottom: 24px;">
+              <p style="margin: 0; font-size: 15px; color: #1e40af;">
+                 This is to confirm that your appointment on <strong>${details.date}</strong> at <strong>${details.time}</strong> has been successfully completed. We appreciate the opportunity to serve you and are committed to providing you with the highest quality care.
+              </p>
+            </div>
+            
+            <p style="font-size: 15px;">Your health and well-being are our top priorities. Should you require any further consultation, follow-up, or medical assistance, please do not hesitate to reach out to us.</p>
+            
+            <p style="font-size: 15px; margin-top: 20px;">Thank you for choosing MediCare. We look forward to serving you again.</p>
+            
+            <p style="font-size: 15px; font-weight: 600; color: #0f172a; margin-top: 20px;">Wishing you good health.</p>
+            
+            <p style="margin-top: 36px; font-size: 15px;">
+              Warm regards,<br>
+              <strong style="color: #0f172a; font-size: 16px;">MediCare Team</strong>
+            </p>
+          </div>
+        </div>
+      `,
+    };
+    await transporter.sendMail(mailOptions);
+    console.log(`✅ [EMAIL] Appointment completion email sent to: ${to}`);
+  } catch (error) {
+    console.error('❌ [EMAIL] Error sending appointment completion email:', error);
   }
 };
 

@@ -33,6 +33,7 @@ import BillingList from '@/components/shared/BillingList';
 import ChatList from '@/components/shared/ChatList';
 import ChatConversation from '@/components/shared/ChatConversation';
 import SettingsScreen from '@/components/shared/SettingsScreen';
+import NotificationsList from '@/components/shared/NotificationsList';
 import BottomNav from '@/components/BottomNav';
 
 export default function Index() {
@@ -166,6 +167,7 @@ export default function Index() {
             case 'pharmacy': return <PharmacyStore onBack={() => setActiveTab('home')} />;
             case 'messages': return renderChatScreen();
             case 'profile': return <PatientProfile onNavigate={handleTabChange} />;
+            case 'notifications': return <NotificationsList onBack={() => setActiveTab('home')} />;
             default: return <PatientHome onNavigate={handleTabChange} />;
         }
     };
@@ -184,6 +186,7 @@ export default function Index() {
             case 'messages': return renderChatScreen();
             case 'analytics': return <AnalyticsScreen />;
             case 'profile': return <DoctorProfile onNavigate={handleTabChange} />;
+            case 'notifications': return <NotificationsList onBack={() => setActiveTab('home')} />;
             default: return <DoctorHome onNavigate={handleTabChange} />;
         }
     };

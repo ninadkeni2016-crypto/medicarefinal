@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import PatientProfile from '../models/PatientProfile';
 import User from '../models/User';
+import Appointment from '../models/Appointment';
 import { isDemoMode } from '../config/demoMode';
 import { demoPatients } from '../data/demoData';
 import Patient from '../models/Patient';
@@ -56,7 +57,26 @@ export const getAllPatients = async (req: Request, res: Response): Promise<void>
             res.json(demoPatients);
             return;
         }
-        let patients = await PatientProfile.find().sort({ createdAt: -1 }).lean();
+
+        let query = {};
+        if (req.user.role === 'doctor') {
+            // SECURITY FIX: Doctors should only see patients who have connected/booked with them
+            const doctorAppointments = await Appointment.find({
+                 $or: [{ doctorId: req.user._id }, { doctorEmail: req.user.email }]
+            }).select('user');
+            
+            const uniquePatientIds = [...new Set(doctorAppointments.map(a => a.user.toString()))];
+            
+            if (uniquePatientIds.length === 0) {
+                // If the doctor has 0 patients, fallback to demo data to keep UI looking good
+                res.setHeader('X-Demo-Data', 'true');
+                res.json(demoPatients);
+                return;
+            }
+            query = { user: { $in: uniquePatientIds } };
+        }
+
+        let patients = await PatientProfile.find(query).sort({ createdAt: -1 }).lean();
         if (patients.length === 0) {
             res.setHeader('X-Demo-Data', 'true');
             res.json(demoPatients);

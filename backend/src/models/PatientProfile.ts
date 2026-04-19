@@ -12,6 +12,7 @@ const patientProfileSchema = new mongoose.Schema(
         email: { type: String, default: '' },
         phone: { type: String, default: '' },
         dateOfBirth: { type: String, default: '' },
+        age: { type: String, default: '' },
         gender: { type: String, default: '' },
         bloodGroup: { type: String, default: '' },
         height: { type: String, default: '' },

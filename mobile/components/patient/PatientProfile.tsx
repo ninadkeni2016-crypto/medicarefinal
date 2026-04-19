@@ -48,7 +48,9 @@ export default function PatientProfile({ onNavigate }: { onNavigate?: (tab: stri
     }
 
     const p = patientProfile;
-    const age = p.dateOfBirth ? String(new Date().getFullYear() - new Date(p.dateOfBirth).getFullYear()) : '—';
+    // Calculate from DOB as fallback, else use p.age
+    const calcAge = p.dateOfBirth ? String(new Date().getFullYear() - new Date(p.dateOfBirth).getFullYear()) : '—';
+    const ageDisplay = p.age || calcAge;
 
     const menuSections = [
         {
@@ -99,7 +101,7 @@ export default function PatientProfile({ onNavigate }: { onNavigate?: (tab: stri
                 <View style={{ flexDirection: 'row', gap: 12, marginTop: 28, width: '100%' }}>
                     {[
                         // Age — teal tint
-                        { icon: Calendar, label: 'Age',    value: `${age} yr`,                     color: colors.primary, bg: 'rgba(31, 78, 95, 0.08)' },
+                        { icon: Calendar, label: 'Age',    value: ageDisplay !== '—' ? `${ageDisplay} yr` : '—', color: colors.primary, bg: 'rgba(31, 78, 95, 0.08)' },
                         // Height — teal-green tint
                         { icon: Ruler,    label: 'Height', value: p.height ? `${p.height} cm` : '—', color: colors.success, bg: 'rgba(107, 203, 119, 0.10)' },
                         // Weight — soft orange tint

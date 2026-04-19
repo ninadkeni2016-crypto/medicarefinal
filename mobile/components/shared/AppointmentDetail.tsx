@@ -370,7 +370,7 @@ export default function AppointmentDetail({ appointment: initialAppointment, onB
                 </View>
 
                 {/* Final Completion Button for Doctors - Only shown when workflow is complete */}
-                {role === 'doctor' && appointment.status !== 'completed' && currentStep >= 6 && (
+                {role === 'doctor' && appointment.status !== 'completed' && (
                     <TouchableOpacity
                         onPress={handleComplete}
                         disabled={completing}

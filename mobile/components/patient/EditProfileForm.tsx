@@ -27,6 +27,7 @@ export default function EditProfileForm({ onBack }: EditProfileFormProps) {
                     email: data.email || patientProfile.email,
                     phone: data.phone || '',
                     dateOfBirth: data.dateOfBirth || '',
+                    age: data.age || '',
                     gender: data.gender || '',
                     bloodGroup: data.bloodGroup || '',
                     height: data.height || '',
@@ -114,6 +115,10 @@ export default function EditProfileForm({ onBack }: EditProfileFormProps) {
                     {renderField('Full Name *', 'fullName', 'Enter your full name')}
                     {renderField('Email', 'email', 'you@email.com')}
                     {renderField('Phone', 'phone', '+91 98765 43210')}
+                    <View style={{ flexDirection: 'row', gap: 8 }}>
+                        <View style={{ flex: 1 }}>{renderField('Date of Birth', 'dateOfBirth', 'DD/MM/YYYY')}</View>
+                        <View style={{ flex: 1 }}>{renderField('Age', 'age', 'e.g. 28')}</View>
+                    </View>
                     {renderSelectRow('Gender', genderOptions, 'gender')}
 
                     {renderSectionHeader('Physical Details')}

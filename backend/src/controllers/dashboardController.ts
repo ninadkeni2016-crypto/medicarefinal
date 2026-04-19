@@ -96,18 +96,47 @@ export const getDashboardData = async (req: AuthRequest, res: Response): Promise
     }
 
     const doctorId = req.user._id;
+
+    // Security Fix: Extract unique patients from doctor's appointments
+    const doctorAppointments = await Appointment.find({ 
+        $or: [{ doctorId }, { doctorEmail: req.user?.email }] 
+    }).select('user');
+    const patientUserIds = [...new Set(doctorAppointments.map(a => a.user.toString()))];
+
     const [patients, appointments, notifications, reports, conversations] = await Promise.all([
-      PatientProfile.find().sort({ updatedAt: -1 }).limit(5).lean(),
-      Appointment.find({ $or: [{ doctorId }, { doctorEmail: req.user?.email }], status: { $in: ['upcoming', 'confirmed', 'rescheduled'] } }).sort({ date: 1, time: 1 }).limit(5).lean(),
+      PatientProfile.find({ user: { $in: patientUserIds } }).sort({ updatedAt: -1 }).limit(5).lean(),
+      Appointment.find({ $or: [{ doctorId }, { doctorEmail: req.user?.email }], status: 'upcoming' }).sort({ date: 1, time: 1 }).limit(5).lean(),
       Notification.find({ user: doctorId }).sort({ createdAt: -1 }).limit(10).lean(),
       Report.find({}).sort({ createdAt: -1 }).limit(4).lean(),
       Conversation.find({ participants: doctorId }).sort({ lastMessageTime: -1, updatedAt: -1 }).limit(3).lean(),
     ]);
 
     const todayStr = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    const allAppointments = await Appointment.find({ $or: [{ doctorId }, { doctorEmail: req.user?.email }] }).lean();
+    
+    const dayCounts = { 'Mon': 0, 'Tue': 0, 'Wed': 0, 'Thu': 0, 'Fri': 0, 'Sat': 0, 'Sun': 0 };
+    allAppointments.forEach((app: any) => {
+        let d = new Date();
+        if (app.date !== 'Today' && app.date !== 'Tomorrow' && app.date) {
+            let parsed = new Date(app.date);
+            if (isNaN(parsed.getTime())) {
+                parsed = new Date(`${app.date} ${new Date().getFullYear()}`);
+            }
+            if (!isNaN(parsed.getTime())) d = parsed;
+        } else if (app.date === 'Tomorrow') {
+            d.setDate(d.getDate() + 1);
+        }
+        
+        const dayMap = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const dayStr = dayMap[d.getDay()];
+        if (dayCounts[dayStr as keyof typeof dayCounts] !== undefined) {
+             dayCounts[dayStr as keyof typeof dayCounts]++;
+        }
+    });
+
     const appointmentsPerWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => ({
       day,
-      count: Math.floor(Math.random() * 5) + 2,
+      count: dayCounts[day as keyof typeof dayCounts],
     }));
     const patientRegistrations = ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'].map(month => ({
       month,

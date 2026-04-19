@@ -101,6 +101,7 @@ export default function PatientHome({ onNavigate }: PatientHomeProps) {
                     </View>
                 </View>
                 <TouchableOpacity
+                    onPress={() => onNavigate('notifications')}
                     activeOpacity={0.7}
                     style={{
                         width: 44,
