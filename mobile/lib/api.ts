@@ -18,7 +18,7 @@ const getBaseUrl = () => {
         return `http://${localhost}:5000/api`;
     }
     // Production URL
-    return 'https://medicarefinal-7yor.onrender.com/api';
+    return 'https://medicarefinal-1nd3.vercel.app/api';
 };
 
 export const API_URL = getBaseUrl();
