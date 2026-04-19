@@ -42,6 +42,12 @@ export default function EditProfileForm({ onBack }: EditProfileFormProps) {
                     pastSurgeries: data.pastSurgeries || '',
                     insuranceProvider: data.insuranceProvider || '',
                     insurancePolicyNumber: data.insurancePolicyNumber || '',
+                    vitals: {
+                        heartRate: data.vitals?.heartRate || '',
+                        bloodPressure: data.vitals?.bloodPressure || '',
+                        bloodSugar: data.vitals?.bloodSugar || '',
+                        weight: data.vitals?.weight || '',
+                    }
                 };
                 setForm(merged);
             })
@@ -51,6 +57,16 @@ export default function EditProfileForm({ onBack }: EditProfileFormProps) {
 
     const update = (field: keyof ProfileType, value: string) => {
         setForm(prev => ({ ...prev, [field]: value }));
+    };
+
+    const updateVital = (field: keyof Required<ProfileType>['vitals'], value: string) => {
+        setForm(prev => ({
+            ...prev,
+            vitals: {
+                ...(prev.vitals || { heartRate: '', bloodPressure: '', bloodSugar: '', weight: '' }),
+                [field]: value
+            }
+        }));
     };
 
     const handleSave = async () => {
@@ -145,6 +161,52 @@ export default function EditProfileForm({ onBack }: EditProfileFormProps) {
                     {renderSectionHeader('Insurance Details')}
                     {renderField('Insurance Provider', 'insuranceProvider', 'Provider name')}
                     {renderField('Policy Number', 'insurancePolicyNumber', 'Policy #')}
+
+                    {renderSectionHeader('Health Vitals')}
+                    <View style={{ flexDirection: 'row', gap: 8 }}>
+                        <View style={{ flex: 1 }}>
+                            <Text style={{ fontSize: 13, fontFamily: fonts.semiBold, color: colors.primary, marginBottom: 6 }}>Heart Rate</Text>
+                            <TextInput
+                                value={form.vitals?.heartRate || ''}
+                                onChangeText={(v) => updateVital('heartRate', v)}
+                                placeholder="e.g. 72 bpm"
+                                placeholderTextColor={colors.textMuted}
+                                style={{ width: '100%', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.background, color: colors.text, fontSize: 14, fontFamily: fonts.regular }}
+                            />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                            <Text style={{ fontSize: 13, fontFamily: fonts.semiBold, color: colors.primary, marginBottom: 6 }}>Blood Pressure</Text>
+                            <TextInput
+                                value={form.vitals?.bloodPressure || ''}
+                                onChangeText={(v) => updateVital('bloodPressure', v)}
+                                placeholder="e.g. 120/80"
+                                placeholderTextColor={colors.textMuted}
+                                style={{ width: '100%', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.background, color: colors.text, fontSize: 14, fontFamily: fonts.regular }}
+                            />
+                        </View>
+                    </View>
+                    <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
+                        <View style={{ flex: 1 }}>
+                            <Text style={{ fontSize: 13, fontFamily: fonts.semiBold, color: colors.primary, marginBottom: 6 }}>Blood Sugar</Text>
+                            <TextInput
+                                value={form.vitals?.bloodSugar || ''}
+                                onChangeText={(v) => updateVital('bloodSugar', v)}
+                                placeholder="e.g. 95 mg/dL"
+                                placeholderTextColor={colors.textMuted}
+                                style={{ width: '100%', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.background, color: colors.text, fontSize: 14, fontFamily: fonts.regular }}
+                            />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                            <Text style={{ fontSize: 13, fontFamily: fonts.semiBold, color: colors.primary, marginBottom: 6 }}>Body Weight</Text>
+                            <TextInput
+                                value={form.vitals?.weight || ''}
+                                onChangeText={(v) => updateVital('weight', v)}
+                                placeholder="e.g. 70 kg"
+                                placeholderTextColor={colors.textMuted}
+                                style={{ width: '100%', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.background, color: colors.text, fontSize: 14, fontFamily: fonts.regular }}
+                            />
+                        </View>
+                    </View>
                 </View>
 
                 {/* Save Button */}

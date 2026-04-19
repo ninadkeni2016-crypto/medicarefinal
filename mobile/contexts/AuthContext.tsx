@@ -52,10 +52,10 @@ export const emptyProfile: PatientProfile = {
   insuranceProvider: '',
   insurancePolicyNumber: '',
   vitals: {
-    heartRate: '72 bpm',
-    bloodPressure: '120/80',
-    bloodSugar: '95 mg/dL',
-    weight: '70 kg',
+    heartRate: '',
+    bloodPressure: '',
+    bloodSugar: '',
+    weight: '',
   },
 };
 

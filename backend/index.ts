@@ -73,6 +73,16 @@ const authLimiter = rateLimit({
     },
 });
 
+// Ensure DB is connected before processing any request (critical for Vercel cold starts)
+app.use(async (req, res, next) => {
+    try {
+        await connectDB();
+        next();
+    } catch (err) {
+        res.status(503).json({ message: 'Database connection failed. Please try again.' });
+    }
+});
+
 // Routes
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/appointments', appointmentRoutes);

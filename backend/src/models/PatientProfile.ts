@@ -28,10 +28,10 @@ const patientProfileSchema = new mongoose.Schema(
         insuranceProvider: { type: String, default: '' },
         insurancePolicyNumber: { type: String, default: '' },
         vitals: {
-            heartRate: { type: String, default: '72 bpm' },
-            bloodPressure: { type: String, default: '120/80' },
-            bloodSugar: { type: String, default: '95 mg/dL' },
-            weight: { type: String, default: '70 kg' },
+            heartRate: { type: String, default: '' },
+            bloodPressure: { type: String, default: '' },
+            bloodSugar: { type: String, default: '' },
+            weight: { type: String, default: '' },
         },
     },
     { timestamps: true }

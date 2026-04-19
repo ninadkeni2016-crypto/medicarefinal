@@ -138,15 +138,20 @@ export const getDashboardData = async (req: AuthRequest, res: Response): Promise
       day,
       count: dayCounts[day as keyof typeof dayCounts],
     }));
-    const patientRegistrations = ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'].map(month => ({
+    // Derive department visits from actual appointments
+    const deptMap: Record<string, number> = {};
+    allAppointments.forEach((a: any) => {
+        if (a.specialization) {
+            deptMap[a.specialization] = (deptMap[a.specialization] || 0) + 1;
+        }
+    });
+    const departmentVisits = Object.entries(deptMap).map(([name, count]) => ({ name, count }));
+
+    // For registrations, ideally we'd group by month. For now, let's just use empty if no patients.
+    const patientRegistrations = patients.length > 0 ? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'].map(month => ({
       month,
-      count: Math.floor(Math.random() * 15) + 5,
-    }));
-    const departmentVisits = [
-      { name: 'Cardiology', count: 28 },
-      { name: 'Dermatology', count: 15 },
-      { name: 'General', count: 35 },
-    ];
+      count: Math.floor(patients.length / 6),
+    })) : [];
 
     res.json({
       demoData: false,

@@ -105,14 +105,14 @@ export default function DoctorHome({ onNavigate }: DoctorHomeProps) {
                 recentReports: dashboardData?.recentReports || [],
                 messages: dashboardData?.messages || [],
                 charts: dashboardData?.charts || {
-                    appointmentsPerWeek: [{ day: 'Mon', count: 4 }, { day: 'Tue', count: 6 }, { day: 'Wed', count: 5 }, { day: 'Thu', count: 8 }, { day: 'Fri', count: 7 }, { day: 'Sat', count: 3 }, { day: 'Sun', count: 2 }],
-                    patientRegistrations: [{ month: 'Oct', count: 12 }, { month: 'Nov', count: 18 }, { month: 'Dec', count: 15 }, { month: 'Jan', count: 22 }, { month: 'Feb', count: 19 }, { month: 'Mar', count: 25 }],
-                    departmentVisits: [{ name: 'Cardiology', count: 28 }, { name: 'Dermatology', count: 15 }, { name: 'General', count: 35 }],
+                    appointmentsPerWeek: [],
+                    patientRegistrations: [],
+                    departmentVisits: [],
                 },
             };
             
             setDashboard(built as DashboardData);
-            setDemoData(dashboardRes?.headers?.['x-demo-data'] === 'true' || (appointments.length === 0 && bills.length === 0));
+            setDemoData(dashboardRes?.headers?.['x-demo-data'] === 'true');
             
         } catch (e) {
             console.error('Failed to load fallback data', e);

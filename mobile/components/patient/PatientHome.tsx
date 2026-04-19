@@ -23,18 +23,22 @@ export default function PatientHome({ onNavigate }: PatientHomeProps) {
     const [loading, setLoading] = useState(true);
     const [showPayment, setShowPayment] = useState(false);
     const [paymentDone, setPaymentDone] = useState(false);
+    const [pendingBills, setPendingBills] = useState<any[]>([]);
 
     useEffect(() => {
         const fetchDashboard = async () => {
             try {
-                const [apptsRes, notifsRes, docsRes] = await Promise.all([
+                const [apptsRes, notifsRes, docsRes, billsRes] = await Promise.all([
                     api.get('/appointments'),
                     api.get('/notifications').catch(() => ({ data: [] })),
                     api.get('/doctors').catch(() => ({ data: [] })),
+                    api.get('/bills').catch(() => ({ data: [] })),
                 ]);
                 setAppointments(apptsRes.data || []);
                 setNotifications(notifsRes.data || []);
                 setTopDoctors(docsRes.data || []);
+                const bills = billsRes.data || [];
+                setPendingBills(bills.filter((b: any) => b.status !== 'Paid'));
             } catch (error) {
                 console.error('Failed to load patient dashboard:', error);
             } finally {
@@ -64,11 +68,16 @@ export default function PatientHome({ onNavigate }: PatientHomeProps) {
         { icon: CreditCard, label: 'Billing', tab: 'billing' },
     ];
 
+    const hasVitals = patientProfile.vitals && (
+        patientProfile.vitals.heartRate || patientProfile.vitals.bloodPressure || 
+        patientProfile.vitals.bloodSugar || patientProfile.vitals.weight
+    );
+
     const healthMetrics = [
-        { label: 'Heart Rate',      value: patientProfile.vitals?.heartRate      || '72 bpm',    Icon: Heart,     bg: metricTints.heartRate.bg,     iconColor: metricTints.heartRate.icon     },
-        { label: 'Blood Pressure',  value: patientProfile.vitals?.bloodPressure  || '120/80',    Icon: Activity,  bg: metricTints.bloodPressure.bg, iconColor: metricTints.bloodPressure.icon },
-        { label: 'Blood Sugar',     value: patientProfile.vitals?.bloodSugar     || '95 mg/dL',  Icon: Droplets,  bg: metricTints.bloodSugar.bg,    iconColor: metricTints.bloodSugar.icon    },
-        { label: 'Weight',          value: patientProfile.vitals?.weight         || '72 kg',     Icon: Scale,     bg: metricTints.weight.bg,        iconColor: metricTints.weight.icon        },
+        { label: 'Heart Rate',      value: patientProfile.vitals?.heartRate      || '--',    Icon: Heart,     bg: metricTints.heartRate.bg,     iconColor: metricTints.heartRate.icon     },
+        { label: 'Blood Pressure',  value: patientProfile.vitals?.bloodPressure  || '--',    Icon: Activity,  bg: metricTints.bloodPressure.bg, iconColor: metricTints.bloodPressure.icon },
+        { label: 'Blood Sugar',     value: patientProfile.vitals?.bloodSugar     || '--',  Icon: Droplets,  bg: metricTints.bloodSugar.bg,    iconColor: metricTints.bloodSugar.icon    },
+        { label: 'Weight',          value: patientProfile.vitals?.weight         || '--',     Icon: Scale,     bg: metricTints.weight.bg,        iconColor: metricTints.weight.icon        },
     ];
 
     const handleSuccess = () => {
@@ -219,17 +228,17 @@ export default function PatientHome({ onNavigate }: PatientHomeProps) {
             </View>
 
             {/* Pending payment */}
-            {!paymentDone && (
+            {!paymentDone && pendingBills.length > 0 && (
                 <MedCard onPress={() => setShowPayment(true)} style={{ marginBottom: spacing.xl, flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
                     <View style={{ width: 44, height: 44, borderRadius: radius.md, backgroundColor: '#FEF2F2', alignItems: 'center', justifyContent: 'center' }}>
                         <CreditCard size={22} color={colors.danger} strokeWidth={2} />
                     </View>
                     <View style={{ flex: 1 }}>
                         <Text style={[typography.section, { color: colors.text }]}>Pending payments</Text>
-                        <Text style={[typography.caption, { color: colors.textSecondary, marginTop: 2 }]}>2 bills awaiting payment</Text>
+                        <Text style={[typography.caption, { color: colors.textSecondary, marginTop: 2 }]}>{pendingBills.length} bill{pendingBills.length !== 1 ? 's' : ''} awaiting payment</Text>
                     </View>
                     <View style={{ alignItems: 'flex-end' }}>
-                        <Text style={{ fontSize: 15, fontWeight: '600', color: colors.danger }}>₹2,800</Text>
+                        <Text style={{ fontSize: 15, fontWeight: '600', color: colors.danger }}>₹{pendingBills.reduce((s: number, b: any) => s + (b.total || 0), 0).toLocaleString()}</Text>
                         <Text style={[typography.caption, { color: colors.primary, fontWeight: '500' }]}>Pay</Text>
                     </View>
                 </MedCard>
@@ -314,15 +323,21 @@ export default function PatientHome({ onNavigate }: PatientHomeProps) {
                             <Text style={[typography.label, { marginBottom: 4 }]}>{label}</Text>
                             <Text style={[typography.cardValue, { fontSize: 19 }]}>{value}</Text>
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6 }}>
-                                <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: colors.success }} />
-                                <Text style={{ fontSize: 11, fontWeight: '600', color: colors.success }}>Normal</Text>
+                                <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: value === '--' ? colors.textMuted : colors.success }} />
+                                <Text style={{ fontSize: 11, fontWeight: '600', color: value === '--' ? colors.textMuted : colors.success }}>{value === '--' ? 'Not set' : 'Normal'}</Text>
                             </View>
                         </MedCard>
                     ))}
                 </View>
             </View>
 
-            <RazorpayCheckout visible={showPayment} amount={2800} onClose={handleCancel} onCancel={handleCancel} onSuccess={handleSuccess} />
+            <RazorpayCheckout 
+                visible={showPayment} 
+                amount={pendingBills.reduce((s: number, b: any) => s + (b.total || 0), 0)} 
+                onClose={handleCancel} 
+                onCancel={handleCancel} 
+                onSuccess={handleSuccess} 
+            />
         </ScrollView>
     );
 }

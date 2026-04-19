@@ -118,6 +118,23 @@ export default function PatientProfile({ onNavigate }: { onNavigate?: (tab: stri
                 </View>
             </MedCard>
 
+            {/* Vitals Summary */}
+            <View style={{ marginBottom: 32 }}>
+                <SectionHeader title="Current Vitals" />
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+                    {[
+                        { label: 'Heart Rate', value: p.vitals?.heartRate || '—', color: '#EF4444', bg: 'rgba(239, 68, 68, 0.08)' },
+                        { label: 'Blood Pressure', value: p.vitals?.bloodPressure || '—', color: colors.primary, bg: 'rgba(31, 78, 95, 0.08)' },
+                        { label: 'Blood Sugar', value: p.vitals?.bloodSugar || '—', color: colors.success, bg: 'rgba(107, 203, 119, 0.08)' },
+                    ].map((item) => (
+                        <View key={item.label} style={{ width: '31%', backgroundColor: colors.card, borderRadius: 16, padding: 12, alignItems: 'center', borderWidth: 1, borderColor: colors.border }}>
+                             <Text style={{ fontFamily: fonts.semiBold, fontSize: 9, color: colors.textMuted, textTransform: 'uppercase', marginBottom: 4 }}>{item.label}</Text>
+                             <Text style={{ fontFamily: fonts.bold, fontSize: 13, color: item.color }}>{item.value}</Text>
+                        </View>
+                    ))}
+                </View>
+            </View>
+
             {/* Contact Info */}
             <View style={{ marginBottom: 32 }}>
                 <SectionHeader title="Contact Information" />

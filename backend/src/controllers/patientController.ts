@@ -68,9 +68,7 @@ export const getAllPatients = async (req: Request, res: Response): Promise<void>
             const uniquePatientIds = [...new Set(doctorAppointments.map(a => a.user.toString()))];
             
             if (uniquePatientIds.length === 0) {
-                // If the doctor has 0 patients, fallback to demo data to keep UI looking good
-                res.setHeader('X-Demo-Data', 'true');
-                res.json(demoPatients);
+                res.json([]);
                 return;
             }
             query = { user: { $in: uniquePatientIds } };
@@ -78,8 +76,7 @@ export const getAllPatients = async (req: Request, res: Response): Promise<void>
 
         let patients = await PatientProfile.find(query).sort({ createdAt: -1 }).lean();
         if (patients.length === 0) {
-            res.setHeader('X-Demo-Data', 'true');
-            res.json(demoPatients);
+            res.json([]);
             return;
         }
         const withExtras = patients.map((p: any) => ({
