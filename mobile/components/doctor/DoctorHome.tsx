@@ -213,7 +213,7 @@ export default function DoctorHome({ onNavigate }: DoctorHomeProps) {
                         { icon: Users, label: 'Total Patients', value: String(stats.totalPatients) },
                         { icon: Calendar, label: "Today's Appointments", value: String(stats.todayAppointments) },
                         { icon: FileText, label: 'Pending Reports', value: String(stats.pendingReports) },
-                        { icon: Receipt, label: 'Total Revenue', value: `₹${Number(stats.totalRevenue).toLocaleString()}` },
+                        { icon: Receipt, label: 'Total Revenue', value: `₹${(Number(stats.totalRevenue) || 0).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}` },
                     ].map(({ icon: Icon, label, value }) => (
                         <ScalePress key={label} style={{ width: '48%', marginBottom: spacing.sm }} haptic="light">
                             <MedCard style={{ padding: spacing.md, height: '100%' }}>
@@ -255,7 +255,7 @@ export default function DoctorHome({ onNavigate }: DoctorHomeProps) {
                 <Text style={[typography.section, { color: colors.text, marginBottom: spacing.md }]}>Quick actions</Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
                     {quickActions.map(({ icon: Icon, label, tab }) => (
-                        <ScalePress key={tab} style={{ width: '31%' }} onPress={() => { Haptics.selectionAsync(); onNavigate(tab); }} haptic="selection">
+                        <ScalePress key={tab} style={{ width: '31%' }} onPress={() => onNavigate(tab)} haptic="selection">
                             <View style={{
                                 backgroundColor: colors.card,
                                 borderRadius: radius.lg,

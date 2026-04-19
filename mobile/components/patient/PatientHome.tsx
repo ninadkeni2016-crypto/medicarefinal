@@ -243,7 +243,7 @@ export default function PatientHome({ onNavigate }: PatientHomeProps) {
                         <Text style={[typography.caption, { color: colors.textSecondary, marginTop: 2 }]}>{pendingBills.length} bill{pendingBills.length !== 1 ? 's' : ''} awaiting payment</Text>
                     </View>
                     <View style={{ alignItems: 'flex-end' }}>
-                        <Text style={{ fontSize: 15, fontWeight: '600', color: colors.danger }}>₹{pendingBills.reduce((s: number, b: any) => s + (b.total || 0), 0).toLocaleString()}</Text>
+                        <Text style={{ fontSize: 15, fontWeight: '600', color: colors.danger }}>₹{pendingBills.reduce((s: number, b: any) => s + (b.total || 0), 0).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</Text>
                         <Text style={[typography.caption, { color: colors.primary, fontWeight: '500' }]}>Pay</Text>
                     </View>
                 </MedCard>
