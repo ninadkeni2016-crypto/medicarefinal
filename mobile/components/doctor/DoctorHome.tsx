@@ -216,7 +216,7 @@ export default function DoctorHome({ onNavigate }: DoctorHomeProps) {
                         { icon: Receipt, label: 'Total Revenue', value: `₹${(Number(stats.totalRevenue) || 0).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}` },
                     ].map(({ icon: Icon, label, value }) => (
                         <ScalePress key={label} style={{ width: '48%', marginBottom: spacing.sm }} haptic="light">
-                            <MedCard style={{ padding: spacing.md, height: '100%' }}>
+                            <MedCard style={{ padding: spacing.md, minHeight: 88 }}>
                                 <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
                                     <View style={{ flex: 1 }}>
                                         <Text style={[typography.cardValue, { color: colors.text }]}>{value}</Text>
