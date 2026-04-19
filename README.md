@@ -1,37 +1,40 @@
-# 🏥 Medicare - Full Stack Healthcare Platform
+# 🏥 MediCare - Full Stack Healthcare Platform
 
-A modern full-stack healthcare web application that allows users to find doctors, book appointments, and manage healthcare services efficiently.
+MediCare is a modern full-stack healthcare web application designed to streamline the process of connecting patients with doctors. It enables users to book appointments, manage profiles, and access healthcare services through a clean and intuitive interface.
 
 ---
 
 ## 🌐 Live Demo
 
-🚀 Frontend: [https://your-new-vercel-link.vercel.app](https://medicaremain.vercel.app/)  
-⚙️ Backend API: https://medicarefinal-7yor.onrender.com/api
+🚀 **Application:** https://medicaremain.vercel.app/  
+⚙️ **Backend API:** Deployed on Vercel (Serverless Functions)
 
 ---
 
-## 📸 Features
+## 📸 Key Features
 
-- 🔐 Secure Authentication (JWT)
-- 📧 Email Verification System
-- 👨‍⚕️ Doctor Listing & Search
+- 🔐 Secure User Authentication (JWT)
+- 👤 User Profile Management
+- 👨‍⚕️ Doctor Listings & Search
 - 📅 Appointment Booking System
-- 🔔 Notifications System
-- 💳 Payment Integration (Razorpay)
-- 📱 Responsive UI (Mobile Friendly)
+- 💳 Razorpay Payment Integration
+- 📧 Automated Email Notifications (Confirmation & Completion)
+- 🔔 Real-time Notifications
+- 🤖 AI Health Assistant
+- ❤️ Health Vitals Tracking
+- 📱 Fully Responsive UI (Mobile Friendly)
 
 ---
 
 ## 🛠️ Tech Stack
 
 ### Frontend
-- React / React Native
+- React / React Native (Expo)
 - Tailwind CSS / Custom Styling
 
 ### Backend
 - Node.js
-- Express.js
+- Express.js (Serverless on Vercel)
 - TypeScript
 
 ### Database
@@ -39,18 +42,83 @@ A modern full-stack healthcare web application that allows users to find doctors
 
 ### Deployment
 - Frontend: Vercel
-- Backend: Render
+- Backend: Vercel (Serverless Functions)
 
 ---
 
-## 📁 Project Structure 
+## ⚙️ Installation & Setup
 
-🔧 Backend Setup
-cd backend
-npm install
-npm run dev
+### 1. Clone the Repository
+```bash
+git clone https://github.com/your-username/medicare.git
+cd medicare
+```
 
-📱 Frontend Setup
+### 2. Install Dependencies
+
+#### Frontend
+```bash
 cd mobile
 npm install
-npm start
+```
+
+#### Backend
+```bash
+cd backend
+npm install
+```
+
+### 3. Environment Variables
+
+Create a `.env` file in the `backend` folder and add:
+
+```env
+MONGO_URI=your_mongodb_connection
+JWT_SECRET=your_secret_key
+EMAIL=your_email
+APP_PASSWORD=your_app_password
+RAZORPAY_KEY_ID=your_key
+RAZORPAY_KEY_SECRET=your_secret
+```
+
+### 4. Run Locally
+
+#### Backend
+```bash
+npm run dev
+```
+
+#### Frontend
+```bash
+npx expo start
+```
+
+---
+
+## 🚀 Deployment
+
+The project is fully deployed on Vercel:
+
+- Frontend hosted on Vercel
+- Backend converted to serverless functions and hosted on Vercel
+- MongoDB Atlas used as cloud database
+
+---
+
+## 📌 Future Improvements
+- Advanced Doctor Recommendation System
+- Video Consultation Integration
+- Appointment Reminder System
+- Admin Dashboard
+
+---
+
+## 🤝 Acknowledgements
+
+Special thanks to the entire team for their contribution, collaboration, and dedication in making this project successful.
+
+---
+
+## 📄 License
+
+This project is developed for educational and demonstration purposes.
